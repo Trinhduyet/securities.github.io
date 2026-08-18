@@ -4,19 +4,37 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 const isGitHubActions = process.env.GITHUB_ACTIONS === 'true'
 const base = isGitHubActions ? '/securities.github.io/' : '/'
 
-const lectures = [
+const foundationLectures = [
   { text: '01. Kinh tế học vi mô', link: '/lectures/01-microeconomics/' },
   { text: '02. Kinh tế học vĩ mô', link: '/lectures/02-macroeconomics/' },
   { text: '03. Tài chính nền tảng', link: '/lectures/03-finance-foundations/' },
   { text: '04. Thị trường chứng khoán', link: '/lectures/04-securities-market/' },
-  { text: '05. Phân tích đầu tư', link: '/lectures/05-investment-analysis/' },
+  { text: '05. Phân tích đầu tư', link: '/lectures/05-investment-analysis/' }
+]
+
+const marketCoreLectures = [
   { text: '06. Order & Matching', link: '/lectures/06-order-matching/' },
   { text: '07. KRX / FIX / VSDC', link: '/lectures/07-clearing-settlement-krx-fix-vsdc/' },
-  { text: '08. Account, Cash, Position & Buying Power', link: '/lectures/08-account-cash-position-buying-power/' },
+  { text: '08. Account / Cash / Position / Buying Power', link: '/lectures/08-account-cash-position-buying-power/' },
   { text: '09. Security Master & Corporate Actions', link: '/lectures/09-security-master-corporate-actions/' },
   { text: '10. Market Data Engineering', link: '/lectures/10-market-data-engineering/' },
   { text: '11. Risk, Margin & Controls', link: '/lectures/11-risk-margin-controls/' },
   { text: '12. EOD, Reconciliation & Operations', link: '/lectures/12-eod-reconciliation-operations/' }
+]
+
+const productionLectures = [
+  { text: '13. OMS Internals & State Machine', link: '/lectures/13-oms-internals-state-machine/' },
+  { text: '14. FIX 4.4 Session Recovery', link: '/lectures/14-fix44-session-recovery/' },
+  { text: '15. Exchange Gateway & KRX Connectivity', link: '/lectures/15-exchange-gateway-krx-connectivity/' },
+  { text: '16. Trade Capture & Booking', link: '/lectures/16-trade-capture-booking/' },
+  { text: '17. Clearing, Netting & Settlement', link: '/lectures/17-clearing-netting-settlement/' },
+  { text: '18. Ledger, Accounting & Projections', link: '/lectures/18-ledger-accounting-projections/' },
+  { text: '19. Event Delivery Semantics', link: '/lectures/19-event-driven-delivery-semantics/' },
+  { text: '20. HA / DR / BCP / Observability', link: '/lectures/20-ha-dr-bcp-observability/' },
+  { text: '21. Security / Compliance / Audit', link: '/lectures/21-security-compliance-audit/' },
+  { text: '22. Performance / Capacity / Latency', link: '/lectures/22-performance-capacity-latency/' },
+  { text: '23. Production Runbook & Incidents', link: '/lectures/23-production-runbook-incident-operations/' },
+  { text: '24. Architecture Boundaries & DDD', link: '/lectures/24-architecture-boundaries-ddd-modular-monolith-microservices/' }
 ]
 
 const domains = [
@@ -35,6 +53,25 @@ const engineering = [
   { text: 'Engineering overview', link: '/engineering/' },
   { text: 'Core Securities Engineering', link: '/engineering/core-securities-engineering' },
   { text: 'Reliability & Ledgers', link: '/engineering/reliability-and-ledgers' }
+]
+
+const projects = [
+  { text: 'Tổng quan', link: '/projects/' },
+  { text: '01. Order Lifecycle', link: '/projects/project-01-order-lifecycle' },
+  { text: '02. Brokerage Platform', link: '/projects/project-02-brokerage-platform' },
+  { text: '03. FIX Gateway Recovery Lab', link: '/projects/project-03-fix-gateway-recovery-lab' },
+  { text: '04. Ledger & Reconciliation Lab', link: '/projects/project-04-ledger-reconciliation-lab' },
+  { text: '05. Brokerage Production Game Day', link: '/projects/project-05-brokerage-production-game-day' }
+]
+
+const resources = [
+  { text: 'Tổng quan', link: '/resources/' },
+  { text: 'Glossary', link: '/resources/glossary' },
+  { text: 'System Map', link: '/resources/system-map' },
+  { text: 'Review Checklist', link: '/resources/checklist' },
+  { text: 'Competency Matrix', link: '/resources/competency-matrix' },
+  { text: '50 Failure Scenarios', link: '/resources/failure-scenarios' },
+  { text: 'References', link: '/resources/references' }
 ]
 
 export default withMermaid(defineConfig({
@@ -61,27 +98,15 @@ export default withMermaid(defineConfig({
       { text: 'Resources', link: '/resources/' }
     ],
     sidebar: {
-      '/lectures/': [{ text: 'Bài giảng', items: lectures }],
+      '/lectures/': [
+        { text: 'I. Economics & Finance', items: foundationLectures },
+        { text: 'II. Market & Brokerage Core', items: marketCoreLectures },
+        { text: 'III. Production Securities Engineering', items: productionLectures }
+      ],
       '/domains/': [{ text: '8 Core Domains', items: domains }],
       '/engineering/': [{ text: 'Core Engineering', items: engineering }],
-      '/projects/': [{
-        text: 'Projects',
-        items: [
-          { text: 'Tổng quan', link: '/projects/' },
-          { text: '01. Order Lifecycle', link: '/projects/project-01-order-lifecycle' },
-          { text: '02. Brokerage Platform', link: '/projects/project-02-brokerage-platform' }
-        ]
-      }],
-      '/resources/': [{
-        text: 'Resources',
-        items: [
-          { text: 'Tổng quan', link: '/resources/' },
-          { text: 'Glossary', link: '/resources/glossary' },
-          { text: 'System Map', link: '/resources/system-map' },
-          { text: 'Review Checklist', link: '/resources/review-checklist' },
-          { text: 'References', link: '/resources/references' }
-        ]
-      }]
+      '/projects/': [{ text: 'Projects', items: projects }],
+      '/resources/': [{ text: 'Resources', items: resources }]
     },
     outline: { level: [2, 3], label: 'Trong bài này' },
     search: { provider: 'local' },
