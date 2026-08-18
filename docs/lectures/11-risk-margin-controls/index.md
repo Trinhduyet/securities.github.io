@@ -1,46 +1,66 @@
-# Bài 11 — Risk, Margin và Trading Controls
+---
+title: "Bài 11 — Risk, Margin & Trading Controls"
+description: "Pre-trade, intraday và post-trade risk; margin, limits, liquidation, kill switch và explainable decisions."
+---
 
-Risk engine không phải một `if (balance >= amount)`. Trong brokerage platform, risk kiểm soát **khả năng đặt lệnh, exposure, margin, concentration và trạng thái tài khoản** trước, trong và sau giao dịch.
+# Bài 11 — Risk, Margin & Controls: làm sao ngăn một order hợp lệ về cú pháp nhưng nguy hiểm về tài chính?
+
+<div class="lesson-meta"><span><strong>Track</strong> Market & Brokerage Core</span><span><strong>Mức độ</strong> Core</span><span><strong>Mục tiêu</strong> Thiết kế risk như state + policy + atomic controls</span></div>
+
+Risk engine không phải `if (balance >= amount)`. Nó bảo vệ exposure, margin, concentration, account restrictions và operational limits.
+
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
+
+- pre/intra/post-trade risk;
+- risk policy versioning;
+- margin state machine;
+- liquidation orchestration;
+- atomic limit consumption;
+- stale data và kill switch controls.
+</div>
 
 ## 1. Ba lớp risk
 
 ```text
 Pre-trade
-  ↓
-Intra-day / real-time
-  ↓
-Post-trade / end-of-day
+Intraday / Real-time
+Post-trade / EOD
 ```
 
-### Pre-trade
+## 2. Pre-trade Controls
 
-- buying power;
-- sellable quantity;
-- price/quantity limits;
-- account restriction;
-- instrument eligibility;
-- concentration/exposure;
-- marginability.
+```text
+Account status
+Buying power
+Sellable qty
+Price/qty limits
+Instrument eligibility
+Marginability
+Concentration
+Credit line
+```
 
-### Intra-day
+## 3. Intraday Risk
 
-- position/P&L;
-- margin utilization;
-- market move;
-- concentration;
-- credit line;
-- liquidation threshold.
+```text
+Position
+PnL
+Margin utilization
+Market movement
+Concentration
+Credit exposure
+```
 
-### Post-trade
+## 4. Post-trade Risk
 
-- settlement exposure;
-- unresolved breaks;
-- limit breach review;
-- end-of-day margin/risk recomputation.
+```text
+Settlement exposure
+Unresolved breaks
+Limit breaches
+Margin recomputation
+```
 
-## 2. Risk rule cần version
-
-Không hard-code `if (ratio > 0.8) reject;` mà không biết `0.8` đến từ policy nào.
+## 5. Policy Versioning
 
 ```text
 RiskPolicy
@@ -48,19 +68,16 @@ PolicyVersion
 EffectiveFrom
 Scope
 Parameters
-Decision
 DecisionReason
 InputSnapshotVersion
 ```
 
-Khi khách hỏi tại sao order bị reject hôm qua, system phải giải thích bằng rule hôm qua.
+Phải giải thích order hôm qua bị reject theo rule hôm qua.
 
-## 3. Margin account
-
-Khái niệm tổng quát:
+## 6. Margin Mental Model
 
 ```text
-Equity / Collateral Value
+Collateral Value
 Exposure / Debit
 Initial Margin
 Maintenance Margin
@@ -68,77 +85,71 @@ Available Margin
 Margin Ratio
 ```
 
-Công thức cụ thể phụ thuộc sản phẩm, công ty và quy định có hiệu lực; điều engineering quan trọng là **input lineage + deterministic calculation**.
+Formula cụ thể phụ thuộc product/policy.
 
-## 4. Derivatives P&L
-
-```mermaid
-flowchart LR
-    PRICE[Market Price] --> PNL[P&L Engine]
-    POS[Position] --> PNL
-    PNL --> MARGIN[Margin Engine]
-    COLL[Collateral] --> MARGIN
-    MARGIN --> STATE[Risk State]
-    STATE --> ALERT[Warning / Margin Call]
-    STATE --> LIQ[Liquidation Workflow]
-```
-
-## 5. Risk state machine
-
-Không chỉ có boolean `IsMarginCall`.
+## 7. Risk State Machine
 
 ```text
 NORMAL
-  ↓
-WARNING
-  ↓
-MARGIN_CALL
-  ↓
-RESTRICTED
-  ↓
-LIQUIDATION_REQUIRED
+→ WARNING
+→ MARGIN_CALL
+→ RESTRICTED
+→ LIQUIDATION_REQUIRED
 ```
 
-Transitions phải có reason, timestamp, policy version và audit.
+Transition có reason/time/policy version.
 
-## 6. Forced liquidation là workflow nguy hiểm
+## 8. Forced Liquidation
 
-Không viết `if margin < threshold: sell everything`.
+Không `sell everything` đơn giản.
 
-Cần giải quyết instrument nào liquidate trước, quantity bao nhiêu, price/order type policy, partial fill, market closed, order rejected, market price tiếp tục chạy, nhiều liquidation worker cạnh tranh và account nạp thêm collateral giữa chừng.
+Phải giải quyết:
 
-Đây là orchestration có state, không phải fire-and-forget.
+- instrument priority;
+- quantity;
+- price policy;
+- partial fill;
+- reject;
+- market closed;
+- concurrent liquidators;
+- collateral top-up giữa workflow.
 
-## 7. Atomic risk reservation
+## 9. Atomic Limit Consumption
 
 ```text
-Credit limit = 1bn
-Order A exposure +700m
-Order B exposure +700m
+Limit = 1bn
+Order A = 700m
+Order B = 700m
 ```
 
-Hai request cùng pass snapshot cũ sẽ vượt limit. Critical limits cần concurrency strategy tại source of truth, không dựa read model trễ.
+Hai request đọc snapshot cũ sẽ vượt limit nếu không có concurrency control.
 
-## 8. Kill switch và trading controls
+## 10. Stale Market Data
 
-Production platform cần control operations như:
+Risk engine phải có policy khi price stale:
 
 ```text
-Disable account trading
+fail closed
+fallback price
+apply haircut
+restrict new orders
+manual escalation
+```
+
+## 11. Kill Switch
+
+```text
+Disable account
 Disable symbol
-Disable market/board
+Disable market
 Disable new BUY
-Cancel all working orders theo scope
-Global emergency stop
+Cancel all working orders
+Global stop
 ```
 
-Các thao tác này cần authorization mạnh, maker/checker nếu policy yêu cầu, audit, propagation nhanh và observable completion.
+Require strong auth/audit/maker-checker khi phù hợp.
 
-## 9. Stale market data
-
-Risk tính theo giá cũ có thể nguy hiểm. Policy phải xác định khi feed stale thì dùng fallback price, apply haircut, stop new orders hay escalate. Không được âm thầm dùng cached price vô thời hạn.
-
-## 10. Explainable decision
+## 12. Explainable Decision
 
 ```json
 {
@@ -150,28 +161,40 @@ Risk tính theo giá cũ có thể nguy hiểm. Policy phải xác định khi f
 }
 ```
 
-Không trả mọi lỗi thành `RISK_FAILED`.
+## 13. Fail-open vs Fail-closed
 
-## 11. Failure scenarios
+Risk dependency timeout không có universal answer.
 
-- Risk service timeout: fail-open hay fail-closed phải có policy theo operation.
-- Duplicate risk command: reservation/limit consumption không double.
-- Recalculation after late execution: risk state phải converge đúng.
-- Failover: không để hai active risk owner cùng cấp limit từ cùng pool mà thiếu fencing/coordination.
+Critical financial control thường thiên fail-closed, nhưng business/operation cần explicit policy theo operation và degraded mode.
+
+## 14. Common mistakes
+
+- hard-code threshold;
+- risk decision không reason;
+- two concurrent orders consume same limit;
+- liquidation fire-and-forget;
+- stale price dùng vô hạn;
+- failover tạo hai active risk owners.
+
+<div class="key-takeaway"><strong>Takeaway</strong>Risk là **deterministic policy + atomic resource control + explainable state machine**.</div>
 
 ## Checklist
 
-- [ ] Risk tách pre/intra/post-trade.
-- [ ] Rule/policy có version và effective date.
-- [ ] Decision có reason + input lineage.
-- [ ] Critical limit có atomic/concurrency control.
-- [ ] Stale market data có policy.
-- [ ] Margin state là state machine.
-- [ ] Liquidation có orchestration/recovery.
-- [ ] Kill switch có authorization/audit.
-- [ ] Duplicate/replay không double exposure.
-- [ ] Failover không tạo double owner.
+- [ ] Pre/intra/post risk.
+- [ ] Versioned policy.
+- [ ] Atomic critical limits.
+- [ ] Margin state machine.
+- [ ] Liquidation recoverable.
+- [ ] Stale data policy.
+- [ ] Kill switch audited.
 
 ## Bài tập
 
-Thiết kế risk decision cho hai concurrent BUY orders sử dụng cùng credit limit. Tiếp theo mô phỏng market-data feed stale và giải thích hệ thống chọn fail-closed/fallback thế nào, cùng trade-off business của quyết định đó.
+1. Simulate concurrent exposure allocation.
+2. Model liquidation workflow with partial fills.
+3. Design stale-price policy matrix.
+4. Build explainable risk response contract.
+
+## Đọc tiếp
+
+[Bài 12 — EOD, Reconciliation & Operations](../12-eod-reconciliation-operations/).

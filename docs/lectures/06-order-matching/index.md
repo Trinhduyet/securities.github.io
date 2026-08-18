@@ -1,79 +1,83 @@
-# Bài 06 — Order Lifecycle, Order Book và Matching Engine
+---
+title: "Bài 06 — Order Lifecycle & Matching"
+description: "Từ nút BUY đến order state machine, order book, partial fill, cancel race và matching semantics."
+---
 
-Đây là bài chuyển từ “người dùng app chứng khoán” sang “engineer hiểu trading core”. Câu hỏi trung tâm:
+# Bài 06 — Order Lifecycle & Matching: khi khách bấm BUY, chuyện gì thực sự xảy ra?
 
-> Khi khách bấm BUY, hệ thống thực sự làm những gì trước, trong và sau khi khớp?
+<div class="lesson-meta">
+  <span><strong>Track</strong> Market & Brokerage Core</span>
+  <span><strong>Mức độ</strong> Core</span>
+  <span><strong>Mục tiêu</strong> Hiểu order lifecycle, matching và các invariant đầu tiên của trading core</span>
+</div>
+
+`POST /orders` chỉ là điểm bắt đầu. Một lệnh thực sự đi qua validation, reservation, routing, exchange acknowledgement, executions, cancel/replace và cuối cùng mới tới trade/post-trade.
+
+<div class="learning-objectives">
+<strong>Sau bài này bạn phải giải thích được:</strong>
+
+- Order khác Execution và Trade;
+- price-time priority;
+- partial fill ảnh hưởng quantities/reservation ra sao;
+- cancel/replace vì sao là lifecycle chứ không phải SQL UPDATE;
+- timeout khi submit vì sao tạo UNKNOWN outcome;
+- invariant nào OMS phải bảo vệ.
+</div>
 
 ## 1. Order không phải Trade
 
 ```text
 Order      = ý định mua/bán
-Execution  = một lần khớp một phần/toàn bộ order
-Trade      = giao dịch hình thành từ execution
-Settlement = chuyển giao money/securities sau trade
+Execution  = một lần khớp
+Trade      = business transaction hình thành từ execution
+Settlement = chuyển giao obligations sau trade
 ```
 
 Ví dụ:
 
 ```text
 BUY 10,000 FPT @ 120,000
-  ├── Execution #1: 2,000 @ 119,900
-  ├── Execution #2: 3,000 @ 120,000
-  └── Execution #3: 5,000 @ 120,000
+  ├─ Exec 1: 2,000 @ 119,900
+  ├─ Exec 2: 3,000 @ 120,000
+  └─ Exec 3: 5,000 @ 120,000
 ```
 
-Invariant:
+## 2. Invariant số lượng
 
 ```text
 CumQty + LeavesQty = OrderQty
-CumQty không bao giờ giảm
-LeavesQty không âm
-Một ExecID không được book hai lần
+CumQty >= 0
+LeavesQty >= 0
+CumQty không giảm
+Một ExecId không apply business effect hai lần
 ```
 
-## 2. Pre-trade
-
-Trước khi gửi lệnh ra thị trường:
+## 3. Pre-trade Flow
 
 ```text
-Authentication
-   ↓
-Account Status
-   ↓
-Market / Session Validation
-   ↓
-Instrument / Price / Lot Validation
-   ↓
-Buying Power / Sellable Quantity
-   ↓
-Risk Limits
-   ↓
-Reserve Cash / Securities
-   ↓
-Submit to OMS
+Authenticate
+→ Account Status
+→ Market / Session
+→ Instrument Rules
+→ Price / Qty Validation
+→ Buying Power / Sellable Qty
+→ Risk Limits
+→ Reserve Cash / Securities
+→ Create / Submit Order
 ```
 
-Ví dụ BUY:
+## 4. Reservation
 
-```text
-Available Cash = 200m
-Order Value    = 120m
-Estimated Fee  = 0.2m
-Required       = 120.2m
-```
-
-Không nên `Balance -= 120.2m` ngay. Mental model tốt hơn:
+BUY không nên trừ settled cash ngay.
 
 ```text
 Available ↓
 Reserved  ↑
 ```
 
-Sau execution/cancel/reject, reservation được consume/release theo state.
+SELL tương tự với securities reservation.
 
-## 3. Order State Machine
-
-Một model tối thiểu:
+## 5. Order State Machine
 
 ```mermaid
 stateDiagram-v2
@@ -87,66 +91,47 @@ stateDiagram-v2
     New --> PendingCancel
     PartiallyFilled --> PendingCancel
     PendingCancel --> Cancelled
-    PendingCancel --> New: CancelReject
+    PendingCancel --> PartiallyFilled: Fill arrives
+    PendingCancel --> New: CancelRejected
 ```
 
-Tên trạng thái production phụ thuộc protocol/exchange, nhưng tư duy state machine là bắt buộc.
-
-## 4. Order Book
+## 6. Order Book
 
 ```text
-ASK / SELL
-Price      Qty
-121.0      2,000
-120.5      1,500
-120.0      3,000  ← best ask
------------------
-119.9      2,500  ← best bid
-119.5      4,000
-119.0      1,000
-BID / BUY
+ASK
+121.0  2,000
+120.5  1,500
+120.0  3,000 ← best ask
+--------------
+119.9  2,500 ← best bid
+119.5  4,000
+119.0  1,000
+BID
 ```
 
-Các khái niệm:
-
-- best bid;
-- best ask;
-- spread;
-- depth;
-- liquidity;
-- market impact.
-
-## 5. Price–Time Priority
-
-Mental model phổ biến:
-
-1. giá tốt hơn được ưu tiên;
-2. cùng giá thì thời gian vào sổ sớm hơn được ưu tiên.
-
-Ví dụ SELL:
+## 7. Spread và Depth
 
 ```text
-A: 1,000 @ 120.0, 09:10
-B: 1,000 @ 120.0, 09:11
+Spread = Best Ask - Best Bid
 ```
 
-Nếu có BUY match với mức 120, A đi trước B theo time priority.
+Depth cho biết quantity sẵn có tại nhiều price levels.
 
-> Quy tắc chi tiết luôn phải đọc rulebook/spec của đúng market; không hard-code assumption toàn cầu.
+## 8. Price-Time Priority
 
-## 6. Continuous vs Periodic Auction
+Price tốt hơn trước; cùng price thì timestamp/priority rule của venue quyết định theo market-specific specification.
 
-### Continuous matching
-Order được xem xét khớp khi vào book.
+Không hard-code global assumptions nếu rulebook thị trường khác.
 
-### Periodic auction
-Tập hợp order trong một khoảng và xác định mức giá theo rule của auction.
+## 9. Continuous vs Auction
 
-System phải biết `TradingSession`, vì cùng một order type có thể hợp lệ ở session này nhưng không ở session khác.
+Continuous: order được xem xét khi vào book.
 
-## 7. Partial Fill
+Auction: tập hợp order rồi xác định clearing/matching price theo rule.
 
-Ví dụ order BUY 10,000 nhưng book chỉ có 5,000 phù hợp:
+Trading session vì vậy là domain state.
+
+## 10. Partial Fill
 
 ```text
 OrderQty  = 10,000
@@ -155,85 +140,120 @@ LeavesQty = 5,000
 Status    = PARTIALLY_FILLED
 ```
 
-Không được release toàn bộ reservation khi partial fill; phải consume phần đã fill và giữ/recalculate phần còn working.
+Reservation phải consume phần executed và giữ/recalculate phần còn working.
 
-## 8. Cancel và Replace
+## 11. Cancel Race
 
-Đừng implement sửa lệnh bằng:
-
-```sql
-UPDATE orders SET price = ...
+```text
+NEW
+→ Cancel Requested
+→ Execution arrives
+→ Cancel Accepted
 ```
 
-Cancel/replace là một **business operation có lifecycle**:
+Fill có thể hợp lệ trong lúc cancel pending. OMS phải process theo authoritative ordering/protocol semantics.
+
+## 12. Replace
+
+Không làm:
+
+```sql
+UPDATE orders SET price = @newPrice;
+```
+
+Mental model:
 
 ```text
 Original Order
-   ↓
-Cancel/Replace Request
-   ↓
-Exchange Accept / Reject
-   ↓
-New effective state
+→ Replace Request
+→ Venue Accept/Reject
+→ effective order state
 ```
 
-Trong race condition, execution có thể đến trong lúc cancel đang pending. Vì vậy cần define rõ state transition và quantities sau mỗi event.
-
-## 9. Unknown State — bài toán khó nhất
+## 13. Unknown Outcome
 
 ```text
 Broker sends order
-      ↓
-Network timeout
+→ network timeout
 ```
 
-Timeout không chứng minh exchange chưa nhận order.
-
-Có hai thế giới đều hợp lý:
+Hai thế giới đều có thể đúng:
 
 ```text
-A. packet chưa tới exchange
-B. exchange đã accept, response bị mất
+A. Venue chưa nhận
+B. Venue đã nhận, response bị mất
 ```
 
-Nếu resend mù quáng, có thể double order. Vì vậy cần idempotency/business identifiers, protocol recovery và reconciliation.
+`timeout != failed`.
 
-## 10. Domain Model gợi ý
+## 14. Idempotency
+
+Client retry cùng `ClientOrderId` không được tạo hai business orders ngoài ý muốn.
+
+Cần stable identity + conflict rule nếu cùng idempotency key nhưng payload khác.
+
+## 15. Persistence Model
+
+Một model tối thiểu:
 
 ```text
 Order
-├── ClientOrderId
-├── InternalOrderId
-├── ExchangeOrderId?
-├── Account
-├── Instrument
-├── Side
-├── Type
-├── Price
-├── OrderQty
-├── CumQty
-├── LeavesQty
-└── Status
-
+OrderCommand/Request
 Execution
-├── ExecId
-├── OrderId
-├── LastQty
-├── LastPx
-└── ExecTime
+Trade
+Reservation
+ExternalIds
+StateTransitionHistory
 ```
 
-## Checklist production
+Không cần full event sourcing, nhưng phải có audit đủ để giải thích transition.
 
-- [ ] Order ≠ Execution ≠ Trade.
-- [ ] Có state machine rõ ràng.
-- [ ] Reservation đi theo lifecycle.
-- [ ] Partial fill đúng quantities.
-- [ ] Cancel/replace xử lý race với fill.
-- [ ] Duplicate execution không gây double booking.
-- [ ] Timeout không bị coi mặc định là failure.
-- [ ] Có reconciliation với exchange.
+## 16. Observability
+
+Business metrics:
+
+```text
+submit latency
+venue ack latency
+reject rate
+partial-fill aging
+pending cancel age
+unknown orders
+reservation leaks
+duplicate executions
+```
+
+## 17. Common mistakes
+
+- Order == Trade;
+- cancel = SQL update;
+- timeout = failed;
+- retry without idempotency;
+- release reservation quá sớm;
+- dùng read model stale để bảo vệ critical invariant.
+
+<div class="key-takeaway">
+<strong>Takeaway</strong>
+
+Trading core là **state machine + resource reservation + external authority**. API chỉ là lớp vào.
+</div>
+
+## Checklist
+
+- [ ] Order/Execution/Trade tách biệt.
+- [ ] Quantity invariant rõ.
+- [ ] Reservation lifecycle rõ.
+- [ ] Cancel/replace race có test.
+- [ ] Unknown outcome explicit.
+- [ ] Duplicate không double effect.
 
 ## Bài tập
 
-Mô phỏng 1 order BUY 10,000; fill 2,000; user cancel; trong lúc cancel pending nhận thêm fill 3,000; sau đó cancel accepted. Viết bảng state cho `CumQty`, `LeavesQty`, `ReservedCash`, `OrderStatus` sau từng event.
+1. Implement state machine với partial fill + cancel race.
+2. Simulate two concurrent BUY orders dùng cùng cash pool.
+3. Inject timeout sau outbound submit và thiết kế recovery path.
+4. Viết property test cho `CumQty + LeavesQty = OrderQty`.
+
+## Đọc tiếp
+
+Tiếp theo: [Bài 07 — KRX / FIX / VSDC](../07-clearing-settlement-krx-fix-vsdc/).

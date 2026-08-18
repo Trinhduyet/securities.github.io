@@ -1,153 +1,191 @@
-# Bài 09 — Security Master và Corporate Actions
+---
+title: "Bài 09 — Security Master & Corporate Actions"
+description: "Instrument identity, effective-dated trading rules, corporate actions, entitlements và historical reproducibility."
+---
 
-Trading core không thể hoạt động chỉ với `Symbol = FPT`. Một instrument có **identity, venue, board, currency, trading rules, lifecycle và corporate-action history**. Tập dữ liệu quản lý các thuộc tính đó thường được gọi là **Security Master / Instrument Master / Reference Data**.
+# Bài 09 — Security Master & Corporate Actions: vì sao Symbol không phải toàn bộ instrument?
 
-## 1. Symbol không phải identity ổn định
+<div class="lesson-meta"><span><strong>Track</strong> Market & Brokerage Core</span><span><strong>Mức độ</strong> Core</span><span><strong>Mục tiêu</strong> Quản lý instrument/reference data và entitlement đúng lịch sử</span></div>
 
-Một instrument model có thể cần:
+Trading core không thể hoạt động chỉ với `Symbol = FPT`. Một security có identity, venue, board, currency, lifecycle và effective-dated rules.
+
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
+
+- symbol khác instrument identity;
+- reference data ảnh hưởng pre-trade/risk/settlement thế nào;
+- corporate action có lifecycle và key dates ra sao;
+- entitlement phải dùng historical ownership snapshot đúng thời điểm;
+- amendment/reversal cần version và audit vì sao.
+</div>
+
+## 1. Security Master
 
 ```text
 InstrumentId
 Symbol
-ISIN / external identifiers
-Exchange / venue
-Board / market
+ISIN / ExternalIds
+Venue
+Board
 InstrumentType
 Currency
 ParValue
-LotSize
-TickSizeRule
 TradingStatus
-ListingDate
-DelistingDate
-EffectiveFrom / EffectiveTo
+Listing/Delisting
+EffectiveFrom/To
 ```
 
-Không nên dùng symbol làm primary identity xuyên mọi lịch sử nếu symbol có thể đổi hoặc tái sử dụng theo rule của thị trường.
+## 2. Symbol không đủ làm immutable key
 
-## 2. Reference data ảnh hưởng trực tiếp pre-trade
+Symbol có thể thay đổi hoặc được tái sử dụng tùy market. Internal stable ID giúp preserve history.
 
-Order quantity có hợp lệ hay không phụ thuộc lot size/odd-lot rule; order price có hợp lệ hay không phụ thuộc tick size, price band, board và session.
-
-```mermaid
-flowchart LR
-    MASTER[Security Master] --> VALIDATE[Order Validation]
-    MASTER --> RISK[Risk]
-    MASTER --> MARKET[Market Data]
-    MASTER --> SETTLE[Post-trade]
-    MASTER --> CA[Corporate Actions]
-```
-
-Reference data sai có thể làm trading, risk và settlement sai cùng lúc.
-
-## 3. Effective-dated configuration
-
-Rule có thể thay đổi theo ngày. Không nên `UPDATE Instrument SET LotSize = 100` rồi mất lịch sử rule cũ.
+## 3. Effective-dated Trading Rules
 
 ```text
-InstrumentRuleVersion
----------------------
-InstrumentId
-EffectiveFrom
-EffectiveTo
 LotSize
-TickRuleId
-PriceBandRuleId
-SettlementRuleId
+TickSize Rule
+Price Band Rule
+Settlement Rule
+Order Type Eligibility
+Margin Eligibility
 ```
 
-Khi audit order ngày D, hệ thống cần biết rule có hiệu lực tại D, không phải rule hôm nay.
+Audit order ngày D phải dùng rule có hiệu lực ngày D.
 
-## 4. Corporate action là lifecycle
+## 4. Data Quality
 
-Các loại thường gặp:
+Reference data sai có thể làm đồng thời:
 
-- cash dividend;
-- stock dividend;
-- bonus shares;
-- rights issue;
-- stock split/reverse split;
-- merger/exchange;
-- redemption/maturity với sản phẩm phù hợp;
-- voting/meeting entitlement.
+```text
+Order validation sai
+Risk sai
+Market data mapping sai
+Settlement sai
+Corporate action sai
+```
+
+Cần source, version, approval và reconciliation controls.
+
+## 5. Corporate Action Types
+
+```text
+Cash Dividend
+Stock Dividend
+Bonus Shares
+Rights Issue
+Split / Reverse Split
+Merger / Exchange
+Redemption / Maturity
+Voting / Meeting Entitlement
+```
+
+## 6. Lifecycle
 
 ```text
 Announcement
-    ↓
-Event Definition
-    ↓
-Key Dates
-    ↓
-Entitlement Calculation
-    ↓
-Instruction / Election nếu có
-    ↓
-Allocation / Payment
-    ↓
-Reconciliation
+→ Event Definition
+→ Key Dates
+→ Entitlement
+→ Election/Instruction nếu có
+→ Allocation/Payment
+→ Reconciliation
 ```
 
-## 5. Key dates
+## 7. Key Dates
 
-Tùy event/market, cần phân biệt `Announcement Date`, `Ex Date`, `Record Date`, `Election Deadline`, `Payment Date`. Không hard-code ý nghĩa ngày theo một loại corporate action duy nhất.
+```text
+Announcement Date
+Ex Date
+Record Date
+Election Deadline
+Payment Date
+```
 
-## 6. Entitlement phải trace được
+Meaning phụ thuộc event/market rules.
 
-Ví dụ cổ tức tiền mặt:
+## 8. Entitlement Calculation
+
+Ví dụ cash dividend:
 
 ```text
 EligibleQty = 1,000
-CashPerShare = 2,000
-Gross = 2,000,000
-Tax = policy(...)
-Net = Gross - Tax
+Rate        = 2,000/share
+Gross       = 2,000,000
+Tax         = policy(...)
+Net         = Gross - Tax
 ```
 
-Hệ thống cần lưu `EventId`, `AccountId`, `EligibleQty`, `Rate`, `GrossAmount`, `TaxAmount`, `NetAmount`, `SourceSnapshotVersion`, `Status` để giải thích kết quả.
+Lưu source snapshot + rule version.
 
-## 7. Position snapshot và record date
+## 9. Không dùng Current Position cho Record Date
 
-Entitlement không được dựa trên `current position` tại lúc job chạy. Phải dựa trên position/ownership theo rule tại record date/effective timeline, hoặc dữ liệu entitlement chính thức từ depository/custodian theo flow nghiệp vụ.
+Job chạy hôm nay nhưng entitlement phải dựa ownership theo record-date rule hoặc external entitlement evidence phù hợp.
 
-Đây là lý do temporal data và ledger quan trọng.
+Đây là temporal-data problem.
 
-## 8. Corporate action và market data
+## 10. Amendment
 
-Split/bonus/dividend có thể ảnh hưởng historical price series. Analytics cần phân biệt:
+Không silently overwrite event cũ.
+
+```text
+Event Version 1
+→ amended
+Event Version 2
+→ recalculate impacted entitlements
+→ adjustment/reversal
+```
+
+## 11. Corporate Action và Market Data
+
+Historical analytics cần:
 
 ```text
 Raw Price
-Adjusted Price
 Adjustment Factor
-Corporate Action Version
+Adjusted Price
+Factor Version
 ```
 
-Nếu không version adjustment factor, indicator/backtest có thể đổi mà không audit được.
+## 12. Corporate Action và Open Orders
 
-## 9. Corporate action và open orders
+Xử lý open order quanh ex-date/split phải theo market-specific rule, không suy generic.
 
-Một event có thể kéo theo rule xử lý open orders/price reference tùy thị trường. Core không nên tự suy generic; cần đọc market-specific rule/specification có hiệu lực và model thành policy/config.
+## 13. Reconciliation
 
-## 10. Failure scenarios
+```text
+Internal Entitlement
+↔ Depository/Custodian/Official Evidence
+```
 
-- Duplicate event import: cùng external event không tạo entitlement hai lần.
-- Event amended: version/amend, không silently overwrite.
-- Job rerun: idempotent hoặc adjustment/reversal có audit.
-- Late position correction: xác định entitlement nào cần recalculation/exception.
-- External mismatch: internal entitlement khác VSDC/custodian → reconciliation break.
+Break phải có owner và resolution lifecycle.
+
+## 14. Common mistakes
+
+- Symbol = immutable identity;
+- overwrite current rules;
+- entitlement theo current position;
+- rerun job double-credit;
+- amend bằng UPDATE không history;
+- adjustment factor không version.
+
+<div class="key-takeaway"><strong>Takeaway</strong>Reference data và corporate actions là **temporal, versioned business facts**. Historical correctness quan trọng không kém current correctness.</div>
 
 ## Checklist
 
-- [ ] Instrument identity tách khỏi display symbol.
-- [ ] Trading/reference rules có effective date.
-- [ ] Security Master có source và data-quality controls.
-- [ ] Corporate Action có event identity và version.
-- [ ] Entitlement trace về source snapshot/rule.
-- [ ] Rerun không double-credit.
-- [ ] Adjustment/reversal có audit trail.
-- [ ] Analytics biết raw vs adjusted data.
-- [ ] External entitlement có reconciliation.
+- [ ] Stable InstrumentId.
+- [ ] Effective-dated rules.
+- [ ] Data source/version controls.
+- [ ] Event identity/version.
+- [ ] Entitlement traceable.
+- [ ] Rerun/amend idempotent.
+- [ ] External reconciliation.
 
 ## Bài tập
 
-Thiết kế flow cho cash dividend từ announcement tới payment. Sau đó giả lập event bị amend sau khi entitlement đã tính và trình bày cách tránh `UPDATE` mất lịch sử.
+1. Thiết kế cash dividend flow end-to-end.
+2. Mô phỏng split 2:1 và adjusted price.
+3. Model event amendment sau khi entitlement đã calculated.
+4. Viết query `rules as of business date`.
+
+## Đọc tiếp
+
+[Bài 10 — Market Data Engineering](../10-market-data-engineering/).

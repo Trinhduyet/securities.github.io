@@ -1,233 +1,189 @@
-# Bài 23 — Production Runbook & Incident Operations: khi market đang mở, ai làm gì?
+---
+title: "Bài 23 — Production Runbook & Incident Operations"
+description: "Incident detection, degraded modes, kill switches, runbooks, game days, reconciliation and postmortems."
+---
 
-Một architecture chỉ hoàn chỉnh khi đội vận hành biết phải làm gì lúc dependency chậm, gateway disconnect, sequence gap, market data stale, reconciliation break hoặc ledger violation xảy ra **trong phiên giao dịch**.
+# Bài 23 — Production Operations: khi thị trường đang mở mà hệ thống lỗi, bạn làm gì trong 5 phút đầu?
 
-## 1. Incident không bắt đầu từ stack trace
+<div class="lesson-meta"><span><strong>Track</strong> Production Securities Engineering</span><span><strong>Mức độ</strong> Advanced</span><span><strong>Mục tiêu</strong> Chuyển architecture thành operational capability</span></div>
 
-Triệu chứng business có thể là:
+Production securities engineering không kết thúc khi deploy. Market-open incidents yêu cầu detection, containment, recovery và business-state proof.
+
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
+
+- severity và incident command;
+- runbook/action preconditions;
+- degraded mode;
+- kill switch;
+- reconciliation before reopen;
+- game day/postmortem.
+</div>
+
+## 1. Incident Lifecycle
 
 ```text
-order không ACK
-cancel bị treo
-portfolio chậm cập nhật
-conditional order không trigger
-market data đứng giá
-trade external có nhưng internal thiếu
-cash/position lệch
+Detect
+→ Triage
+→ Contain
+→ Stabilize
+→ Recover
+→ Reconcile
+→ Reopen
+→ Postmortem
 ```
 
-Runbook phải bắt đầu từ business symptom rồi drill-down technical layer.
-
-## 2. Severity
-
-Ví dụ framework:
+## 2. First Questions
 
 ```text
-SEV-1: correctness/money/trading continuity risk đang xảy ra
-SEV-2: partial degradation/redundancy lost, workaround tồn tại
-SEV-3: noncritical degradation/capacity warning
+Customer impact?
+Orders affected?
+Unknown outcomes?
+External venue/session state?
+Data loss/corruption risk?
+Can new traffic make it worse?
 ```
 
-Severity phải dựa customer/business impact, không dựa service name.
+## 3. Severity
 
-## 3. Golden incident questions
+Define severity by business impact, not engineer stress.
 
-1. Market/venue đang live không?
-2. New orders có đang đi ra ngoài không?
-3. Executions có đang vào đầy đủ theo sequence không?
-4. Có unknown outcomes không?
-5. Có risk/ledger invariant nào bị phá không?
-6. Có cần stop new order nhưng vẫn allow cancel không?
-7. External authoritative source đang nói gì?
-8. Khi recover, replay/reconciliation nào bắt buộc?
-
-## 4. Runbook: gateway disconnect
+## 4. Incident Roles
 
 ```text
-Detect disconnect
-→ mark route NOT READY
-→ stop/redirect new submissions theo policy
-→ retain durable outbound state
-→ reconnect
-→ recover sequence/session
-→ query/reconcile unknown orders
-→ verify working orders
-→ enable route
+Incident Commander
+Operations/Technical Lead
+Business/Risk Representative
+Communications
+Recorder
 ```
 
-Không tự mở routing ngay khi socket connected.
+Scale depending org.
 
-## 5. Runbook: market data stale
+## 5. Runbook
+
+Runbook action cần:
 
 ```text
-stale threshold breached
-→ mark feed/book STALE
-→ notify risk/conditional/UI consumers
-→ fallback/stop-trigger theo policy
-→ resync snapshot+incremental
-→ verify sequence
-→ mark LIVE
+precondition
+command/step
+expected result
+rollback
+owner
+risk
+verification
 ```
 
-Không để conditional order trigger từ giá cũ mà không có policy.
+## 6. Degraded Mode
 
-## 6. Runbook: duplicate execution storm
-
-Expected control:
+Examples:
 
 ```text
-business uniqueness/inbox blocks double effect
+allow cancels, block new orders
+read-only portfolio
+disable conditional orders
+freeze one market
+serve stale data with explicit stale banner
 ```
 
-Operations kiểm tra:
+Degraded mode phải design/test trước incident.
 
-- dedup rate tăng bao nhiêu;
-- sequence recovery đang diễn ra?
-- có ExecId collision thật hay replay bình thường?
-- trade count/position có invariant violation không?
+## 7. Kill Switch
 
-Không disable dedup để “cho message chạy qua”.
+Emergency stop có scope, authorization, audit và confirmation.
 
-## 7. Runbook: reconciliation break critical
+## 8. Unknown Orders
 
-```text
-External Trade exists
-Internal Trade missing
-```
+Connection loss có thể tạo pool unknown.
 
-Các bước:
+Không reopen blindly trước recovery/reconciliation policy.
 
-1. freeze automatic repair nếu nguyên nhân chưa rõ;
-2. retrieve raw external evidence;
-3. verify mapping/identity;
-4. check inbox/message store/DB transaction;
-5. controlled replay hoặc adjustment;
-6. recompare;
-7. document root cause;
-8. add permanent detector/test.
+## 9. Data Corruption
 
-## 8. Kill switch
-
-Cần predefined scope:
+Nếu suspected corruption:
 
 ```text
-account
-symbol
-market
-product
-new-buy only
-all-new-orders
-conditional orders
-```
-
-Kill switch phải authorization mạnh, audit, propagation status và cách rollback rõ.
-
-## 9. Manual data fix
-
-`UPDATE production_table ...` trực tiếp là last-resort cực nguy hiểm.
-
-Tốt hơn có controlled operation:
-
-```text
-Repair Command
-Reason
-Evidence
-Maker/Checker
-Expected invariant
-Dry-run diff
-Execute
-Audit
-Reconcile
+stop propagation
+isolate scope
+identify trusted checkpoint/source
+rebuild/reconcile
 ```
 
 ## 10. Communication
 
-Incident commander cần một timeline duy nhất:
+Status messages phải factual:
 
 ```text
-T0 detected
-T1 route disabled
-T2 venue confirmed connectivity issue
-T3 session recovered
-T4 reconciliation completed
-T5 trading reopened
+what affected
+since when
+current mitigation
+next update
+customer/business action if any
 ```
 
-Technical teams, operations, risk, customer support cần cùng business status, không mỗi nơi một interpretation.
-
-## 11. Pre-market checklist
+## 11. Reopen Criteria
 
 ```text
-reference/security master current
-trading calendar/session correct
-certificates not near expiry
-FIX/venue session ready
+critical sessions healthy
+sequence synchronized
+unknown orders resolved/bounded
+ledger balanced
 market data live
-risk limits loaded
-ledger/database healthy
-outbox/inbox backlog normal
-DR standby healthy
-critical reconciliations previous day closed
+high-severity breaks controlled
+business approval
 ```
 
-## 12. Post-market checklist
+## 12. Game Day
+
+Inject planned failures:
 
 ```text
-no critical unknown orders
-trade recon complete
-session/message archives complete
-EOD dependency graph progressed
-cash/securities reconciliation
-open breaks assigned
-manual adjustments reviewed
-next-day reference/calendar ready
+FIX disconnect
+DB failover
+market-data gap
+duplicate executions
+outbox backlog
+DR switch
+stale risk price
 ```
 
-## 13. Game Day
+## 13. Postmortem
 
-Thực hành định kỳ:
+Focus system causes, timeline, contributing factors, detection gaps, recovery gaps và actions.
 
-- kill one gateway node;
-- drop packet/connection;
-- inject sequence gap;
-- duplicate 10,000 execution messages;
-- delay market feed;
-- make DB replica unavailable;
-- fill outbox backlog;
-- fail settlement external dependency.
+Avoid superficial “human error”.
 
-Game day phải có invariant assertions, không chỉ “service recovered”.
+## 14. Automation
 
-## 14. Postmortem
+Automate safe diagnostics/checks, nhưng emergency mutation still needs authorization/guardrails.
 
-Không dừng ở “human error”. Tìm missing control:
+## 15. Common mistakes
 
-```text
-specification gap
-missing validation
-missing observability
-unsafe default
-manual step
-insufficient fencing
-no idempotency
-no reconciliation
-bad rollout
-capacity assumption
-```
+- runbook chỉ là wiki screenshot;
+- no degraded mode;
+- restart first, understand later;
+- reopen vì dashboard green;
+- manual DB fix no record;
+- postmortem blame individual.
 
-Action item phải giảm xác suất/làm nhỏ blast radius/làm nhanh detection hoặc recovery.
+<div class="key-takeaway"><strong>Takeaway</strong>Operational maturity là khả năng **contain failure mà không tạo financial inconsistency mới**.</div>
 
-## Definition of Done
+## Checklist
 
-- [ ] Critical symptoms có runbook.
-- [ ] Degraded mode/kill switch explicit.
-- [ ] Manual repairs được kiểm soát/audit.
-- [ ] Pre/post-market checklist tồn tại.
-- [ ] Game day cover session, data, DB, backlog.
-- [ ] Incident timeline dùng business status.
-- [ ] Recovery luôn kết thúc bằng reconciliation khi cần.
-- [ ] Postmortem tạo permanent control/test.
+- [ ] Incident roles/severity.
+- [ ] Tested runbooks.
+- [ ] Degraded modes.
+- [ ] Kill switches.
+- [ ] Reconciliation before reopen.
+- [ ] Game days.
+- [ ] Actionable postmortems.
 
 ## Bài tập
 
-Viết runbook cho sự cố 09:15: gateway mất kết nối 40 giây, 300 order đang `PENDING_NEW`, venue sau đó báo 120 order đã accepted. Trình bày cách stop routing, recover sequence, resolve 180/120 unknown outcomes, reconcile working orders và reopen market route.
+1. Viết runbook FIX disconnect.
+2. Define reopen criteria after DB failover.
+3. Run table-top game day market-data stale.
+4. Write blameless postmortem template.
+
+## Đọc tiếp
+
+[Bài 24 — Architecture Boundaries & DDD](../24-architecture-boundaries-ddd-modular-monolith-microservices/).

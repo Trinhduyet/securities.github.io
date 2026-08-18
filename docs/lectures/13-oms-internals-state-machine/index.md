@@ -1,260 +1,205 @@
-# Bài 13 — OMS Internals: từ API đặt lệnh đến State Machine có thể phục hồi
+---
+title: "Bài 13 — OMS Internals & State Machine"
+description: "Order aggregate internals, command/event processing, concurrency, reservation, persistence và recovery semantics."
+---
 
-Order Management System (OMS) là nơi biến một ý định giao dịch thành một lifecycle có kiểm soát. Nếu chỉ nghĩ OMS là `POST /orders` + bảng `orders`, bạn sẽ bỏ qua phần khó nhất: **reservation, state transition, external identity, race condition, unknown outcome và recovery**.
+# Bài 13 — OMS Internals: từ API đặt lệnh đến state machine production
 
-## Câu hỏi trung tâm
+<div class="lesson-meta"><span><strong>Track</strong> Production Securities Engineering</span><span><strong>Mức độ</strong> Advanced</span><span><strong>Mục tiêu</strong> Thiết kế OMS quanh invariant, durability và external authority</span></div>
 
-> Sau khi client gửi một order, hệ thống nào sở hữu trạng thái của order, trạng thái đó thay đổi bằng event nào, và làm sao chứng minh mỗi transition chỉ xảy ra hợp lệ một lần?
+Một OMS production không phải CRUD `orders` table. Nó là stateful transaction processor đứng giữa client, risk, cash/position và exchange.
 
-```mermaid
-flowchart LR
-    CLIENT[Client] --> API[Trading API]
-    API --> RISK[Pre-trade Risk]
-    RISK --> RES[Reservation]
-    RES --> OMS[OMS]
-    OMS --> GW[Exchange Gateway]
-    GW --> VENUE[Venue]
-    VENUE --> GW
-    GW --> OMS
-    OMS --> TRADE[Trade Booking]
-```
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
 
-## 1. Command khác Event
+- command vs authoritative external event;
+- aggregate/state transition design;
+- concurrency/versioning;
+- inbound/outbound persistence;
+- unknown outcome recovery;
+- why actor/single-writer is an option, not a religion.
+</div>
 
-Command nói **muốn làm gì**:
+## 1. Core Responsibilities
 
 ```text
-SubmitOrder
-CancelOrder
-ReplaceOrder
+Accept Command
+Validate
+Reserve Resource
+Persist Order Intent
+Route Outbound
+Process Venue Events
+Update Quantities/Status
+Book Executions
+Release/Consume Reservation
+Expose Query State
+Recover/Reconcile
 ```
 
-Event/observation nói **đã xảy ra gì**:
+## 2. Command vs Event
 
 ```text
-OrderAccepted
-OrderRejected
-OrderPartiallyFilled
-OrderFilled
-CancelAccepted
-CancelRejected
+CancelOrder = request/intention
+CancelAccepted = authoritative outcome
 ```
 
-OMS không nên coi `SubmitOrder()` thành công chỉ vì đã ghi DB. Business outcome còn phụ thuộc venue.
+Không set `Cancelled` chỉ vì client gửi cancel.
 
-## 2. Identity phải tách lớp
-
-Một order thường có nhiều identity:
+## 3. Aggregate State
 
 ```text
-InternalOrderId   — identity nội bộ
-ClientOrderId     — identity ổn định từ client/business command
-VenueOrderId      — identity do venue cấp
-Session/Sequence  — transport/session identity nếu protocol có
-ExecId            — identity của execution
+OrderId
+ClientOrderId
+Status
+OrderQty
+CumQty
+LeavesQty
+Price
+Side
+ReservationId
+VenueOrderId
+Version
+Timestamps
 ```
 
-Không dùng một field `OrderId` cho mọi ngữ cảnh rồi hy vọng mapping luôn rõ.
+## 4. Transition Function
 
-## 3. State Machine phải explicit
-
-Ví dụ mental model:
-
-```mermaid
-stateDiagram-v2
-    [*] --> Created
-    Created --> Validated
-    Validated --> PendingNew
-    PendingNew --> New: venue accepts
-    PendingNew --> Rejected: venue rejects
-    PendingNew --> Unknown: timeout/disconnect
-    Unknown --> New: recovered accepted
-    Unknown --> Rejected: recovered rejected
-    New --> PartiallyFilled
-    PartiallyFilled --> PartiallyFilled
-    New --> PendingCancel
-    PartiallyFilled --> PendingCancel
-    PendingCancel --> Cancelled
-    PendingCancel --> PartiallyFilled: fill races cancel
-    PartiallyFilled --> Filled
-    New --> Filled
-```
-
-Tên trạng thái production phụ thuộc venue/protocol. Điều bắt buộc là transition hợp lệ được định nghĩa và test.
-
-## 4. Quantity invariant
-
-Tối thiểu:
+Mental model:
 
 ```text
-0 <= CumQty <= OrderQty
-0 <= LeavesQty <= OrderQty
-CumQty không được giảm
-Execution đã book không được mất sau restart
-Terminal state không được mở lại tùy tiện
+New State = Apply(Current State, Event)
 ```
 
-Với cancel remainder, công thức `CumQty + LeavesQty = OrderQty` cần hiểu theo semantics của working/cancelled quantity. Đừng copy công thức mà không mô hình hóa cancelled quantity nếu domain cần.
+Transition invalid phải reject/log as protocol/business anomaly.
 
-## 5. Reservation phải đi cùng lifecycle
+## 5. Concurrency
 
-BUY giữ buying power/cash resource; SELL giữ sellable securities.
+Options:
 
 ```text
-Order Created
-    ↓
-Reservation Active
-    ↓
-Partial Fill → consume một phần
-    ↓
-Cancel remainder → release phần còn lại
+Optimistic version
+Pessimistic lock
+Atomic conditional update
+Single-writer/actor ownership
+Partitioned command processing
 ```
 
-Invariant quan trọng:
+Chọn theo conflict profile và latency, không theo trend.
+
+## 6. Outbound Durability
+
+Câu hỏi critical:
+
+> DB commit rồi process crash trước network send thì sao?
+
+Cần persisted outbound intent/outbox hoặc tương đương để recovery.
+
+## 7. Inbound Durability
+
+Venue event nhận xong nhưng crash trước business commit phải replay/recover được.
+
+Pattern:
 
 ```text
-terminal order ⇒ không còn reservation bị treo ngoài policy
+Receive
+→ durable inbox/message log
+→ dedup
+→ transaction apply effect
+→ mark processed
 ```
 
-## 6. Cancel race
+## 8. Idempotency
 
-Sequence thực tế có thể là:
+Keys khác nhau cho layers khác nhau:
 
 ```text
-NEW
-→ PARTIAL_FILL 2,000
-→ CANCEL_REQUESTED
-→ FILL 3,000
-→ CANCEL_ACCEPTED remainder
+Client request idempotency
+Venue order identity
+Execution identity
+Message/session sequence
 ```
 
-Nếu code giả định `PendingCancel` không nhận fill, bạn sẽ mất execution hợp lệ.
+Không dùng một key cho mọi semantics.
 
-Cách học đúng là viết bảng transition:
-
-| Current | Incoming | Next | Business effect |
-|---|---|---|---|
-| NEW | Fill 2k | PARTIAL | book 2k |
-| PARTIAL | CancelRequest | PENDING_CANCEL | none |
-| PENDING_CANCEL | Fill 3k | PENDING_CANCEL/PARTIAL* | book 3k |
-| PENDING_CANCEL | CancelAck | CANCELLED | release remainder |
-
-`*` State representation tùy model, nhưng CumQty và audit phải chính xác.
-
-## 7. Unknown outcome là first-class state
+## 9. Unknown Submit
 
 ```text
-OMS ── Submit ──▶ Gateway/Venue
-OMS ◀──── X ───── ACK bị mất
+Persisted order
+→ send venue
+→ timeout
 ```
 
-Không biết order đã vào venue hay chưa.
+State nên có `Unknown/PendingRecovery` semantics, không mù quáng create new order.
 
-Sai:
+## 10. Reservation Coupling
+
+Nếu pre-trade invariant critical, order + reservation transaction boundary phải được thiết kế rõ.
+
+Tách services quá sớm biến invariant local thành saga phức tạp.
+
+## 11. Read Model
+
+Queries có thể dùng projection/cache, nhưng critical commands không dựa stale projection nếu phá invariant.
+
+## 12. State Transition Audit
+
+Không nhất thiết full Event Sourcing, nhưng cần đủ evidence:
 
 ```text
-timeout => REJECTED
+from
+input
+rule/version
+to
+timestamp
+source
+correlation ids
 ```
 
-Đúng hơn:
+## 13. Recovery Startup
+
+OMS start không chỉ `health=200`.
+
+Readiness có thể yêu cầu:
 
 ```text
-timeout => UNKNOWN
-          ↓
-query/recover/reconcile
-          ↓
-NEW | REJECTED | other authoritative state
+DB ready
+session state loaded
+outbox replay status known
+reconciliation baseline loaded
+critical dependencies ready
 ```
 
-## 8. Transaction boundary
+## 14. Sharding / Partitioning
 
-Một design đơn giản có thể giữ trong cùng local transaction:
+Có thể partition theo account/order/session, nhưng phải preserve ordering nơi business cần.
 
-```text
-Order mutation
-+ Reservation mutation
-+ Inbox/Dedup record cho inbound execution
-+ Outbox event cho downstream
-```
+## 15. Common mistakes
 
-khi chúng cùng bảo vệ một invariant. Đừng tách thành bốn microservice trước rồi biến local invariant thành distributed saga.
+- controller tự mutate status;
+- event handler không dedup;
+- DB commit/network send dual-write hole;
+- read replica bảo vệ buying power;
+- restart bỏ quên pending outbound;
+- hai nodes active cùng ownership mà không fencing.
 
-## 9. Optimistic concurrency
+<div class="key-takeaway"><strong>Takeaway</strong>OMS production là **durable state machine với exactly-once business effect trên nền delivery có thể duplicate/timeout**.</div>
 
-Ví dụ:
+## Checklist
 
-```sql
-UPDATE orders
-SET status = @next, version = version + 1
-WHERE order_id = @id
-  AND version = @expectedVersion;
-```
-
-Hoặc atomic transition:
-
-```sql
-UPDATE orders
-SET status = 'PENDING_CANCEL'
-WHERE order_id = @id
-  AND status IN ('NEW','PARTIALLY_FILLED');
-```
-
-Nếu affected rows = 0, caller phải reload/resolve conflict; không silently overwrite.
-
-## 10. OMS recovery khi restart
-
-Khi process lên lại, phải tìm được:
-
-```text
-orders đang PendingNew/Unknown
-orders đang PendingCancel
-unprocessed inbound venue messages
-outbox chưa publish
-reservation đang active
-```
-
-Recovery không nên phụ thuộc RAM.
-
-## 11. Business metrics
-
-```text
-orders by state
-pending-new age
-unknown orders
-cancel-pending age
-partial-fill age
-reservation leaks
-execution dedup hits
-venue reject reasons
-submit-to-ack latency
-```
-
-CPU thấp không giúp gì nếu có 2,000 order kẹt `PENDING_NEW`.
-
-## Failure lab
-
-Hãy inject lần lượt:
-
-1. crash sau reserve trước send;
-2. crash sau send trước ACK;
-3. duplicate ExecutionReport;
-4. fill đến trong cancel pending;
-5. DB deadlock khi book execution;
-6. process restart với 100 order UNKNOWN.
-
-Mỗi case phải trả lời: **state bền vững nằm đâu, retry gì, dedup bằng gì, reconcile với ai?**
-
-## Definition of Done
-
-- [ ] State machine explicit và có transition tests.
-- [ ] Identity nội bộ/client/venue/execution được tách rõ.
-- [ ] Unknown outcome có recovery path.
-- [ ] Duplicate execution không double-book.
-- [ ] Reservation không leak sau terminal state.
-- [ ] Cancel race được test.
-- [ ] Crash/restart không mất business state.
-- [ ] Có metrics cho stuck/unknown lifecycle.
+- [ ] Commands/events tách.
+- [ ] Valid transitions explicit.
+- [ ] Concurrency strategy.
+- [ ] Durable inbound/outbound.
+- [ ] Layer-specific idempotency.
+- [ ] Unknown recovery.
+- [ ] Startup readiness business-aware.
 
 ## Bài tập
 
-Xây một OMS simulator với `Submit`, `Cancel`, `Execution`, `Reject`, `RecoverUnknown`. Chạy property/invariant tests với event order ngẫu nhiên và chứng minh không thể tạo `CumQty > OrderQty` hoặc apply cùng `ExecId` hai lần.
+1. Implement transition table.
+2. Crash inject ở 5 điểm submit lifecycle.
+3. Design outbox/inbox schemas.
+4. Compare optimistic concurrency vs single-writer design.
+
+## Đọc tiếp
+
+[Bài 14 — FIX 4.4 Session Recovery](../14-fix44-session-recovery/).

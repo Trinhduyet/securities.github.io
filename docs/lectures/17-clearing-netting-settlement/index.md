@@ -1,241 +1,159 @@
-# Bài 17 — Clearing, Netting & Settlement: phần hậu giao dịch mà backend thường bỏ quên
+---
+title: "Bài 17 — Clearing, Netting & Settlement"
+description: "Obligations, netting, DVP, settlement states, calendars, failures và external reconciliation."
+---
 
-Trading trả lời **đã mua/bán gì**. Clearing trả lời **sau các giao dịch, mỗi bên có nghĩa vụ gì**. Settlement trả lời **tiền và chứng khoán đã thực sự được chuyển giao chưa**.
+# Bài 17 — Clearing, Netting & Settlement: sau Trade còn những nghĩa vụ nào?
+
+<div class="lesson-meta"><span><strong>Track</strong> Production Securities Engineering</span><span><strong>Mức độ</strong> Advanced</span><span><strong>Mục tiêu</strong> Model post-trade obligations và settlement lifecycle</span></div>
+
+FILLED chỉ kết thúc execution lifecycle. Post-trade mới biến trade thành obligations tiền/chứng khoán và cuối cùng thành settled ownership.
+
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
+
+- gross vs net obligation;
+- clearing vs settlement;
+- cash/securities legs;
+- DVP;
+- settlement calendar/cutoff;
+- fail/shortfall/reconciliation workflow.
+</div>
+
+## 1. Trade to Obligation
 
 ```text
-Execution
-→ Trade
+Trades
+→ Validate/Confirm
 → Clearing
-→ Net Obligation
-→ Settlement Instruction
-→ Cash Leg + Securities Leg
-→ Finality
-→ Reconciliation
+→ Netting
+→ Obligations
+→ Settlement Instructions
+→ Cash/Securities Transfer
+→ Confirm
+→ Reconcile
 ```
 
-## 1. Clearing khác Settlement
+## 2. Gross vs Net
 
-### Clearing
+Gross xử lý từng obligation riêng; netting giảm số amount/quantity cần settle theo rule.
 
-Tính nghĩa vụ:
+Ví dụ cash:
 
 ```text
-Member A owes Cash X
-Member A receives Security Y
+Buy obligations  = -500m
+Sell receivables = +300m
+Net cash         = -200m
 ```
 
-### Settlement
+## 3. Securities Obligation
 
-Thực hiện chuyển giao các nghĩa vụ đó qua hạ tầng liên quan.
+Net theo instrument/account/member scope theo market rules.
 
-Nếu model chỉ có `Trade.Status = Settled`, bạn đang mất quá nhiều state để vận hành/reconcile.
+Không tự suy netting dimension.
 
-## 2. Obligation là entity riêng
+## 4. Clearing
 
-Một model có thể cần:
+Clearing tính nghĩa vụ.
+
+## 5. Settlement
+
+Settlement thực hiện chuyển giao.
+
+Đừng merge hai khái niệm.
+
+## 6. Settlement State
 
 ```text
-ObligationId
-Member/Account Scope
-Instrument/Currency
-Side: PAY / RECEIVE / DELIVER
-GrossAmount
-NetAmount
-TradeDate
-SettlementDate
-Status
-ExternalReference
-BatchId
+Calculated
+Confirmed
+Ready
+Submitted
+Pending
+PartiallySettled
+Settled
+Failed / Exception
 ```
 
-Nghĩa vụ có lifecycle độc lập với order.
+Tên tùy system nhưng lifecycle explicit.
 
-## 3. Gross vs Net
+## 7. DVP
 
-Ví dụ trong cùng clearing scope:
+Cash leg và securities leg phải phối hợp theo settlement model để giảm principal risk.
+
+## 8. Calendars
 
 ```text
-BUY  FPT  +100m cash payable
-SELL VNM   -70m cash receivable
-BUY  HPG   +20m cash payable
-```
-
-Sau netting theo rule phù hợp:
-
-```text
-Net cash payable = 50m
-```
-
-Đây chỉ là minh họa. Netting scope/algorithm phải theo rule của clearing system/market, không generic hóa từ ví dụ.
-
-## 4. DVP mental model
-
-Delivery versus Payment nhằm giảm principal risk bằng cách gắn chuyển giao securities với chuyển giao cash theo settlement mechanism.
-
-```mermaid
-flowchart LR
-    SEC[Securities Leg] --> SETTLE[Settlement Control]
-    CASH[Cash Leg] --> SETTLE
-    SETTLE --> FINAL[Final / Completed]
-```
-
-Application cần model hai leg và authoritative result thay vì tự coi một bên thành công là toàn settlement thành công.
-
-## 5. Settlement calendar
-
-Settlement date phụ thuộc:
-
-```text
-Instrument type
-Market rule
-Trade date
-Business calendar
+Trade Date
+Settlement Date
 Holiday
-Exceptional market day
+Cutoff
+Business Date
+Product Rule
 ```
 
-Không hard-code `AddDays(2)`.
+No `AddDays(n)` naive.
 
-Tạo `SettlementCalendar`/rule effective-dated để historical calculation reproduce được.
+## 9. Shortfall / Fail
 
-## 6. State machine
-
-```mermaid
-stateDiagram-v2
-    [*] --> Calculated
-    Calculated --> Submitted
-    Submitted --> Pending
-    Pending --> PartiallySettled
-    Pending --> Settled
-    PartiallySettled --> Settled
-    Pending --> Failed
-    Failed --> RepairPending
-    RepairPending --> Submitted
-    Settled --> [*]
-```
-
-State thực tế tùy external infrastructure. Mục tiêu là giữ đủ evidence để biết **đang chờ gì và ai là authority**.
-
-## 7. Settlement failure
-
-Một obligation có thể fail vì:
+Nếu thiếu tiền hoặc chứng khoán:
 
 ```text
-insufficient cash
-insufficient securities
-invalid instruction/reference
-external system unavailable
-data mismatch
-cutoff missed
+detect
+→ classify
+→ funding/borrow/operational action theo rule
+→ resubmit/adjust
+→ reconcile
 ```
 
-Không retry mọi failure giống nhau. Business failure cần operations/risk workflow; transient technical failure mới phù hợp retry.
+## 10. External Authority
 
-## 8. VSDC integration boundary
+Settlement result từ depository/clearing/bank là external evidence cần ingest và reconcile.
 
-Trong bối cảnh Việt Nam, VSDC là một thành phần hạ tầng lưu ký/bù trừ/thanh toán quan trọng. Core nên tách adapter:
+## 11. Idempotency
+
+Settlement instruction retry không được tạo duplicate transfer instruction ngoài contract.
+
+Stable instruction identity quan trọng.
+
+## 12. Cash/Securities Ledger
+
+Settlement confirmation chuyển pending effects sang settled effects bằng ledger entries/reclassification theo accounting design.
+
+## 13. Reconciliation
 
 ```text
-PostTrade Domain
-      ↓
-Depository/Clearing Port
-      ↓
-VSDC Adapter
-      ↓
-Electronic gateway / message/file interface theo spec
+Internal Obligation ↔ Clearing Result
+Internal Cash       ↔ Bank
+Internal Securities ↔ Depository
 ```
 
-Không để domain phụ thuộc tên cột/file/protocol cụ thể.
+## 14. Common mistakes
 
-## 9. Bank/cash leg
+- clearing = settlement;
+- FILLED = settled;
+- settlement date = calendar date + N;
+- retry transfer blind;
+- no instruction ID;
+- settlement correction bằng overwrite.
 
-Cash leg có thể liên quan settlement bank/banking integration. Cần giữ:
+<div class="key-takeaway"><strong>Takeaway</strong>Post-trade correctness là **obligation lifecycle + authoritative external confirmations + reconciliation**.</div>
 
-```text
-PaymentInstructionId
-BankReference
-Amount
-Currency
-ValueDate
-Status
-ExternalTimestamp
-```
+## Checklist
 
-Timeout với bank cũng có thể là UNKNOWN. Không gửi lại payment mù quáng.
-
-## 10. Securities leg
-
-Tương tự, chứng khoán cần:
-
-```text
-Instrument
-Quantity
-Deliver/Receive
-Depository account
-Settlement reference
-Status
-```
-
-Internal position phải tách pending settlement khỏi settled position theo business model.
-
-## 11. Reconciliation
-
-Tối thiểu:
-
-```text
-Internal trades        ↔ external trade evidence
-Internal obligations   ↔ clearing result
-Internal cash          ↔ bank result
-Internal securities    ↔ depository result
-```
-
-Reconciliation không chỉ EOD; critical break có thể cần intraday detection.
-
-## 12. Break classification
-
-```text
-Missing Internal
-Missing External
-Amount mismatch
-Quantity mismatch
-Status mismatch
-Date mismatch
-Reference mismatch
-Timing-only difference
-```
-
-Mỗi break cần severity, owner, SLA, resolution code và recompare.
-
-## 13. Settlement finality và ledger
-
-Ledger posting policy phải biết thời điểm nào effect là pending, settled, reversed hoặc adjusted.
-
-Ví dụ mental model:
-
-```text
-Trade booked
-→ pending receivable/payable
-→ settlement confirmed
-→ move/reclassify to settled state
-```
-
-Đừng mutate một `Balance` field không trace được transition.
-
-## 14. Current rules phải verify
-
-Settlement cycle và chi tiết bù trừ có thể thay đổi theo quy định. Tài liệu này cố ý tập trung vào architecture semantics. Khi implement thật, kiểm tra quy chế mới nhất từ cơ quan/đơn vị thị trường và specification dành cho thành viên.
-
-## Definition of Done
-
-- [ ] Clearing khác settlement trong domain model.
-- [ ] Obligation có identity/lifecycle.
-- [ ] Settlement calendar không hard-code.
-- [ ] Cash và securities legs trace được.
-- [ ] Timeout có unknown-outcome strategy.
-- [ ] Business failure khác technical retry.
-- [ ] Internal ↔ VSDC/depository/bank reconciliation có thiết kế.
-- [ ] Break có workflow và SLA.
+- [ ] Clearing/netting dimensions explicit.
+- [ ] Settlement states.
+- [ ] Cash/securities legs separated.
+- [ ] Calendar/cutoff modeled.
+- [ ] Stable instruction IDs.
+- [ ] External recon.
 
 ## Bài tập
 
-Tạo 20 trades trong một ngày, tính gross obligations rồi áp dụng một netting rule giả lập. Sau đó inject thiếu tiền ở cash leg, retry transport, duplicate confirmation và external/internal amount mismatch. Thiết kế state transitions sao cho kết quả cuối audit được.
+1. Net 20 trades into obligations.
+2. Model settlement shortfall.
+3. Design DVP sequence diagram.
+4. Build obligation reconciliation table.
+
+## Đọc tiếp
+
+[Bài 18 — Ledger, Accounting & Projections](../18-ledger-accounting-projections/).

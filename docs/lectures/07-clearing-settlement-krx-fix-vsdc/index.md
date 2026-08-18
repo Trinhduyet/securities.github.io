@@ -1,122 +1,94 @@
-# Bài 07 — Clearing, Settlement, KRX, FIX 4.4 và VSDC
+---
+title: "Bài 07 — KRX, FIX 4.4, Clearing, Settlement và VSDC"
+description: "Market infrastructure: exchange connectivity, FIX session/application semantics, clearing, settlement và reconciliation."
+---
 
-Một engineer chỉ biết REST API đặt lệnh chưa hiểu market infrastructure. Bài này nối toàn bộ vòng đời:
+# Bài 07 — KRX / FIX / VSDC: từ exchange connectivity đến settlement
+
+<div class="lesson-meta">
+  <span><strong>Track</strong> Market & Brokerage Core</span>
+  <span><strong>Mức độ</strong> Core</span>
+  <span><strong>Mục tiêu</strong> Hiểu trading infrastructure end-to-end</span>
+</div>
+
+Một engineer hiểu trading không thể dừng ở `Order → FILLED`. Sau execution còn trade booking, clearing, settlement và reconciliation; trước execution còn exchange gateway và session protocol.
+
+<div class="learning-objectives">
+<strong>Sau bài này bạn phải giải thích được:</strong>
+
+- KRX, FIX 4.4 và VSDC là ba khái niệm khác nhau;
+- application message khác session message;
+- sequence gap/resend/recovery dùng để làm gì;
+- clearing khác settlement;
+- DVP và reconciliation vì sao bắt buộc;
+- venue-specific specification vì sao quan trọng hơn generic FIX examples.
+</div>
+
+## 1. End-to-end Map
 
 ```text
 Investor
-  ↓
-Broker OMS / Risk
-  ↓
-Exchange Gateway
-  ↓
-Trading / Matching Infrastructure
-  ↓
-Execution / Trade
-  ↓
-Clearing
-  ↓
-Settlement
-  ↓
-Depository + Settlement Bank
-  ↓
-Reconciliation
+→ Broker OMS / Risk
+→ Exchange Gateway
+→ Venue / Matching
+→ Execution
+→ Trade Booking
+→ Clearing
+→ Settlement
+→ Depository + Bank
+→ Reconciliation
 ```
 
-## 1. KRX trong bối cảnh Việt Nam
+## 2. KRX trong bối cảnh Việt Nam
 
-Hệ thống công nghệ thông tin mới của thị trường chứng khoán Việt Nam do KRX cung cấp đã chính thức go-live ngày **05/05/2025**, kết nối các thành phần như HOSE, HNX, VSDC và thành viên thị trường trên một nền tảng tích hợp.
+Hệ thống CNTT mới của thị trường chứng khoán Việt Nam do KRX cung cấp đã đi vào vận hành từ 05/05/2025.
 
-Nguồn: [Ủy ban Chứng khoán Nhà nước — Chính thức vận hành hệ thống KRX](https://ssc.gov.vn/webcenter/portal/ubck/pages_r/l/chitit?dDocName=APPSSCGOVVN1620154578)
-
-### Distinction quan trọng
+Điều cần nhớ về engineering:
 
 ```text
-KRX        = market technology/infrastructure context
-FIX 4.4    = financial messaging protocol standard
-VSDC       = depository / clearing / settlement infrastructure
-Broker OMS = internal order/risk/accounting system của CTCK
+KRX context
+≠ generic FIX standard
+≠ VSDC business role
 ```
 
-Không được suy luận:
+Triển khai production phải theo member interface specification, certification rules, message dictionary và network requirements của đúng market.
 
-```text
-"hỗ trợ vanilla FIX 4.4" = "kết nối production KRX hoàn chỉnh"
-```
+## 3. FIX 4.4 Application Layer
 
-Triển khai thật luôn phải theo **member interface specification, message dictionary, custom field/rule, network/certification requirements** của đúng venue.
-
-## 2. FIX 4.4 — Application Layer
-
-FIX là Financial Information eXchange protocol.
-
-Một số message quan trọng:
+Các message thường gặp:
 
 | MsgType | Message | Vai trò |
 |---|---|---|
-| `D` | NewOrderSingle | gửi order mới |
-| `F` | OrderCancelRequest | yêu cầu hủy |
-| `G` | OrderCancelReplaceRequest | yêu cầu sửa |
-| `8` | ExecutionReport | ack/status/fill/reject |
-| `9` | OrderCancelReject | từ chối cancel/replace |
-| `H` | OrderStatusRequest | hỏi trạng thái |
-| `AE` | TradeCaptureReport | trade report |
+| D | NewOrderSingle | lệnh mới |
+| F | OrderCancelRequest | hủy |
+| G | OrderCancelReplaceRequest | sửa |
+| 8 | ExecutionReport | ack/status/fill/reject |
+| 9 | OrderCancelReject | reject cancel/replace |
+| H | OrderStatusRequest | hỏi trạng thái |
+| AE | TradeCaptureReport | trade report |
 
-Nguồn chuẩn: [FIX Trading Community — FIX 4.4 message summary](https://fiximate.fixtrading.org/legacy/en/FIX.4.4/messages_sorted_by_category.html)
+## 4. Canonical Domain Model vs FIX Tags
 
-### Ví dụ NewOrderSingle
-
-```text
-8=FIX.4.4|35=D|49=BROKER|56=VENUE|34=1001|
-11=CL-123|55=FPT|54=1|38=1000|40=2|44=120000|...
-```
-
-Trong wire format classic FIX, separator thực tế là SOH, ký tự `|` ở đây chỉ để dễ đọc.
-
-Các field cần nhận diện:
+Core không nên phụ thuộc trực tiếp:
 
 ```text
-8   BeginString
-35  MsgType
-49  SenderCompID
-56  TargetCompID
-34  MsgSeqNum
-11  ClOrdID
-55  Symbol
-54  Side
-38  OrderQty
-40  OrdType
-44  Price
+35=D
+11=ClOrdID
+54=Side
+38=Qty
+44=Price
 ```
 
-## 3. ExecutionReport
-
-`ExecutionReport (35=8)` có thể được dùng để xác nhận nhận order, báo status, báo fill hoặc reject theo FIX 4.4.
-
-Nguồn: [FIX 4.4 ExecutionReport](https://fiximate.fixtrading.org/legacy/en/FIX.4.4/body_5756.html)
-
-Quan trọng:
-
-```text
-NewOrderSingle  ─────────────▶
-                ◀──────────── ExecutionReport: NEW
-                ◀──────────── ExecutionReport: PARTIAL_FILL
-                ◀──────────── ExecutionReport: FILLED
-```
-
-Business core không nên phụ thuộc trực tiếp tag number. Dùng adapter/anti-corruption layer:
+Nên có:
 
 ```text
 Domain Command
-SubmitOrder
-    ↓
-Exchange Adapter
-    ↓
-FIX Mapper / Venue Mapper
-    ↓
-Wire Message
+→ Exchange Adapter
+→ Venue Mapper
+→ FIX/Wire Message
 ```
 
-## 4. FIX Session Layer — phần khó hơn parsing tag
+## 5. Session Layer
 
 ```text
 Logon
@@ -127,10 +99,14 @@ MsgSeqNum
 ResendRequest
 SequenceReset
 PossDupFlag
-Session recovery
+OrigSendingTime
 ```
 
-Ví dụ receiver chờ:
+Đây là phần reliability của protocol.
+
+## 6. Sequence Gap
+
+Receiver chờ:
 
 ```text
 100
@@ -145,150 +121,149 @@ nhưng nhận:
 102
 ```
 
-→ phát hiện sequence gap.
+→ sequence gap → recovery/resend semantics.
 
-FIX `ResendRequest (35=2)` được dùng để yêu cầu retransmission khi có sequence gap/lost message hoặc trong quá trình initialization.
-
-Nguồn: [FIX 4.4 ResendRequest](https://fiximate.fixtrading.org/legacy/en/FIX.4.4/body_5150.html)
-
-### Session state phải bền vững
+## 7. Persistent Session State
 
 ```text
-FIX Session
-├── SenderCompId
-├── TargetCompId
-├── NextSenderSeqNum
-├── NextTargetSeqNum
-├── Logon state
-└── Message store / replay metadata
+SessionId
+SenderCompId
+TargetCompId
+NextSenderSeqNum
+NextTargetSeqNum
+Message Store
+Logon State
 ```
 
-Restart process không được làm sequence biến mất nếu session contract yêu cầu continuity.
+Restart không được tự ý reset nếu session contract yêu cầu continuity.
 
-## 5. Timeout != Failure
+## 8. Transport Correctness != Business Correctness
+
+FIX sequence giúp đảm bảo session transport, nhưng duplicate business effect vẫn phải được chống ở application/domain layer.
 
 ```text
-Broker ── NewOrder ──▶ Venue
-Broker ◀── X ───────── Response lost
+PossDup=Y
+ExecId=ABC
 ```
 
-Broker có thể đang ở trạng thái **UNKNOWN**, không phải FAILED.
+Không được book trade hai lần.
 
-Reliability cần phối hợp:
+## 9. Timeout
 
-- stable business identity (`ClOrdID`, internal id);
-- session sequence;
-- duplicate semantics;
-- status/recovery flow;
-- reconciliation.
+Outbound message có thể đã tới venue dù caller timeout.
 
-## 6. Trade xong chưa phải settlement xong
+Recovery cần:
+
+- stable business identity;
+- session state;
+- status query/reconciliation;
+- dedup.
+
+## 10. Trade xong chưa phải settlement xong
 
 ```text
 FILLED
-  ↓
-Trade Booking
-  ↓
-Clearing
-  ↓
-Settlement Obligation
-  ↓
-Money + Securities Transfer
-  ↓
-Reconciliation
+→ Trade Booking
+→ Clearing
+→ Obligation
+→ Settlement
+→ Reconciliation
 ```
 
-## 7. Clearing là gì?
+## 11. Clearing
 
 Clearing trả lời:
 
-> Sau các trade, từng thành viên có nghĩa vụ tiền và chứng khoán bao nhiêu?
+> ai phải giao tiền/chứng khoán bao nhiêu?
 
-Có thể có gross obligations rồi netting theo rule thị trường:
+Có thể gồm validation, netting, obligation calculation theo rule.
 
-```text
-Trades
-  ↓
-Validation / Confirmation
-  ↓
-Netting
-  ↓
-Cash Obligation
-Securities Obligation
-```
+## 12. Settlement
 
-Clearing **tính nghĩa vụ**; Settlement **thực hiện chuyển giao**.
-
-## 8. Settlement và DVP
-
-VSDC mô tả cơ chế DVP nhằm giảm principal risk: bên mua nhận chứng khoán gắn với thanh toán tiền, bên bán nhận tiền gắn với chuyển giao chứng khoán.
-
-Nguồn: [VSDC — Bù trừ và Thanh toán](https://vsd.vn/vi/sd/XAz40d2Q-9j569TvBgLQaQ)
-
-Quy chế 39/QĐ-HĐTV năm 2025 quy định ngày thanh toán:
+Settlement thực hiện chuyển giao obligations.
 
 ```text
-T+1: trái phiếu doanh nghiệp thuộc phạm vi quy chế
-T+2: cổ phiếu, chứng chỉ quỹ, chứng quyền có bảo đảm
+Cash leg
+Securities leg
 ```
 
-Nguồn tham khảo văn bản: [Quyết định 39/QĐ-HĐTV 2025](https://thuvienphapluat.vn/van-ban/Chung-khoan/Quyet-dinh-39-QD-HDTV-2025-Quy-che-hoat-dong-bu-tru-va-thanh-toan-giao-dich-chung-khoan-655003.aspx)
+## 13. DVP
 
-> Luôn kiểm tra quy chế hiện hành khi triển khai production. Settlement calendar không được viết bằng `tradeDate.AddDays(2)`; phải tính business day/holiday/market calendar.
+Delivery versus Payment giảm principal risk bằng cách phối hợp securities delivery với payment leg theo model thị trường.
 
-## 9. VSDC
+## 14. Settlement Calendar
 
-Mental model:
+Không dùng:
+
+```csharp
+tradeDate.AddDays(2)
+```
+
+Mà phải dùng business/settlement calendar, holidays, cutoffs và product rules.
+
+## 15. VSDC
+
+VSDC nằm ở post-trade infrastructure: registration/depository/clearing/settlement/corporate-actions related functions theo phạm vi nghiệp vụ.
+
+Broker integration phải xem VSDC/external result là authority phù hợp cho nhiều post-trade facts.
+
+## 16. Reconciliation
 
 ```text
-VSDC
-├── Registration / Depository
-├── Clearing
-├── Settlement
-├── Corporate Actions
-└── Post-trade services
+Internal Orders     ↔ Venue Orders
+Internal Trades     ↔ Venue Trades
+Internal Cash       ↔ Bank
+Internal Securities ↔ Depository
+Internal Settlement ↔ External Settlement Result
 ```
 
-Broker post-trade core phải đối chiếu được state nội bộ với external source.
+## 17. External IDs
 
-## 10. Reconciliation
+Phải giữ:
 
 ```text
-Internal Orders    ↔ Venue Orders
-Internal Trades    ↔ Venue Trades
-Settlement Book    ↔ VSDC obligations/results
-Cash Ledger        ↔ Settlement Bank
-Securities Ledger  ↔ Depository position
+ClientOrderId
+VenueOrderId
+ExecId
+TradeId
+SettlementInstructionId
+BatchId
+BusinessDate
 ```
 
-HTTP/FIX ACK không thay thế reconciliation.
+Không có identity mapping thì recovery/recon cực khó.
 
-## 11. Gateway Architecture
+## 18. Common mistakes
 
-```mermaid
-flowchart LR
-    A[Trading Core] --> B[Exchange Adapter]
-    B --> C[FIX / Venue Gateway]
-    C --> D[Session Engine]
-    C --> E[Message Mapper]
-    D --> F[Market Infrastructure]
-    E --> F
-    F --> G[Execution Events]
-    G --> H[OMS / Trade Booking]
-    H --> I[Post Trade]
-    I --> J[VSDC / Bank]
-```
+- “support FIX 4.4 = connect production KRX”;
+- reset sequence tùy ý;
+- duplicate ExecutionReport double-book;
+- FILLED = done;
+- clearing = settlement;
+- không có reconciliation.
 
-## 12. Production questions phải trả lời được
+<div class="key-takeaway">
+<strong>Takeaway</strong>
 
-- FIX process crash thì sequence ở đâu?
-- Node B failover có tiếp tục session được không?
-- Exchange accepted nhưng response mất thì làm gì?
-- Duplicate ExecutionReport có double position không?
-- EOD internal trades lệch venue thì workflow nào xử lý?
-- Settlement obligation lệch VSDC thì ai là source of truth?
-- Business calendar/version thay đổi thì historical settlement được audit thế nào?
+Market connectivity production cần **protocol correctness + domain idempotency + post-trade reconciliation**. Không một lớp nào thay thế lớp còn lại.
+</div>
 
-## Definition of Done
+## Checklist
 
-Bạn chỉ thực sự “biết FIX/KRX/VSDC” khi có thể giải thích **business effect + session recovery + post-trade reconciliation**, chứ không chỉ biết parse message.
+- [ ] KRX/FIX/VSDC được phân biệt.
+- [ ] Session state persisted.
+- [ ] Sequence gap/replay test được.
+- [ ] Business dedup độc lập transport sequence.
+- [ ] Clearing vs settlement rõ.
+- [ ] External IDs và reconciliation đầy đủ.
+
+## Bài tập
+
+1. Mô phỏng FIX session sequence 100–110 với gap 104.
+2. Mô phỏng duplicate `ExecutionReport` sau resend.
+3. Vẽ DVP settlement flow.
+4. Thiết kế reconciliation key matrix cho order/trade/cash/securities.
+
+## Đọc tiếp
+
+Tiếp theo: [Bài 08 — Account, Cash, Position & Buying Power](../08-account-cash-position-buying-power/).

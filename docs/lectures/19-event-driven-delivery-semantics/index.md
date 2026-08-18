@@ -1,248 +1,172 @@
-# Bài 19 — Event-Driven Delivery Semantics: at-least-once, inbox/outbox và exactly-once business effect
+---
+title: "Bài 19 — Event Delivery Semantics"
+description: "At-least-once delivery, idempotent consumers, outbox/inbox, ordering, replay, DLQ và unknown outcomes."
+---
 
-Kafka, RabbitMQ hay một message broker không tự làm business đúng. Trong securities core, câu hỏi cần trả lời là:
+# Bài 19 — Event Delivery: “exactly once” thực sự cần ở đâu?
 
-> Nếu message mất, duplicate, đến sai thứ tự hoặc consumer crash sau khi commit thì business effect cuối cùng có vẫn đúng và reconcile được không?
+<div class="lesson-meta"><span><strong>Track</strong> Production Securities Engineering</span><span><strong>Mức độ</strong> Advanced</span><span><strong>Mục tiêu</strong> Thiết kế message flow chịu duplicate, retry và replay</span></div>
 
-## 1. Delivery khác Business Effect
+Financial systems hiếm khi kiểm soát toàn bộ network để đảm bảo một message “chỉ được giao đúng một lần”. Mục tiêu thực tế thường là **at-least-once delivery + exactly-once business effect**.
 
-```text
-Message delivery may happen multiple times
-                ↓
-Business effect must converge correctly
-```
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
 
-Mục tiêu thường thực tế hơn “exactly-once network delivery” là:
+- at-most/at-least/exactly-once semantics;
+- outbox/inbox;
+- idempotency identity;
+- ordering scope;
+- retry/DLQ/replay;
+- side-effect suppression trong historical replay.
+</div>
 
-```text
-at-least-once transport
-+ stable business identity
-+ idempotent consumer
-= effectively-once business effect
-```
+## 1. Delivery Semantics
 
-## 2. Dual-write hole
+### At-most-once
+Có thể mất, không duplicate.
 
-Sai:
+### At-least-once
+Không muốn mất nhưng duplicate có thể xảy ra.
 
-```text
-BEGIN DB
-  update Trade
-COMMIT
-publish TradeBooked
-```
+### Exactly-once
+Thường chỉ meaningful trong bounded system/transactional abstraction, không phải magic toàn distributed world.
 
-Nếu crash sau commit trước publish:
+## 2. Exactly-once Business Effect
 
 ```text
-DB đúng
-Downstream không bao giờ biết
+Message arrives N times
+→ business mutation applied once
 ```
 
-Transactional Outbox:
+Ví dụ Execution `ABC` replay 5 lần → trade booked 1 lần.
+
+## 3. Transactional Outbox
 
 ```text
 BEGIN
   mutate business state
-  insert outbox row
+  insert outbox
 COMMIT
 
-Dispatcher
-  ↓
-publish
-  ↓
-mark sent/checkpoint
+Dispatcher → broker
 ```
 
-Outbox dispatcher có thể publish duplicate; consumer vẫn phải idempotent.
+Tránh commit DB rồi crash trước publish.
 
-## 3. Inbox / Dedup
-
-Consumer nhận:
+## 4. Inbox / Dedup
 
 ```text
-TradeBooked { TradeId=T100 }
+Receive
+→ check identity
+→ apply business mutation
+→ mark processed
 ```
 
-Trong cùng transaction khi phù hợp:
+Nếu có thể trong cùng local transaction.
+
+## 5. Identity
+
+Không dedup bằng payload hash nếu source có authoritative ID tốt hơn.
 
 ```text
-check/insert Inbox(T100,event-type/version)
-apply ledger effect
-commit
+TradeId
+ExecId
+OrderId + EventType + Version
+SettlementInstructionId
 ```
-
-Redelivery → inbox/business uniqueness chặn double effect.
-
-## 4. Idempotency key
-
-Key phải đại diện **business operation**, không phải một random retry attempt.
-
-Tốt:
-
-```text
-TradeBooked:T100
-RewardEarn:Campaign10:TradeT100
-SettlementInstruction:ObligationO77
-```
-
-Nguy hiểm:
-
-```text
-Guid.NewGuid() on every retry
-```
-
-vì retry mới trở thành business command mới.
-
-## 5. Same key, different payload
-
-Nếu client gửi cùng `IdempotencyKey` nhưng payload khác:
-
-```text
-request 1: BUY 100 FPT
-request 2: BUY 200 FPT
-same key
-```
-
-Không được silently dùng kết quả cũ hoặc tạo order mới. Trả conflict và audit mismatch.
 
 ## 6. Ordering
 
-Một aggregate có thể cần order:
+Không phải mọi event cần global total order.
+
+Xác định ordering scope:
 
 ```text
-OrderAccepted
-PartialFill
-PartialFill
-CancelledRemainder
+per order
+per account
+per instrument
+per session
+per partition
 ```
 
-Nhưng event bus global ordering thường không tồn tại hoặc không cần.
+## 7. Retry
 
-Thiết kế:
+Retry chỉ an toàn khi:
 
 ```text
-partition key = OrderId / AccountId / InstrumentId
+transient failure
++ idempotency/dedup
++ bounded/backoff/jitter
 ```
 
-chỉ khi ordering boundary thực sự cần và scale trade-off chấp nhận được.
+## 8. DLQ / Parking Lot
 
-## 7. Out-of-order event
+DLQ không phải nghĩa địa.
 
-Ví dụ `CancelAccepted` đến projection trước `PartialFill` do hai pipeline khác nhau. Policy có thể:
+Need owner, reason, reprocess process, audit và poison-message classification.
 
-- sequence/version gate;
-- buffer/reorder;
-- reject to parking lot;
-- apply commutative operation nếu domain cho phép;
-- rebuild projection từ authoritative history.
+## 9. Replay
 
-Đừng giả định timestamp arrival = business order.
-
-## 8. Poison message
-
-Message luôn fail vì schema/data invariant violation không nên retry vô hạn.
+Replay cần:
 
 ```text
-Retry bounded
-→ Parking Lot / DLQ
-→ alert
-→ inspect/fix
-→ controlled replay
+from/to boundary
+schema version
+business rule version
+side-effect policy
+idempotency behavior
+observability
 ```
 
-Critical financial message ở DLQ cần owner/SLA, không phải nơi “quên message”.
+## 10. Side Effects
 
-## 9. Schema evolution
+Historical replay không được gửi lại email, submit exchange order hoặc payment nếu không có explicit sandbox/suppression policy.
 
-Event contract cần:
+## 11. Schema Evolution
+
+Events sống lâu cần compatibility strategy.
 
 ```text
-EventType
-EventVersion
-BusinessId
-OccurredAt
-Source
-Correlation/Causation
-Payload
+additive change
+versioning
+upcasting/translation
+consumer tolerance
 ```
 
-Consumer cũ/new phải có migration strategy. Không rename field production rồi mong replay history tự hiểu.
+## 12. Backpressure
 
-## 10. Replay
+Consumer lag tăng phải visible. Autoscale chỉ giúp nếu bottleneck scaleable; external systems có fixed capacity cần throttle.
 
-Replay dùng cho recovery/rebuild nhưng cực nguy hiểm với external side effects.
+## 13. Unknown External Outcome
 
-```text
-Historical TradeBooked replay
-→ rebuild portfolio OK
-→ gửi SMS/email lại? không
-→ submit order ra venue lại? tuyệt đối không
-```
+Message broker retry không giải quyết outbound unknown outcome với exchange/bank. Cần status query/reconciliation theo external protocol.
 
-Consumer cần replay mode/side-effect boundary rõ.
+## 14. Common mistakes
 
-## 11. Saga khi nào cần?
+- “Kafka gives exactly once, done”;
+- retry without idempotency;
+- DLQ không owner;
+- global ordering không cần thiết;
+- replay fire external side effects;
+- dedup state tách transaction khỏi mutation.
 
-Saga hữu ích khi business process thật sự trải nhiều consistency boundary:
+<div class="key-takeaway"><strong>Takeaway</strong>Distributed delivery nên được thiết kế cho **duplicates, delay, reorder và replay** ngay từ đầu.</div>
 
-```text
-Fund Subscription
-→ reserve cash
-→ submit to fund platform
-→ pricing/allocation later
-→ settlement
-```
+## Checklist
 
-Nhưng đừng dùng Saga để chữa việc tách một invariant local thành nhiều service quá sớm.
-
-## 12. Correlation vs Idempotency
-
-```text
-CorrelationId = trace một workflow
-CausationId   = event nào gây event này
-IdempotencyKey = business operation nào không được apply hai lần
-```
-
-Ba field có thể giống trong case đơn giản nhưng semantics khác nhau.
-
-## 13. Broker outage
-
-Nếu message broker down:
-
-- local transaction có tiếp tục không?
-- outbox backlog bao nhiêu là chấp nhận?
-- critical flow fail-open/fail-closed?
-- backlog drain có gây load spike?
-- replay ordering còn đúng?
-
-Hãy define degraded mode thay vì chỉ retry connection.
-
-## 14. Metrics
-
-```text
-outbox backlog/age
-publish failures
-consumer lag
-inbox duplicate hits
-DLQ count/oldest age
-schema errors
-replay throughput
-out-of-order rejects
-processing latency by event type
-```
-
-## Definition of Done
-
-- [ ] Dual-write hole có giải pháp.
-- [ ] Consumer idempotent theo business identity.
-- [ ] Ordering boundary explicit.
-- [ ] Out-of-order policy có test.
-- [ ] Poison message có parking-lot workflow.
-- [ ] Schema version/replay strategy rõ.
-- [ ] Replay không lặp external side effects.
-- [ ] Saga chỉ dùng khi business boundary thật sự distributed.
+- [ ] Delivery semantics documented.
+- [ ] Stable event identity.
+- [ ] Outbox/inbox where needed.
+- [ ] Ordering scope explicit.
+- [ ] DLQ lifecycle.
+- [ ] Replay safe.
 
 ## Bài tập
 
-Xây flow `TradeBooked → Ledger → Rewards → Notification` với at-least-once delivery. Inject duplicate, out-of-order, crash sau commit, broker outage 15 phút và replay 1 triệu events. Chứng minh ledger/reward không double và notification không bị gửi lại trong historical rebuild.
+1. Implement outbox dispatcher crash-safe.
+2. Replay same event 100 times.
+3. Design per-order ordering partition.
+4. Create DLQ reprocess workflow.
+
+## Đọc tiếp
+
+[Bài 20 — HA / DR / BCP / Observability](../20-ha-dr-bcp-observability/).

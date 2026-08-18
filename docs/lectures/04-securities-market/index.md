@@ -1,162 +1,274 @@
-# Bài 04 — Thị trường chứng khoán: từ instrument đến market infrastructure
+---
+title: "Bài 04 — Thị trường chứng khoán"
+description: "Instrument, participant, primary/secondary market, order, trade, settlement và cấu trúc thị trường chứng khoán."
+---
 
-“Chứng khoán” không chỉ là cổ phiếu. Một brokerage platform thường phải xử lý nhiều instrument có lifecycle rất khác nhau.
+# Bài 04 — Thị trường chứng khoán: từ doanh nghiệp cần vốn đến nhà đầu tư giao dịch
 
-## 1. Các nhóm instrument
+<div class="lesson-meta">
+  <span><strong>Track</strong> Economics & Finance</span>
+  <span><strong>Mức độ</strong> Foundation</span>
+  <span><strong>Mục tiêu</strong> Hiểu market structure và lifecycle của securities</span>
+</div>
 
-### Equity
-Quyền sở hữu một phần doanh nghiệp.
+Một app chứng khoán chỉ là lớp ngoài cùng. Phía sau một nút BUY là issuer, broker, exchange, clearing, depository, bank và regulator cùng tham gia.
 
-### Bond
-Khoản nợ với cash-flow/coupon/maturity.
+<div class="learning-objectives">
+<strong>Sau bài này bạn phải giải thích được:</strong>
 
-### Derivative
-Giá trị phụ thuộc underlying; trọng tâm là position, margin và mark-to-market.
+- primary vs secondary market;
+- equity, bond, fund, derivative khác nhau ở economic claim nào;
+- broker, exchange, depository, custodian, settlement bank có vai trò gì;
+- order khác execution/trade/settlement thế nào;
+- market, instrument, account và position nên được model tách biệt ra sao.
+</div>
 
-### Fund Certificate
-Đại diện phần sở hữu trong quỹ; thường có subscription/redemption và NAV.
-
-### Structured / Warrant products
-Có payoff và risk phức tạp hơn.
-
-## 2. Primary vs Secondary Market
+## 1. Vì sao securities market tồn tại?
 
 ```text
-Primary Market
-Issuer → Investor
-Capital formation
-
-Secondary Market
-Investor ↔ Investor
-Liquidity + Price Discovery
+Capital Surplus Units
+        ↓
+      Market
+        ↓
+Capital Deficit Units
 ```
 
-Một engineer cần tách issuance workflow khỏi exchange trading workflow.
+Doanh nghiệp/chính phủ cần vốn; investor cần nơi allocate capital và nhận return.
 
-## 3. Thành phần thị trường
+## 2. Primary Market
 
-Ở mức mental model:
+Primary market là nơi security được phát hành lần đầu hoặc phát hành thêm.
+
+Ví dụ:
+
+```text
+Issuer
+→ offering
+→ investor subscribes
+→ capital goes to issuer
+```
+
+## 3. Secondary Market
+
+Sau phát hành, investor giao dịch với nhau.
+
+```text
+Investor A sells
+↔ Exchange / Market
+Investor B buys
+```
+
+Issuer thường không nhận tiền từ từng secondary trade.
+
+## 4. Equity
+
+Cổ phiếu đại diện residual ownership claim.
+
+Investor quan tâm:
+
+- earnings;
+- dividends;
+- voting/governance;
+- growth;
+- liquidation priority thấp hơn debt.
+
+## 5. Bond
+
+Bond là contractual debt claim.
+
+Core terms:
+
+```text
+Face Value
+Coupon
+Coupon Schedule
+Maturity
+Yield
+Credit Risk
+Accrued Interest
+```
+
+## 6. Fund Certificate
+
+Investor sở hữu units của fund, không trực tiếp sở hữu từng asset trong portfolio fund theo nghĩa operational.
+
+Core concepts:
+
+```text
+NAV
+NAV per Unit
+Subscription
+Redemption
+Cut-off
+Pricing Date
+Settlement
+```
+
+## 7. Derivative
+
+Derivative value phụ thuộc underlying/reference.
+
+```text
+Futures
+Options
+Forwards
+Swaps
+```
+
+Ở brokerage engineering, derivatives kéo theo position, margin, mark-to-market và liquidation.
+
+## 8. Participants
 
 ```text
 Investor
-   ↓
 Broker / Securities Company
-   ↓
-Exchange / Trading System
-   ↓
-Clearing & Depository Infrastructure
-   ↓
-Settlement Bank / Custodian
+Exchange / Trading Venue
+Clearing / Depository Infrastructure
+Custodian
+Settlement Bank
+Regulator
+Issuer
+Market Maker / Liquidity Provider
 ```
 
-Các vai trò khác gồm regulator, issuer, fund manager, custodian, market maker, data vendor.
+Mỗi actor có authority và obligation khác nhau.
 
-## 4. Account Model
+## 9. Account model
 
-Một account không chỉ có `Balance`.
+Đừng chỉ có `UserAccount`.
+
+Một platform có thể phải phân biệt:
 
 ```text
 Customer
-└── TradingAccount
-    ├── Cash
-    │   ├── Available
-    │   ├── Reserved
-    │   ├── Pending
-    │   └── Settled
-    ├── Securities
-    │   ├── Total
-    │   ├── Sellable
-    │   ├── PendingReceive
-    │   └── ReservedSell
-    ├── Orders
-    ├── Trades
-    └── Positions
+Trading Account
+Cash Account
+Securities Account
+Margin Account
+Derivatives Account
+Custody Account
 ```
 
-## 5. Order khác Trade
+Tên thực tế phụ thuộc business/legal model.
 
-Đây là distinction bắt buộc.
+## 10. Order ≠ Execution ≠ Trade ≠ Settlement
 
 ```text
-Order: ý định mua/bán
-Execution: một phần order được khớp
-Trade: giao dịch đã hình thành từ execution
-Settlement: chuyển giao money + securities sau trade
+Order      = intention
+Execution  = một lần khớp
+Trade      = business transaction formed from execution
+Settlement = transfer of cash/securities obligations
 ```
 
-Một order có thể:
+Một order có thể có nhiều executions.
+
+## 11. Position
+
+Position trả lời:
+
+> account hiện có exposure/holding gì?
+
+Không đồng nghĩa sellable quantity.
 
 ```text
-BUY 10,000 FPT
-  ├── Fill 2,000
-  ├── Fill 3,000
-  └── Fill 5,000
+Total Position
+Settled
+Pending Buy
+Pending Sell
+Reserved
+Blocked
+Sellable
 ```
 
-## 6. Market Data
+## 12. Market Session
 
-Các lớp dữ liệu:
-
-- reference/security master;
-- quote/bid/ask;
-- order book depth;
-- trade/tick;
-- OHLCV;
-- corporate action;
-- index;
-- market status/session.
-
-Không nên dùng cùng một data model cho tất cả.
-
-## 7. Corporate Actions
-
-Sở hữu chứng khoán tạo quyền/nghĩa vụ theo record date và rule cụ thể:
+Trading rules phụ thuộc session:
 
 ```text
-Dividend
-Stock Dividend
-Rights Issue
-Bonus Share
-Split / Reverse Split
-Tender / Redemption
+Pre-open
+Opening Auction
+Continuous Trading
+Closing Auction
+After-hours / Other sessions
 ```
 
-Corporate action ảnh hưởng position, cost basis, cash, entitlement và reporting.
+Backend phải model `BusinessDate`, `TradingSession`, timezone và calendar.
 
-## 8. Pre-trade / Trade / Post-trade
+## 13. Reference Data
+
+Security master cần tối thiểu:
 
 ```text
-PRE-TRADE
-Account → Buying Power → Risk → Reservation
-
-TRADE
-Order → Exchange → Matching → Execution
-
-POST-TRADE
-Trade Booking → Clearing → Settlement → Reconciliation
+InstrumentId
+Symbol
+Venue
+Board
+Currency
+InstrumentType
+Lot/Tick Rules
+Trading Status
+Effective Dates
 ```
 
-Nếu kiến trúc chỉ có `OrderService`, `PortfolioService`, `PaymentService`, rất có thể domain boundary chưa phản ánh market lifecycle.
+## 14. Market Infrastructure Map
 
-## 9. Invariants cơ bản
+```mermaid
+flowchart LR
+    INV[Investor] --> BR[Broker]
+    BR --> VENUE[Exchange / Venue]
+    VENUE --> CLEAR[Clearing]
+    CLEAR --> DEP[Depository]
+    CLEAR --> BANK[Settlement Bank]
+    REG[Regulator] -. rules .-> BR
+    REG -. rules .-> VENUE
+```
+
+## 15. Front-office / Middle-office / Back-office mental model
 
 ```text
-SellQty <= SellableQty
-RequiredCash <= BuyingPower
-ExecutionQty <= LeavesQty
-CumQty + LeavesQty = OrderQty
-Trade không được book hai lần
-Ledger phải cân bằng theo rule kế toán nội bộ
+Front Office
+→ client/order/trading
+
+Middle Office
+→ risk/control/reconciliation
+
+Back Office
+→ settlement/accounting/corporate actions/reporting
 ```
+
+Không phải tổ chức nào cũng chia đúng ba khối này nhưng mental model hữu ích.
+
+## 16. Common mistakes
+
+- model Order = Trade;
+- chỉ lưu balance/position hiện tại không có history;
+- không lưu external IDs;
+- dùng Symbol làm immutable identity;
+- bỏ qua business calendar;
+- coi FILLED là lifecycle kết thúc.
+
+<div class="key-takeaway">
+<strong>Takeaway</strong>
+
+Securities market là **một chuỗi ownership + obligations + state transitions**, không chỉ là bảng giá và API đặt lệnh.
+</div>
 
 ## Checklist
 
-- Primary vs secondary market?
-- Equity/bond/derivative/fund khác nhau về lifecycle nào?
-- Order, execution, trade, settlement khác nhau ra sao?
-- Available, reserved, pending, settled dùng khi nào?
-- Corporate action ảnh hưởng hệ thống nào?
+- [ ] Primary vs secondary market.
+- [ ] Equity/bond/fund/derivative khác nhau.
+- [ ] Vai trò broker/exchange/VSDC/bank.
+- [ ] Order/Execution/Trade/Settlement tách biệt.
+- [ ] Position khác SellableQty.
+- [ ] Instrument/account/session model rõ.
 
 ## Bài tập
 
-Vẽ lifecycle “Khách nộp 500 triệu → đặt BUY → partial fill → cancel phần còn lại → T+ settlement → nhận dividend sau record date”. Liệt kê state thay đổi ở cash, order, trade, position và ledger.
+1. Vẽ lifecycle một equity BUY từ investor đến settlement.
+2. So sánh entity model Equity/Bond/Fund/Derivative.
+3. Thiết kế `SecurityMaster` có effective-dated rules.
+4. Giải thích vì sao một customer có thể cần nhiều account types.
+
+## Đọc tiếp
+
+Tiếp theo: [Bài 05 — Phân tích đầu tư](../05-investment-analysis/).

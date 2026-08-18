@@ -1,240 +1,194 @@
-# Bài 14 — FIX 4.4 Session Recovery: sequence, resend, duplicate và restart
+---
+title: "Bài 14 — FIX 4.4 Session Recovery"
+description: "FIX session state, sequence numbers, resend, gap fill, PossDup, restart và business dedup."
+---
 
-Parsing `35=D` hay `35=8` là phần dễ. Phần khó của FIX nằm ở việc hai bên duy trì **một phiên có thứ tự, phát hiện gap, retransmit đúng và không tạo business effect hai lần**.
+# Bài 14 — FIX 4.4 Session Recovery: reconnect không có nghĩa là đã recover
 
-FIX Trading Community mô tả `ResendRequest (35=2)` dùng khi receiver phát hiện sequence gap/lost message; message retransmit dùng sequence cũ và `PossDupFlag(43)=Y`, còn `SequenceReset (35=4)` có thể được dùng cho gap fill theo session rules.
+<div class="lesson-meta"><span><strong>Track</strong> Production Securities Engineering</span><span><strong>Mức độ</strong> Advanced</span><span><strong>Mục tiêu</strong> Hiểu stateful protocol recovery</span></div>
 
-## 1. Hai lớp phải tách
+FIX parsing dễ hơn FIX recovery. Production problem thực sự là sequence continuity, replay, duplicates và failover ownership.
 
-```text
-Application Layer
-NewOrderSingle
-ExecutionReport
-Cancel/Replace
-Trade messages
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
 
-Session Layer
-Logon / Logout
-Heartbeat / TestRequest
-MsgSeqNum
-ResendRequest
-SequenceReset
-PossDupFlag
-```
+- sender/target sequence;
+- resend request và gap fill;
+- PossDup/OrigSendingTime;
+- persistent message store;
+- restart/failover session ownership;
+- transport replay vs business dedup.
+</div>
 
-Application layer trả lời “order/trade là gì”. Session layer trả lời “message stream có liên tục và recoverable không”.
-
-## 2. Durable session state
-
-Một FIX gateway production thường phải duy trì ít nhất mental state:
+## 1. Session Identity
 
 ```text
-SessionKey
+BeginString
 SenderCompID
 TargetCompID
-NextNumOut
-NextNumIn
-LastLogon
-ConnectionState
-MessageStore / replay metadata
+Session Qualifier nếu implementation dùng
 ```
 
-Nếu process restart làm `NextNumOut` quay về 1 trái contract, peer có thể reject/logout hoặc yêu cầu resync.
+Session state gắn với logical counterpart, không chỉ TCP socket.
 
-## 3. Sequence gap
+## 2. Sequence Numbers
 
-Receiver mong:
+Mỗi direction có sequence riêng.
 
 ```text
-1001
-1002
-1003
+Outbound NextSenderSeqNum
+Inbound  NextTargetSeqNum
 ```
 
-nhưng nhận:
+## 3. Gap Detection
+
+Expected=101, Receive=104 → gap.
+
+Không nên apply blind messages nếu session spec yêu cầu recovery sequence semantics.
+
+## 4. Resend Request
+
+Receiver yêu cầu peer retransmit range phù hợp.
+
+## 5. Gap Fill / Sequence Reset
+
+Session protocol có thể dùng sequence reset/gap fill cho messages không cần replay nguyên bản tùy semantics/spec.
+
+Engineer phải hiểu đúng contract thay vì reset cho “hết lỗi”.
+
+## 6. PossDup
+
+Retransmitted application messages có duplicate potential.
+
+Transport layer đánh dấu duplicate possibility; domain layer vẫn phải dedup bằng business identity.
+
+## 7. Message Store
 
 ```text
-1001
-1003
+SessionId
+Direction
+MsgSeqNum
+MsgType
+RawMessage
+SendingTime
+BusinessIdentity
+ReplayMetadata
 ```
 
-→ thiếu `1002`.
+Retention và performance cần thiết kế theo certification/operations requirement.
 
-```mermaid
-sequenceDiagram
-    participant A as Sender
-    participant B as Receiver
-    A->>B: Seq 1001
-    A->>B: Seq 1003
-    B->>A: ResendRequest Begin=1002
-    A->>B: retransmit / gap fill
-    B->>B: sequence converges
-```
+## 8. Logon Recovery
 
-Không nên cho application tiếp tục tin rằng stream đầy đủ nếu session đang gap/recovery.
-
-## 4. Resend không đồng nghĩa re-apply business effect
-
-Một ExecutionReport có thể quay lại do session recovery.
+Reconnect flow phải resolve:
 
 ```text
-Message Seq=1002
-ExecId=EX-7788
-PossDup=Y
+local expected seq
+peer expected seq
+resend obligations
+pending outbound
+pending inbound gaps
 ```
 
-Application phải phân biệt:
+## 9. Restart
+
+Nếu restart làm seq về 1 không đúng contract, peer có thể reject hoặc session state diverge.
+
+## 10. Failover
+
+Primary chết, standby lên phải có:
 
 ```text
-transport message duplicate
-≠
-business execution mới
+same durable session state
+exclusive ownership
+fencing
+network readiness
+certificate/secrets
 ```
 
-Business dedup nên dựa identity theo venue contract, ví dụ `Venue + ExecId`, không chỉ `MsgSeqNum`.
+## 11. Split Brain
 
-## 5. Vì sao không chỉ dedup bằng sequence?
+Hai nodes cùng nghĩ active trên một logical session là incident nghiêm trọng.
 
-Sequence là session-scoped. Business identity có lifecycle riêng. Session có thể reset/reconnect; một trade/execution cần trace độc lập khỏi transport sequence.
+Leader election chưa đủ nếu old leader vẫn có external connectivity; cần fencing/ownership enforcement.
 
-Mental model:
+## 12. Transport vs Business Identity
 
 ```text
-MsgSeqNum  → transport ordering/recovery
-ClOrdID    → client order identity
-OrderID    → venue order identity
-ExecID     → execution identity
+MsgSeqNum = transport identity/order
+ClOrdID/OrderID/ExecID = business identities
 ```
 
-## 6. Gap Fill
+Không dedup execution chỉ bằng MsgSeqNum.
 
-Session layer có những message không cần retransmit như application messages. FIX định nghĩa `SequenceReset` với `GapFillFlag=Y` để receiver tiến qua vùng sequence bị bỏ qua theo rules.
-
-Điều quan trọng với backend engineer không phải học thuộc tag, mà là hiểu invariant:
+## 13. Recovery Scenario
 
 ```text
-NextNumIn chỉ tiến khi sequence semantics cho phép
-Không bỏ qua application message quan trọng ngoài contract
-Gap-fill/replay phải audit được
+35=D seq=100 sent
+venue accepts
+35=8 seq=501 response lost
+connection drops
+reconnect
+resend/recovery
+35=8 arrives PossDup
 ```
 
-## 7. Restart scenario
+Business effect phải apply đúng một lần.
 
-Giả sử gateway crash:
+## 14. Testing
+
+Test matrix:
 
 ```text
-Durable NextNumOut = 5010
-Durable NextNumIn  = 8800
+lost outbound
+lost inbound
+duplicate inbound
+gap
+out-of-order socket delivery simulation
+restart
+failover
+stale standby
+split brain attempt
 ```
 
-Process mới phải restore state trước khi active session. Nếu node mới kết nối trong khi node cũ vẫn active, có nguy cơ **dual owner**.
-
-Cần:
+## 15. Metrics
 
 ```text
-leader/active ownership
-fencing token hoặc equivalent protection
-persistent session store
-single logical sender
-```
-
-## 8. Active/Standby không phải load balancing
-
-Sai mental model:
-
-```text
-Load Balancer
- ├─ FIX Node A
- └─ FIX Node B
-```
-
-nếu cả hai có thể cùng sở hữu cùng logical session.
-
-Đúng hơn:
-
-```text
-Active Node A  ← owns session + fencing
-Standby Node B ← replicated state, not sending
-      ↓ failover
-Node B acquires ownership
-      ↓
-restore sequence/message store
-      ↓
-reconnect + recover + reconcile
-```
-
-## 9. Unknown application outcome vẫn tồn tại
-
-Session recovery giúp message continuity, nhưng không tự giải quyết mọi business ambiguity.
-
-Ví dụ order đã gửi, socket chết, sau reconnect peer gap-fill một phần. OMS vẫn cần `ClOrdID`/venue status/reconciliation để biết order thực sự tồn tại không.
-
-Session correctness và business correctness là hai lớp liên quan nhưng khác nhau.
-
-## 10. Message store
-
-Một message store tốt cần hỗ trợ:
-
-```text
-find outbound messages by sequence range
-retain raw/canonical message for audit
-reconstruct resend payload theo FIX rules
-track processed inbound sequence
-survive process restart
-```
-
-Retention phụ thuộc operational/spec requirements; không đặt tùy ý rồi xóa message cần recovery.
-
-## 11. Test cases bắt buộc
-
-- Logon với expected sequence.
-- Inbound sequence thấp hơn expected.
-- Inbound sequence cao hơn expected.
-- Resend request một range.
-- Gap fill.
-- Duplicate `PossDup=Y`.
-- Connection drop giữa order và ExecutionReport.
-- Process restart.
-- Failover active → standby.
-- Standby không được send trước khi giành ownership.
-
-FIX Trading Community có session-layer test cases; dùng chúng làm baseline rồi thêm venue-specific certification cases.
-
-## 12. Observability
-
-```text
-session state
-NextNumIn / NextNumOut
+session status
+sender/target seq
 sequence gaps
-resend requests
-messages replayed
-unexpected duplicates
+resend count
+replay volume
 logon failures
-heartbeat/test-request latency
-connection flap count
-active owner identity
-recovery duration
+heartbeat timeout
+duplicate business events
 ```
 
-## Source chính
+## 16. Common mistakes
 
-- FIX Trading Community — FIX Session Layer Online.
-- FIX 4.4 `ResendRequest (35=2)`.
-- FIX 4.4 `ExecutionReport (35=8)`.
-- FIX Session Layer Test Cases.
+- reset seq để “fix nhanh”;
+- sequence store trong RAM;
+- HA = 2 pods;
+- PossDup ignored;
+- MsgSeqNum dùng làm business dedup;
+- standby thiếu fencing.
 
-Các link nằm trong [References](../../resources/references.md).
+<div class="key-takeaway"><strong>Takeaway</strong>FIX recovery là **state machine ở transport layer**; core business vẫn cần identity, idempotency và reconciliation riêng.</div>
 
-## Definition of Done
+## Checklist
 
-- [ ] Session state durable.
-- [ ] Gap detection/resend/gap-fill có test.
-- [ ] Business dedup không dựa duy nhất MsgSeqNum.
-- [ ] Restart giữ continuity đúng contract.
-- [ ] Active/standby có fencing/ownership.
-- [ ] Unknown application outcome có recovery ngoài session layer.
-- [ ] Có audit và metrics cho sequence/replay.
+- [ ] Persistent seq state.
+- [ ] Message store/replay.
+- [ ] Gap/resend tested.
+- [ ] PossDup handled.
+- [ ] Failover exclusive ownership.
+- [ ] Business dedup separate.
 
 ## Bài tập
 
-Mô phỏng một FIX engine mini: gửi sequence 1..10 nhưng cố tình làm mất 4 và 7, sau đó implement `ResendRequest`, replay application message và gap-fill session message. Inject duplicate execution và chứng minh transport recovery không double-book position.
+1. Viết simulator two-sided seq.
+2. Inject gap và resend.
+3. Failover session store giữa node A/B.
+4. Prove duplicate execution not double-booked.
+
+## Đọc tiếp
+
+[Bài 15 — Exchange Gateway & KRX Connectivity](../15-exchange-gateway-krx-connectivity/).

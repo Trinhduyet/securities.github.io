@@ -1,73 +1,178 @@
-# Bài 03 — Finance Foundations: tiền, thời gian, rủi ro và định giá
+---
+title: "Bài 03 — Tài chính nền tảng"
+description: "Time value of money, risk-return, cash flow, cost of capital và valuation — nền tảng để hiểu mọi instrument tài chính."
+---
 
-Finance bắt đầu từ một câu hỏi: **một đồng tiền ở các thời điểm và trạng thái rủi ro khác nhau có giá trị như nhau không?** Câu trả lời là không.
+# Bài 03 — Tài chính nền tảng: tiền hôm nay khác tiền ngày mai thế nào?
+
+<div class="lesson-meta">
+  <span><strong>Track</strong> Economics & Finance</span>
+  <span><strong>Mức độ</strong> Foundation</span>
+  <span><strong>Mục tiêu</strong> Hiểu cash flow, discounting, risk/return và valuation</span>
+</div>
+
+Nếu được chọn `100 triệu hôm nay` hoặc `100 triệu sau 3 năm`, bạn nên chọn hôm nay — vì tiền có **time value**. Từ ý tưởng đơn giản này sinh ra bond pricing, DCF, NPV, IRR, cost of capital và phần lớn finance.
+
+<div class="learning-objectives">
+<strong>Sau bài này bạn phải giải thích được:</strong>
+
+- future value và present value;
+- simple vs compound return;
+- expected return và risk;
+- diversification vì sao giảm unsystematic risk;
+- NPV/IRR dùng để đánh giá investment thế nào;
+- cost of equity, debt và WACC liên quan valuation ra sao;
+- cash flow khác accounting profit vì sao.
+</div>
 
 ## 1. Time Value of Money
 
+### Future Value
+
 ```text
 FV = PV × (1 + r)^n
+```
+
+100 triệu, 8%/năm, 3 năm:
+
+```text
+FV = 100 × 1.08^3 ≈ 125.97 triệu
+```
+
+### Present Value
+
+```text
 PV = FV / (1 + r)^n
 ```
 
-Tư duy này là gốc của bond pricing, DCF, loan schedule và derivatives valuation.
+125.97 triệu sau 3 năm với discount rate 8% có PV khoảng 100 triệu.
 
-## 2. Cash Flow
+## 2. Compounding
 
-Đừng nhầm accounting profit với cash flow.
-
-Một doanh nghiệp có lợi nhuận nhưng thiếu cash vì:
-
-- accounts receivable tăng;
-- inventory tăng;
-- capex lớn;
-- debt repayment.
-
-Ba báo cáo tài chính liên kết:
+Khác biệt giữa simple và compound return ngày càng lớn theo thời gian.
 
 ```text
-Income Statement
-       ↓
-Net Income
-       ↓
-Cash Flow Statement
-       ↕
-Balance Sheet
+Year 0: 100
+Year 1: 108
+Year 2: 116.64
+Year 3: 125.97
 ```
 
-## 3. Risk và Return
+Finance system phải explicit compounding convention, day-count convention và frequency đối với sản phẩm cần chúng.
 
-Expected return cao thường đi cùng risk cao hơn, nhưng phải định nghĩa risk.
+## 3. Cash Flow trước Profit
 
-Các dạng risk:
-
-- market risk;
-- credit risk;
-- liquidity risk;
-- interest-rate risk;
-- FX risk;
-- operational risk;
-- counterparty risk;
-- settlement risk.
-
-Trong software, mỗi risk có data/state khác nhau; không nên có một field `RiskScore` rồi coi như xong.
-
-## 4. Diversification
-
-Portfolio risk phụ thuộc không chỉ từng tài sản mà còn correlation.
+Accounting profit có thể dương nhưng doanh nghiệp vẫn thiếu tiền.
 
 ```text
-Asset A risk
-Asset B risk
-Correlation(A,B)
-        ↓
-Portfolio Risk
+Revenue
+- Expense
+= Accounting Profit
 ```
 
-Đây là lý do position engine phải nhìn theo portfolio, không chỉ từng order.
+khác với:
 
-## 5. Required Return và Discount Rate
+```text
+Cash Inflows
+- Cash Outflows
+= Net Cash Flow
+```
 
-Một cách tư duy:
+Receivables, inventory, capex và debt repayment tạo khác biệt lớn.
+
+## 4. NPV
+
+```text
+NPV = Σ CF_t / (1+r)^t - Initial Investment
+```
+
+Nếu NPV > 0, project tạo value theo discount rate giả định.
+
+Ví dụ đầu tư 100, nhận 60 năm 1 và 60 năm 2, r=10%:
+
+```text
+NPV = 60/1.1 + 60/1.1² - 100
+    ≈ 4.13
+```
+
+## 5. IRR
+
+IRR là discount rate làm NPV = 0.
+
+Không nên dùng IRR mù quáng khi cash flow đổi dấu nhiều lần hoặc project có scale khác nhau.
+
+## 6. Return
+
+Simple return:
+
+```text
+R = (P1 - P0 + Income) / P0
+```
+
+Nếu mua 100, bán 110 và nhận dividend 3:
+
+```text
+R = 13%
+```
+
+Portfolio analytics phải tách price return, income return và total return khi cần.
+
+## 7. Expected Return
+
+```text
+E[R] = Σ probability_i × return_i
+```
+
+Ví dụ:
+
+| Scenario | Probability | Return |
+|---|---:|---:|
+| Bull | 30% | 25% |
+| Base | 50% | 10% |
+| Bear | 20% | -15% |
+
+```text
+E[R] = 0.3×25% + 0.5×10% + 0.2×(-15%) = 9.5%
+```
+
+Expected return không phải guaranteed return.
+
+## 8. Risk
+
+Risk có nhiều nghĩa:
+
+```text
+Volatility
+Drawdown
+Default risk
+Liquidity risk
+Market risk
+Credit risk
+Operational risk
+Settlement risk
+```
+
+Đừng dùng một chỉ số volatility để đại diện mọi rủi ro.
+
+## 9. Diversification
+
+Nếu hai assets không perfectly correlated, portfolio variance có thể thấp hơn weighted average variance đơn giản.
+
+Đây là nền tảng của portfolio construction.
+
+```text
+Asset-specific risk
+  ↓ diversification
+Reduced
+
+Systematic risk
+  ↓
+Không biến mất chỉ bằng diversification
+```
+
+## 10. Risk-free Rate và Risk Premium
+
+Mental model:
 
 ```text
 Required Return
@@ -75,102 +180,121 @@ Required Return
 + Risk Premium
 ```
 
-Trong equity valuation có thể dùng CAPM như một model tham khảo:
+Risk premium bù cho uncertainty, illiquidity, credit risk hoặc equity risk tùy asset.
+
+## 11. Cost of Equity
+
+Một framework thường gặp là CAPM:
 
 ```text
-E(Ri) = Rf + βi × (E(Rm) - Rf)
+Ke = Rf + β(Rm - Rf)
 ```
 
-Không nên coi CAPM là chân lý; điều quan trọng là hiểu **discount rate phản ánh time value + risk**.
+Đây là model, không phải định luật tự nhiên. Beta đo sensitivity trong historical/statistical framework, không capture mọi risk.
 
-## 6. Corporate Finance
+## 12. Cost of Debt
 
-Doanh nghiệp quyết định:
+Debt holder có contractual cash flow và priority khác equity.
 
-- đầu tư dự án nào;
-- tài trợ bằng debt hay equity;
-- giữ lại lợi nhuận hay trả dividend;
-- quản lý working capital thế nào.
-
-Các khái niệm cần nắm:
+After-tax debt cost thường xét tax shield:
 
 ```text
-NPV
-IRR
-WACC
-ROIC
-ROE
-Debt/Equity
-Free Cash Flow
-Working Capital
+Kd_after_tax = Kd × (1 - Tax Rate)
 ```
 
-## 7. Valuation
+## 13. WACC
 
-### DCF
+```text
+WACC = E/(D+E) × Ke + D/(D+E) × Kd × (1-T)
+```
+
+WACC thường dùng discount unlevered/free cash flow to firm khi assumptions phù hợp.
+
+## 14. Enterprise Value vs Equity Value
+
+Đừng nhầm:
 
 ```text
 Enterprise Value
-≈ Present Value of future Free Cash Flows
+≈ value of operations to debt + equity capital providers
 ```
 
-### Relative valuation
+với:
 
 ```text
-P/E
-P/B
-EV/EBITDA
-EV/Sales
+Equity Value
+= value attributable to shareholders
 ```
 
-Multiple chỉ có nghĩa khi so với growth, profitability, risk và accounting quality.
+Bridge thường xem xét net debt và các adjustment khác.
 
-## 8. Fixed Income Foundations
-
-Bond có:
+## 15. DCF mental model
 
 ```text
-Face Value
-Coupon
-Coupon Schedule
-Maturity
-Yield
-Price
-Accrued Interest
+Forecast Revenue
+→ Margin
+→ Operating Profit
+→ Tax
+→ Reinvestment
+→ Free Cash Flow
+→ Discount
+→ Terminal Value
+→ Enterprise Value
+→ Equity Value
 ```
 
-Quan hệ quan trọng:
+Sai lầm lớn nhất không nằm ở công thức mà ở assumptions.
 
-```text
-Yield ↑ → Bond Price ↓
-Yield ↓ → Bond Price ↑
-```
+## 16. Duration thinking
 
-Duration đo sensitivity gần đúng của giá trước biến động yield.
+Asset nhận cash flow xa trong tương lai nhạy hơn với discount-rate changes.
 
-## 9. Finance → Domain Model
+Đó là lý do long-duration growth stock thường nhạy với lãi suất.
 
-```text
-Cash Flow → Ledger / Settlement
-Risk      → Risk Engine
-Position  → Portfolio / PnL
-Yield     → Bond Pricing
-NAV       → Fund Core
-Discount  → Valuation / Research
-```
+## 17. Finance trong backend system
+
+Các calculator production cần:
+
+- deterministic input;
+- versioned assumptions;
+- currency;
+- rounding convention;
+- business calendar/day count khi liên quan;
+- audit trail;
+- unit tests với known examples.
+
+## 18. Common mistakes
+
+- dùng `double` tùy tiện cho money;
+- trộn percentage với decimal;
+- quên compounding convention;
+- dùng profit thay cash flow;
+- hard-code discount rate;
+- không lưu assumption version.
+
+<div class="key-takeaway">
+<strong>Takeaway</strong>
+
+Finance biến cash flow trong tương lai thành giá trị hôm nay bằng **discount rate phản ánh time value + risk**. Mọi valuation chỉ đáng tin bằng assumptions và cash-flow model phía sau.
+</div>
 
 ## Checklist
 
-Bạn phải giải thích được:
-
-- PV/FV và discount rate;
-- profit khác cash flow;
-- systematic vs idiosyncratic risk;
-- diversification;
-- DCF vs multiples;
-- yield-price relationship;
-- duration dùng để làm gì.
+- [ ] Tính được PV/FV.
+- [ ] Hiểu NPV/IRR.
+- [ ] Phân biệt expected vs realized return.
+- [ ] Phân biệt volatility với các loại risk khác.
+- [ ] Hiểu diversification.
+- [ ] Hiểu WACC/enterprise/equity value.
+- [ ] Biết finance calculation cần version + rounding + audit.
 
 ## Bài tập
 
-Thiết kế một API `GET /portfolio/{id}/risk-summary`. Trước khi nghĩ JSON, hãy liệt kê các risk dimension cần có và nguồn dữ liệu của từng dimension. Đây là cách finance dẫn dắt API design, không phải ngược lại.
+1. Tính FV của 500 triệu sau 10 năm ở 7%.
+2. Xây NPV calculator có unit tests.
+3. Tạo DCF đơn giản 5 năm với 3 scenario.
+4. Thiết kế `ValuationRun` lưu model version, assumptions và outputs.
+
+## Đọc tiếp
+
+Tiếp theo: [Bài 04 — Thị trường chứng khoán](../04-securities-market/).

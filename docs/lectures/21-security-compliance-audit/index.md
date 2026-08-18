@@ -1,243 +1,153 @@
-# Bài 21 — Security, Compliance & Audit: bảo vệ quyền giao dịch và bằng chứng nghiệp vụ
+---
+title: "Bài 21 — Security, Compliance & Audit"
+description: "Authentication, authorization, segregation of duties, privileged operations, secrets, tamper-evident audit và compliance controls."
+---
 
-Security trong công ty chứng khoán không dừng ở OAuth/JWT. Một trading platform phải bảo vệ **ai được thao tác tài khoản nào, ai được thay đổi risk rule, ai được failover gateway, ai được manual-adjust ledger, và sau đó chứng minh được ai đã làm gì**.
+# Bài 21 — Security & Compliance: ai được phép làm gì với tiền, lệnh và dữ liệu?
 
-## 1. Authentication khác Authorization
+<div class="lesson-meta"><span><strong>Track</strong> Production Securities Engineering</span><span><strong>Mức độ</strong> Advanced</span><span><strong>Mục tiêu</strong> Security theo resource/business operation, không chỉ login</span></div>
 
-```text
-Authentication → bạn là ai?
-Authorization  → bạn được làm gì trên resource nào?
-```
+Trong brokerage, một admin có khả năng sửa account restriction hoặc trigger manual adjustment là privileged actor với financial impact.
 
-Ví dụ user đã login nhưng không có nghĩa được đặt lệnh trên mọi account liên kết trong hệ thống.
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
 
-## 2. Entitlement model
+- authentication vs authorization;
+- resource/account entitlement;
+- segregation of duties;
+- maker-checker;
+- secrets/cert/HSM concerns;
+- audit evidence và data privacy.
+</div>
 
-Một authorization decision có thể phụ thuộc:
+## 1. Authentication
 
-```text
-User/Employee
-CustomerId
-TradingAccountId
-Role
-Product
-Market
-Operation
-Channel
-Risk/Restriction state
-Effective time
-```
+Xác định caller là ai.
 
-Đừng chỉ `role == Admin` cho mọi privileged operation.
+## 2. Authorization
 
-## 3. Customer trading authorization
-
-Flow:
+Xác định caller được làm gì trên resource nào.
 
 ```text
-Authenticated Principal
-→ account ownership/mandate check
-→ trading status/restriction
-→ product entitlement
-→ operation permission
-→ risk/pre-trade
+User A can trade Account X
+User B can view but not trade
+Ops role can adjust only with approval
 ```
 
-Authorization fail phải xảy ra trước business mutation.
+## 3. Least Privilege
+
+Service/user chỉ có quyền tối thiểu cần thiết.
 
 ## 4. Segregation of Duties
 
-Các nghiệp vụ nhạy cảm có thể cần maker/checker/four-eyes theo policy:
+Không để một người có thể create + approve + settle một high-risk adjustment nếu policy yêu cầu separation.
+
+## 5. Maker-Checker
 
 ```text
-manual cash adjustment
-securities adjustment
-risk limit increase
-fee-rule change
-corporate-action override
-settlement repair
-privileged configuration
+Maker creates action
+→ Checker approves/rejects
+→ Executor applies
+→ Audit records evidence
 ```
 
-Một người không nên vừa tạo vừa duyệt cùng sensitive change nếu control yêu cầu tách vai trò.
+## 6. Privileged Operations
 
-## 5. Privileged Access
-
-Operations/support cần quyền mạnh nhưng phải bounded:
+Examples:
 
 ```text
-just-in-time access
+kill switch
+manual ledger adjustment
+account unlock
+margin override
+symbol enable/disable
+session reset
+certificate rotation
+```
+
+Need stronger controls.
+
+## 7. Secrets and Certificates
+
+```text
+API keys
+DB credentials
+FIX/network certificates
+private keys
+HSM-backed keys when required
+```
+
+No secrets in config repo/log.
+
+## 8. Audit Log
+
+Audit answers:
+
+```text
+who
+what
+which resource
+before/after
+when
+why/reason
 approval
-expiry
-reason/ticket reference
-session recording/audit khi phù hợp
-least privilege
+correlation
+source IP/device/context where needed
 ```
 
-Không cấp shared production admin account.
+## 9. Tamper Resistance
 
-## 6. Audit Log vs Debug Log
+Audit store should limit mutation and have retention/access controls appropriate to risk/regulation.
 
-Debug log có thể rotate/format tùy app. Audit evidence cần semantics mạnh hơn:
+## 10. Sensitive Data
 
-```text
-Who
-What operation
-Which business object
-Before/After hoặc business delta
-When
-Why / ReasonCode
-Approval
-CorrelationId
-Source channel
-```
+PII, financial data, credentials, tokens need classification, masking and least-access.
 
-Audit record critical không nên bị user có quyền business thông thường sửa/xóa.
+## 11. Data at Rest / In Transit
 
-## 7. Sensitive data
+Use appropriate encryption and key-management practices; exact requirements depend system/regulation.
 
-Không log:
+## 12. Service-to-Service Identity
 
-```text
-password
-private key
-full secret/token
-raw PIN/OTP
-sensitive personal data ngoài nhu cầu
-```
+Do not trust network location alone.
 
-Mask account/PII theo policy nhưng vẫn giữ đủ correlation để điều tra.
+Use authenticated workload identity/mTLS/token mechanism consistent with platform.
 
-## 8. Certificate & Key Management
+## 13. Compliance as Code/Policy
 
-External connectivity có thể dùng certificate/private keys theo interface requirements.
+Rules like account restriction, employee trading restriction, approval threshold should be explicit/versioned where possible.
 
-Cần lifecycle:
+## 14. Incident Evidence
 
-```text
-generate/import
-store securely
-access control
-rotation
-expiry monitoring
-revocation
-DR availability
-```
+Logs/audit/trace phải đủ reconstruct incident without leaking secrets.
 
-Không để private key trong repo/container image.
+## 15. Common mistakes
 
-## 9. HSM/PKI
+- authentication = authorization;
+- admin role = all power;
+- shared service accounts;
+- secrets in logs;
+- manual DB fix no audit;
+- audit log itself editable by same operator.
 
-Khi infrastructure/policy yêu cầu, HSM giúp bảo vệ private-key operation và giảm khả năng key export. Engineering cần hiểu failure mode: HSM cluster unavailable thì gateway/payment flow fail thế nào, fail-open hay fail-closed?
+<div class="key-takeaway"><strong>Takeaway</strong>Security trong securities system phải bảo vệ **business authority**, không chỉ HTTP endpoints.</div>
 
-## 10. Configuration governance
+## Checklist
 
-Risk/tick/fee/calendar/route config có thể ảnh hưởng trực tiếp tiền.
-
-Mỗi change nên có:
-
-```text
-Version
-EffectiveFrom
-Author
-Approver
-Reason
-Diff
-Validation
-Rollback plan
-```
-
-Feature flag thay đổi trading behavior cũng là production control, không chỉ developer convenience.
-
-## 11. Immutable evidence
-
-Không phải mọi audit system cần blockchain/WORM, nhưng cần chống silent tampering phù hợp risk:
-
-```text
-append-only controls
-restricted delete
-hash/signature/chained evidence khi policy cần
-central log retention
-backup/retention policy
-```
-
-## 12. Fraud/abuse controls
-
-Security engineering giao với business risk:
-
-```text
-account takeover
-abnormal order pattern
-credential stuffing
-API abuse
-privileged insider action
-reward abuse
-manual-adjustment abuse
-```
-
-Detection cần business context, không chỉ WAF alert.
-
-## 13. Incident investigation
-
-Khi khách nói “tôi không đặt lệnh này”, cần trace:
-
-```text
-login/session/device evidence
-request/correlation id
-authorization decision
-order command
-OMS state
-venue message
-execution/trade
-notification
-manual ops actions
-```
-
-Nếu mỗi service log một format/timezone khác nhau, investigation rất khó.
-
-## 14. Time synchronization
-
-Audit/trading correlation phụ thuộc clock. Infrastructure cần time-sync policy; application nên lưu timestamp chuẩn + business date/session semantics.
-
-## 15. Data retention
-
-Retention khác nhau cho:
-
-```text
-audit
-orders/trades
-FIX raw messages
-customer data
-market data
-operations evidence
-```
-
-Áp dụng theo legal/regulatory/internal policy hiện hành; không đặt `DELETE after 30 days` generic.
-
-## 16. Security failure mode
-
-- authorization service timeout;
-- certificate hết hạn trước market open;
-- leaked secret;
-- privileged account compromise;
-- audit sink unavailable;
-- config deploy sai risk limit;
-- HSM unavailable;
-- clock drift.
-
-Mỗi case cần runbook và fail-safe policy.
-
-## Definition of Done
-
-- [ ] Authentication và resource-level authorization tách rõ.
-- [ ] Sensitive operation có SoD/maker-checker khi policy cần.
-- [ ] Privileged access time-bounded/audited.
-- [ ] Audit evidence khác debug log.
-- [ ] Secret/certificate lifecycle có owner/rotation/alert.
-- [ ] Production config có version/approval/rollback.
-- [ ] Incident có thể trace end-to-end bằng stable IDs.
-- [ ] Retention dựa policy hiện hành.
+- [ ] Strong authN/authZ.
+- [ ] Resource entitlement.
+- [ ] Least privilege.
+- [ ] SoD/maker-checker.
+- [ ] Secrets/cert lifecycle.
+- [ ] Privileged audit.
+- [ ] Sensitive-data controls.
 
 ## Bài tập
 
-Thiết kế flow manual cash adjustment 100 triệu: maker tạo, checker duyệt, ledger post, customer balance update, audit evidence immutable và reconciliation. Sau đó giả lập checker token bị compromise và chỉ ra control nào giới hạn blast radius.
+1. Model roles for trader/ops/risk/admin.
+2. Design maker-checker ledger adjustment.
+3. Threat-model FIX gateway certificate handling.
+4. Define audit schema.
+
+## Đọc tiếp
+
+[Bài 22 — Performance, Capacity & Latency](../22-performance-capacity-latency/).

@@ -1,266 +1,199 @@
-# Bài 15 — Exchange Gateway & KRX Connectivity: Anti-Corruption Layer của trading core
+---
+title: "Bài 15 — Exchange Gateway & KRX Connectivity"
+description: "Gateway architecture, anti-corruption layer, session ownership, readiness, certification, backpressure và failover."
+---
 
-Ngày **05/05/2025**, hệ thống công nghệ thông tin mới do KRX cung cấp đã chính thức vận hành cho thị trường chứng khoán Việt Nam, với HOSE, HNX, VSDC và các thành viên thị trường tham gia trên nền tảng tích hợp. Với backend engineer, điều quan trọng không phải gọi mọi thứ là “KRX API”, mà là thiết kế **một exchange connectivity boundary có thể thay đổi theo specification của venue mà không làm nhiễm domain core**.
+# Bài 15 — Exchange Gateway: lớp mỏng hay hệ thống stateful critical?
 
-> Production implementation phải dùng member interface specification, message dictionary, network/certification rule được cấp cho đúng thành viên/venue. FIX 4.4 generic không đồng nghĩa tự động tương thích toàn bộ giao diện production của KRX.
+<div class="lesson-meta"><span><strong>Track</strong> Production Securities Engineering</span><span><strong>Mức độ</strong> Advanced</span><span><strong>Mục tiêu</strong> Thiết kế venue connectivity an toàn và recoverable</span></div>
 
-## 1. Gateway nằm ở đâu?
+Gateway không chỉ map JSON sang FIX. Nó sở hữu protocol state, network connectivity, certification behavior và recovery semantics.
 
-```mermaid
-flowchart LR
-    OMS[OMS Domain] --> PORT[Venue Port]
-    PORT --> MAP[Canonical ↔ Venue Mapper]
-    MAP --> SES[Session / Transport]
-    SES --> NET[Private Network]
-    NET --> VENUE[KRX / Exchange Infrastructure]
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
+
+- anti-corruption layer;
+- canonical model vs venue model;
+- readiness khác liveness;
+- session ownership/fencing;
+- backpressure trước venue;
+- certification và operational controls.
+</div>
+
+## 1. Architecture
+
+```text
+Trading Core
+→ Exchange Port
+→ Venue Adapter
+→ Session Engine
+→ Network
+→ Venue
 ```
 
-Core chỉ nên biết các operation kiểu:
+## 2. Anti-Corruption Layer
+
+Core command:
 
 ```text
 SubmitOrder
 CancelOrder
 ReplaceOrder
-QueryOrderStatus
-ReceiveExecution
-ReceiveTradingStatus
 ```
 
-Core không nên biết trực tiếp tag/proprietary field, socket framing hay reconnect details.
+Gateway dịch sang venue-specific messages/tags/rules.
 
-## 2. Canonical model và venue model
+## 3. Canonical vs Venue-Specific
 
-Canonical command:
+Canonical model không nên giả định mọi venue có cùng order types/status semantics.
+
+Adapter phải preserve distinctions quan trọng, không normalize đến mức mất meaning.
+
+## 4. Outbound Pipeline
 
 ```text
-SubmitOrder
-- InternalOrderId
-- ClientOrderId
-- Account
-- InstrumentId
-- Side
-- Quantity
-- Price
-- OrderType
-- TimeInForce
-- TradingSession
+Command
+→ validate route/readiness
+→ map
+→ persist outbound/session state
+→ encode
+→ send
+→ track unknown/pending ack
 ```
 
-Adapter map sang message contract của venue.
-
-Khi venue thêm field/rule mới, mục tiêu là thay đổi adapter/config trước, không rewrite toàn bộ OMS.
-
-## 3. Validation ở đâu?
-
-Có ba lớp khác nhau:
+## 5. Inbound Pipeline
 
 ```text
-Domain validation
-→ account/buying power/order state
-
-Market-rule validation
-→ session, lot, tick, order type, instrument status
-
-Protocol validation
-→ required field, enum, sequence, checksum/session rule
+Receive
+→ session validation
+→ decode
+→ durable record/dedup
+→ map canonical event
+→ publish/apply
 ```
 
-Đừng gom mọi reject thành `INVALID_ORDER`.
+## 6. Readiness
 
-## 4. Reject taxonomy
+Liveness chỉ nói process còn chạy.
 
-Gateway nên chuẩn hóa reason nhưng giữ raw evidence:
+Gateway ready cần có thể yêu cầu:
 
 ```text
-CanonicalReasonCode
-VenueReasonCode
-VenueMessage
-RawMessageRef
-OccurredAt
-SessionId
-Sequence
-```
-
-OMS có thể phản ứng theo canonical reason; operations vẫn điều tra được raw venue reason.
-
-## 5. Connection lifecycle
-
-```mermaid
-stateDiagram-v2
-    [*] --> Disconnected
-    Disconnected --> Connecting
-    Connecting --> Recovering
-    Recovering --> Live
-    Live --> Degraded
-    Degraded --> Recovering
-    Live --> Disconnected
-    Recovering --> Disconnected
-```
-
-Không nên publish trạng thái `READY` chỉ vì TCP socket connected. Gateway chỉ ready khi session/sequence/reference state cần thiết đã đồng bộ theo contract.
-
-## 6. Startup readiness gate
-
-Một service gateway thường phải chờ:
-
-```text
-configuration loaded
-credentials/certificates ready
-session store available
-network route available
 session logged on
-sequence recovered
-required reference/trading status synced
+sequence synchronized
+message store healthy
+network route healthy
+cert valid
+ownership active
 ```
 
-Sau đó mới `SetReady()` cho order routing. Đây là nơi một readiness gate/TCS phù hợp hơn dùng semaphore để diễn tả “một lần chuyển sang ready”.
+## 7. Backpressure
 
-## 7. Primary/backup connectivity
+Nếu venue slow hoặc disconnected, không nên unbounded queue orders.
 
-Market connectivity cần thiết kế theo failure domain:
+Policy cần:
 
 ```text
-Primary DC
-Primary route
-Primary gateway
-
-Backup route
-Standby gateway
-DR site
+queue limit
+reject/degraded mode
+priority
+TTL
+operator visibility
 ```
 
-Không chỉ hỏi “có 2 server chưa?”. Hỏi:
+## 8. Session Ownership
 
-- hai server có chung switch/firewall failure không?
-- session state replicate thế nào?
-- ai có quyền active?
-- failover mất bao nhiêu giây/phút?
-- sau failover reconcile order/trade thế nào?
+Một logical session thường chỉ có một active owner.
 
-## 8. Fencing
+Need fencing để standby không cùng gửi.
 
-Kịch bản nguy hiểm:
+## 9. Primary / Standby
 
 ```text
-Node A mất heartbeat với coordinator nhưng vẫn có network tới venue
-Node B nghĩ A chết và active
+Primary Gateway
+Standby Gateway
+Primary Network
+Backup Network
+DR Site
 ```
 
-Nếu cả A và B send trên cùng logical session/business identity → split brain.
+Failover phải được rehearsed.
 
-Cần fencing/ownership mechanism phù hợp với deployment và protocol; không dựa duy nhất biến `IsLeader=true` trong RAM.
+## 10. Certification
 
-## 9. Backpressure
-
-Nếu OMS gửi nhanh hơn gateway/venue cho phép:
+Production connectivity yêu cầu test cases không chỉ happy path:
 
 ```text
-unbounded queue
-→ memory growth
-→ latency tăng
-→ stale order
-→ reconnect/replay storm
+logon/logout
+sequence recovery
+cancel/replace
+rejections
+session reset rules
+network break
+reconnect
+replay
+order status cases
 ```
 
-Gateway cần bounded queue, capacity policy, rate/flow control, metrics và reject/degrade behavior rõ.
+## 11. Configuration
 
-## 10. Trading-status event
-
-Gateway không chỉ truyền orders. Nó có thể cần đưa vào canonical model các sự kiện:
+Version:
 
 ```text
-market/session open-close
-instrument halt/resume
-venue connectivity state
-sequence/recovery state
-reference updates theo interface
+venue endpoints
+sender/target IDs
+certificates
+routing tables
+message mappings
+trading calendars
+feature flags
 ```
 
-Downstream risk/order validation phải biết data freshness và authority của event.
+## 12. Security Zone
 
-## 11. Certification mindset
+Gateway thường cần network isolation, secret/cert controls, restricted admin access và audit.
 
-Trước production, test không chỉ happy-path submit/fill. Certification matrix nên gồm:
+## 13. Observability
 
 ```text
-new order
-reject
-partial fill
-full fill
-cancel
-cancel reject
-replace
-session reconnect
-sequence gap
-resend
-duplicate
-invalid message
-market close transition
-network failover
-gateway restart
-DR failover
+session status
+seq positions
+send queue depth
+ack latency
+rejects
+network latency
+reconnects
+replay volume
+cert expiry
 ```
 
-## 12. Reconciliation boundary
+## 14. Common mistakes
 
-Gateway giữ mapping:
+- stateless REST gateway mindset;
+- core biết raw FIX tags;
+- readiness = process up;
+- queue unbounded khi venue down;
+- two active sessions;
+- config change không version/audit.
 
-```text
-InternalOrderId ↔ ClientOrderId ↔ VenueOrderId
-InternalTradeId ↔ ExecId/TradeId
-```
+<div class="key-takeaway"><strong>Takeaway</strong>Exchange gateway là **stateful protocol boundary** cần ownership, durability, backpressure và operational discipline.</div>
 
-Reconciliation engine dùng mapping này để so internal OMS/trades với venue evidence.
+## Checklist
 
-Mất mapping external IDs là một operational incident, không phải lỗi nhỏ.
-
-## 13. Security
-
-Tùy interface/specification có thể cần private circuits, certificate, IP allowlist, HSM/PKI hoặc control khác. Architecture phải tách:
-
-```text
-application credentials
-transport/session credentials
-certificate/private key ownership
-rotation
-privileged access
-network zone
-```
-
-Không log raw secrets/private keys.
-
-## 14. Observability
-
-```text
-connection/session state
-active gateway node
-orders sent/sec
-venue ACK latency
-reject rate by reason
-unknown submit count
-outbound queue depth
-sequence gaps/resends
-reconnect count
-last inbound timestamp
-mapping failures
-reconciliation breaks
-```
-
-## Nguồn kiểm tra
-
-Thông tin KRX go-live: Ủy ban Chứng khoán Nhà nước, công bố ngày 05/05/2025. Link được lưu tại [References](../../resources/references.md).
-
-## Definition of Done
-
-- [ ] Domain không phụ thuộc wire protocol.
-- [ ] Canonical ↔ venue mapping version/test được.
-- [ ] Ready state bao gồm session recovery, không chỉ socket up.
-- [ ] Primary/standby có ownership/fencing.
-- [ ] Queue/backpressure bounded.
-- [ ] External IDs được lưu bền vững.
-- [ ] Certification test có recovery/failure scenarios.
-- [ ] Reconciliation có thể trace về raw venue evidence.
+- [ ] Domain/protocol separated.
+- [ ] Durable session/outbound state.
+- [ ] Readiness business-aware.
+- [ ] Bounded queue.
+- [ ] Fencing.
+- [ ] Certification scenarios.
+- [ ] Config/audit controls.
 
 ## Bài tập
 
-Thiết kế `IExchangeVenue` port và adapter giả lập hai venue có message contract khác nhau. Sau đó failover từ gateway A sang B giữa lúc có 100 working orders và trình bày từng bước để B khôi phục session, mapping, unknown orders và chỉ mở routing khi reconciliation đạt điều kiện.
+1. Vẽ primary/standby gateway.
+2. Design readiness endpoint semantics.
+3. Simulate venue outage with 10k pending submits.
+4. Create certification test matrix.
+
+## Đọc tiếp
+
+[Bài 16 — Trade Capture & Booking](../16-trade-capture-booking/).

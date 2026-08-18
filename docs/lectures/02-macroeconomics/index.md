@@ -1,144 +1,290 @@
-# Bài 02 — Kinh tế học vĩ mô: nền kinh tế đi vào giá tài sản như thế nào?
+---
+title: "Bài 02 — Kinh tế học vĩ mô"
+description: "Từ GDP, lạm phát, lãi suất và chính sách đến định giá tài sản, chu kỳ thị trường và quyết định đầu tư."
+---
 
-Vĩ mô nghiên cứu nền kinh tế tổng thể. Với nhà đầu tư và securities engineer, cần hiểu chuỗi truyền dẫn:
+# Bài 02 — Kinh tế học vĩ mô: vì sao cả thị trường cùng tăng hoặc cùng giảm?
 
-```text
-Growth / Inflation / Policy
-        ↓
-Interest Rate / Liquidity / FX
-        ↓
-Corporate Earnings + Discount Rate
-        ↓
-Asset Valuation
-        ↓
-Market Activity / Risk
-```
+<div class="lesson-meta">
+  <span><strong>Track</strong> Economics & Finance</span>
+  <span><strong>Mức độ</strong> Foundation</span>
+  <span><strong>Mục tiêu</strong> Hiểu các biến vĩ mô truyền dẫn vào doanh nghiệp, lãi suất và giá tài sản</span>
+</div>
 
-## 1. GDP và tăng trưởng
+Một cổ phiếu có thể tốt lên dù doanh nghiệp không công bố tin gì, hoặc giảm mạnh dù báo cáo lợi nhuận vẫn ổn. Lý do thường nằm ở **môi trường vĩ mô**: lãi suất, lạm phát, tăng trưởng, tỷ giá, thanh khoản hệ thống và kỳ vọng chính sách.
 
-GDP đo giá trị hàng hóa, dịch vụ cuối cùng được sản xuất trong nền kinh tế.
+<div class="learning-objectives">
+<strong>Sau bài này bạn phải giải thích được:</strong>
 
-Ba cách nhìn phổ biến:
+- GDP thực khác GDP danh nghĩa thế nào;
+- lạm phát tác động đến purchasing power và required return ra sao;
+- vì sao lãi suất tăng thường gây áp lực lên định giá tài sản;
+- chính sách tiền tệ và tài khóa truyền dẫn vào nền kinh tế thế nào;
+- chu kỳ kinh tế ảnh hưởng earnings, credit risk và sector rotation ra sao;
+- backend/data platform cần lưu macro data theo version, period và release time vì sao.
+</div>
 
-```text
-GDP = C + I + G + (X - M)
-```
+## 1. GDP — đo quy mô hoạt động kinh tế
 
-Tăng trưởng kinh tế thường hỗ trợ doanh thu/lợi nhuận doanh nghiệp nhưng không đồng nghĩa thị trường chứng khoán luôn tăng; giá còn phụ thuộc **expectation** và **valuation**.
-
-## 2. Inflation
-
-Lạm phát làm giảm sức mua và ảnh hưởng:
-
-- chi phí nguyên vật liệu;
-- tiền lương;
-- sức mua người tiêu dùng;
-- lãi suất;
-- discount rate;
-- biên lợi nhuận.
-
-Một doanh nghiệp có pricing power có thể chuyển chi phí tăng sang khách hàng tốt hơn doanh nghiệp cạnh tranh bằng giá.
-
-## 3. Interest Rate
-
-Lãi suất là biến số trung tâm của finance.
+GDP thường được hiểu bằng identity:
 
 ```text
-Interest Rate ↑
-   ├─ Cost of Debt ↑
-   ├─ Required Return ↑
-   ├─ Present Value ↓
-   └─ Credit / Liquidity có thể ↓
+GDP = Consumption + Investment + Government Spending + Net Exports
 ```
 
-Định giá một cash flow tương lai:
+Nhưng với investor, câu hỏi quan trọng hơn là:
+
+> tăng trưởng đến từ đâu, bền vững không, và doanh nghiệp nào hưởng lợi?
+
+Ví dụ đầu tư công tăng có thể thúc đẩy xây dựng, vật liệu, logistics; xuất khẩu yếu có thể làm giảm doanh thu nhóm doanh nghiệp phụ thuộc thị trường ngoài nước.
+
+## 2. GDP danh nghĩa và GDP thực
+
+Nếu sản lượng không đổi nhưng giá tăng 10%, GDP danh nghĩa có thể tăng dù nền kinh tế không sản xuất nhiều hơn.
 
 ```text
-PV = CF / (1 + r)^t
+Nominal GDP = current price × current quantity
+Real GDP    = base-year price × current quantity
 ```
 
-`r` tăng → PV giảm, nếu các yếu tố khác giữ nguyên.
+Vì vậy phân tích tăng trưởng phải tách **price effect** khỏi **volume effect**.
 
-## 4. Monetary Policy
+## 3. Inflation — lạm phát
 
-Ngân hàng trung ương tác động nền kinh tế qua công cụ chính sách tiền tệ và điều kiện thanh khoản.
+Lạm phát làm giảm sức mua của tiền.
 
-Engineer không cần trở thành nhà kinh tế, nhưng phải hiểu tại sao thị trường phản ứng mạnh với:
+Nếu lợi suất danh nghĩa là 8% nhưng inflation 5%, real return xấp xỉ:
 
-- policy rate;
-- money supply/liquidity;
-- credit conditions;
-- expectation về future rate.
+```text
+Real Return ≈ Nominal Return - Inflation
+            ≈ 8% - 5%
+            ≈ 3%
+```
 
-## 5. Fiscal Policy
+Công thức chính xác hơn:
 
-Thuế, chi tiêu công, đầu tư công và ngân sách có thể tác động tổng cầu và từng ngành.
+```text
+1 + real = (1 + nominal) / (1 + inflation)
+```
 
-Ví dụ đầu tư hạ tầng lớn có thể ảnh hưởng nhóm xây dựng, vật liệu, logistics và ngân hàng qua nhiều kênh khác nhau.
+### Tại sao inflation làm thị trường khó chịu?
 
-## 6. Exchange Rate
+```text
+Inflation ↑
+  ↓
+Policy rate có thể ↑
+  ↓
+Cost of capital ↑
+  ↓
+Present value of future cash flows ↓
+  ↓
+Valuation pressure
+```
 
-FX ảnh hưởng:
+## 4. Interest Rate — biến số trung tâm của finance
 
-- doanh nghiệp xuất khẩu/nhập khẩu;
-- khoản vay ngoại tệ;
-- dòng vốn nước ngoài;
-- giá nguyên liệu;
-- inflation.
+Giả sử nhận `110` sau một năm.
 
-Không nên suy luận đơn giản “tỷ giá tăng = exporter tốt”; phải xem cơ cấu revenue/cost/debt và hedging.
+Nếu discount rate 5%:
 
-## 7. Business Cycle
+```text
+PV = 110 / 1.05 ≈ 104.76
+```
+
+Nếu discount rate 10%:
+
+```text
+PV = 110 / 1.10 = 100
+```
+
+Cùng cash flow, lãi suất cao hơn → present value thấp hơn.
+
+Đây là cầu nối trực tiếp từ macro sang valuation.
+
+## 5. Yield Curve
+
+Yield curve mô tả lãi suất theo kỳ hạn.
+
+```text
+Short-term yield
+Medium-term yield
+Long-term yield
+```
+
+Shape của curve chứa kỳ vọng về policy, inflation, growth và risk premium.
+
+Không nên học máy móc “inverted yield curve = recession”. Engineer/data analyst cần lưu **observation date, maturity, source và revision** để historical backtest đúng.
+
+## 6. Monetary Policy
+
+Ngân hàng trung ương tác động nền kinh tế qua các công cụ như policy rate, open-market operations, reserve/liquidity mechanisms tùy hệ thống.
 
 Mental model:
 
 ```text
-Expansion → Peak → Slowdown/Recession → Recovery
+Policy stance
+   ↓
+Interbank / funding conditions
+   ↓
+Bank lending rates
+   ↓
+Credit creation
+   ↓
+Consumption / Investment
+   ↓
+Growth / Inflation
 ```
 
-Các sector không phản ứng giống nhau. Cyclical companies khác defensive companies.
+## 7. Fiscal Policy
 
-## 8. Yield Curve
-
-Yield curve biểu diễn lãi suất theo kỳ hạn. Nó chứa expectation về growth, inflation, policy và risk premium.
-
-Đối với bond core, yield curve không phải chart để xem cho đẹp; nó là input cho:
-
-- pricing;
-- mark-to-market;
-- duration;
-- risk;
-- scenario analysis.
-
-## 9. Vĩ mô → hệ thống dữ liệu
-
-Một investment/data platform thường phải ingest:
+Chính phủ tác động qua chi tiêu, thuế và đầu tư công.
 
 ```text
-Macro Data
-├── GDP
-├── CPI
-├── Policy Rate
-├── FX
-├── Yield Curve
-├── Credit Growth
-└── Commodity Prices
-       ↓
-Time-series Store
-       ↓
-Analytics / Research / Alert
+Government spending ↑
+→ aggregate demand ↑
+→ business revenue có thể ↑
+→ nhưng debt/funding pressure cũng có thể ↑
 ```
 
-Điểm kỹ thuật quan trọng: macro series có thể **revision**. Một giá trị lịch sử được công bố hôm nay có thể được cơ quan thống kê sửa sau này; data model nên lưu publication time/version nếu yêu cầu audit/research nghiêm túc.
+Không có policy nào chỉ có một effect.
+
+## 8. Exchange Rate
+
+Tỷ giá ảnh hưởng doanh nghiệp khác nhau.
+
+### Exporter
+
+Doanh thu USD, chi phí VND có thể hưởng lợi khi USD mạnh — nhưng còn contract, hedging, input import và elasticity.
+
+### Importer
+
+Nhập nguyên liệu bằng USD có thể chịu cost pressure khi VND yếu.
+
+Do đó backend analytics không nên hard-code `USD/VND ↑ = exporter tốt` mà cần exposure model.
+
+## 9. Business Cycle
+
+Một mental model đơn giản:
+
+```text
+Expansion
+→ Peak
+→ Slowdown
+→ Recession
+→ Recovery
+```
+
+Sector sensitivity khác nhau:
+
+- cyclical: construction, discretionary, commodities;
+- defensive: utilities, essential consumption;
+- rate-sensitive: banks, real estate, long-duration growth stocks.
+
+## 10. Unemployment và labor market
+
+Labor market vừa phản ánh sức khỏe kinh tế vừa ảnh hưởng wage inflation.
+
+```text
+Tight labor market
+→ wage pressure
+→ consumption support
+→ margin pressure ở business labor-intensive
+```
+
+## 11. Liquidity và Credit Cycle
+
+Không chỉ policy rate, **availability of credit** cũng quan trọng.
+
+```text
+Easy credit
+→ leverage ↑
+→ asset demand ↑
+→ risk taking ↑
+```
+
+Khi cycle đảo chiều:
+
+```text
+credit standards tighten
+→ refinancing difficult
+→ defaults ↑
+→ forced selling
+```
+
+## 12. Macro → Company Earnings
+
+Ví dụ công ty bán lẻ:
+
+```text
+GDP growth ↓
+→ disposable income pressure
+→ consumer demand ↓
+→ revenue growth ↓
+→ operating leverage
+→ profit falls faster than revenue
+```
+
+Đây là lý do valuation model phải có scenario thay vì chỉ extrapolate lịch sử.
+
+## 13. Macro → Asset Pricing
+
+```text
+Risk-free rate
++ inflation expectation
++ growth expectation
++ risk premium
+= required return context
+```
+
+Thị trường không phản ứng chỉ với dữ liệu hiện tại mà với **surprise so với expectation**.
+
+Ví dụ CPI 4% không tự động xấu. Nếu market kỳ vọng 5%, 4% có thể là positive surprise.
+
+## 14. Dữ liệu vĩ mô là temporal data
+
+Backend engineer phải phân biệt:
+
+```text
+Reference Period
+Release Time
+Revision Time
+Source
+Vintage
+```
+
+Một chỉ số GDP có thể được công bố sơ bộ rồi revised. Nếu backtest dùng số revised mà giả định investor đã biết từ ngày đầu, bạn tạo **look-ahead bias**.
+
+## 15. Common mistakes
+
+- nhìn một macro indicator rồi kết luận cả thị trường;
+- dùng nominal growth thay cho real growth;
+- bỏ qua expectation/surprise;
+- dùng dữ liệu revised cho historical decision simulation;
+- coi correlation là causation;
+- hard-code “rate up = all stocks down”.
+
+<div class="key-takeaway">
+<strong>Takeaway</strong>
+
+Macro không đưa ra lệnh BUY/SELL trực tiếp. Nó thiết lập **discount-rate environment, earnings environment và liquidity regime** mà mọi tài sản phải hoạt động bên trong.
+</div>
 
 ## Checklist
 
-- GDP growth khác stock return ở điểm nào?
-- Inflation ảnh hưởng margin và discount rate thế nào?
-- Tại sao rate tăng thường gây áp lực lên valuation?
-- FX tác động doanh nghiệp qua những kênh nào?
-- Yield curve được dùng ở bond/risk engine ra sao?
+- [ ] Giải thích nominal vs real GDP.
+- [ ] Giải thích inflation → rate → valuation.
+- [ ] Hiểu yield curve là term structure, không phải một con số.
+- [ ] Phân biệt monetary vs fiscal transmission.
+- [ ] Biết expectation quan trọng hơn headline value.
+- [ ] Biết macro data có revision/vintage.
 
 ## Bài tập
 
-Lấy một doanh nghiệp ngân hàng, một doanh nghiệp xuất khẩu và một doanh nghiệp bất động sản. Lập bảng sensitivity với 4 biến: interest rate, FX, inflation, GDP growth; giải thích kênh tác động thay vì chỉ ghi “tăng/giảm”.
+1. Giả lập PV của một cash flow 100 triệu sau 5 năm với discount rate 6%, 9%, 12%.
+2. Chọn một exporter và importer; lập bảng sensitivity với USD/VND ±5%.
+3. Thiết kế schema lưu CPI/GDP có `period`, `released_at`, `revised_at`, `source`, `value`.
+4. Viết một scenario: inflation cao nhưng GDP vẫn tăng — ngành nào có thể thắng/thua và vì sao?
+
+## Đọc tiếp
+
+Tiếp theo: [Bài 03 — Tài chính nền tảng](../03-finance-foundations/).

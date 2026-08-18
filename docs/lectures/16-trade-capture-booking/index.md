@@ -1,237 +1,165 @@
-# Bài 16 — Trade Capture & Booking: từ Execution sang business transaction
+---
+title: "Bài 16 — Trade Capture & Booking"
+description: "Execution identity, trade booking transaction, fees/tax, corrections, busts và reconciliation."
+---
 
-Một `ExecutionReport` báo fill chưa tự động đồng nghĩa mọi downstream state đã đúng. Broker cần một lớp **trade capture / trade booking** biến execution hợp lệ từ venue thành business transaction bền vững, có identity, fee/tax effect, position/cash effect và post-trade handoff.
+# Bài 16 — Trade Capture & Booking: execution về rồi, business effect được ghi nhận thế nào?
 
-## 1. Order, Execution và Trade
+<div class="lesson-meta"><span><strong>Track</strong> Production Securities Engineering</span><span><strong>Mức độ</strong> Advanced</span><span><strong>Mục tiêu</strong> Apply execution exactly once và tạo trade/audit đúng</span></div>
+
+Một `ExecutionReport` không chỉ update `CumQty`. Nó có thể tạo trade, consume reservation, thay đổi position/cash pending, fee/tax và downstream settlement obligations.
+
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
+
+- execution identity và dedup;
+- trade booking transaction boundary;
+- fees/tax versioning;
+- correction/bust/reversal;
+- booking vs settlement;
+- reconciliation với external trade evidence.
+</div>
+
+## 1. Execution Identity
 
 ```text
-Order
-  ├── Execution #1
-  ├── Execution #2
-  └── Execution #3
-
-Execution accepted
-      ↓
-Trade Booking
-      ↓
-Internal Trade
+Venue + ExecId
 ```
 
-Một order có thể sinh nhiều executions/trades. Không update một dòng order rồi coi đó là toàn bộ trade history.
+hoặc identity theo exact venue contract.
 
-## 2. Execution identity
+Unique business key cần ngăn double booking.
 
-Một inbound fill cần stable identity theo venue contract:
+## 2. Booking Flow
 
 ```text
-Venue
-ExecId / TradeId
-VenueOrderId
-Symbol/Instrument
-Side
-LastQty
-LastPx
-TradeTime
-BusinessDate
+Execution Received
+→ dedup
+→ validate order/qty
+→ update order quantities
+→ create Trade
+→ consume reservation
+→ create ledger/pending effects
+→ create downstream event/outbox
+→ commit
 ```
 
-Business constraint điển hình:
+## 3. Atomicity
+
+Nếu Trade created nhưng Order not updated, state diverges.
+
+Transaction boundary phải bảo vệ invariant liên quan.
+
+## 4. Partial Fills
+
+Một order sinh nhiều trades/executions.
+
+Trade entity không nên overwrite order row history.
+
+## 5. Average Price
 
 ```text
-UNIQUE(Venue, ExecId)
+AvgPx = Σ(qty_i × price_i) / Σ(qty_i)
 ```
 
-hoặc key khác theo specification. Mục tiêu là duplicate/replay không double-book.
+Need decimal precision/rounding rules.
 
-## 3. Booking transaction
-
-Một local transaction hợp lý có thể bao gồm:
+## 6. Fees and Tax
 
 ```text
-insert inbox/dedup marker
-insert execution/trade
-update order CumQty/LeavesQty
-consume reservation
-write ledger/business entries
-insert outbox events
-```
-
-khi các mutation này cùng bảo vệ một invariant và cùng database boundary.
-
-## 4. Crash matrix
-
-Hãy phân tích từng điểm:
-
-```text
-A. receive execution
-B. insert trade
-C. update order
-D. write ledger
-E. commit DB
-F. publish TradeBooked
-```
-
-### Crash trước E
-
-Local transaction rollback → inbound message phải có khả năng redeliver/recover.
-
-### Crash sau E trước F
-
-Nếu publish trực tiếp, downstream có thể không bao giờ biết trade. Transactional outbox xử lý lỗ hổng này.
-
-### Duplicate sau restart
-
-Inbox/business uniqueness bảo đảm trade effect không chạy lần hai.
-
-## 5. Position effect
-
-BUY fill:
-
-```text
-Pending/Trade Position +Qty
-Cash obligation         -Amount
-```
-
-SELL fill:
-
-```text
-Pending sell/position effect -Qty
-Cash receivable               +Amount
-```
-
-Tên state cụ thể phụ thuộc accounting/settlement model; điều quan trọng là phân biệt **trade-date effect** và **settled effect**.
-
-## 6. Fee & Tax
-
-Fee/tax engine phải reproducible:
-
-```text
-TradeId
-RuleVersion
+FeePolicyVersion
+TaxRuleVersion
 EffectiveDate
-InputAmount/Qty
-CalculatedFee
-CalculatedTax
-Currency
-Reason/Category
+AccountSegment
+Instrument/Market
 ```
 
-Nếu rule thay đổi sau này, trade lịch sử vẫn giải thích được.
+Không hard-code rate trong execution handler.
 
-## 7. Average Price và P&L
+## 7. Pending Effects
 
-Đừng để mỗi consumer tự tính average cost khác nhau. Xác định rõ source/algorithm cho:
+Execution có thể tạo:
 
 ```text
-Average Cost
-Realized P&L
-Unrealized P&L
-Position Lots nếu cần
-Corporate-action adjustments
+pending cash payable/receivable
+pending securities receivable/deliverable
 ```
 
-Trading P&L, accounting P&L và tax cost basis có thể khác semantics; document rõ thay vì gọi chung `AvgPrice`.
+không đồng nghĩa settled immediately.
 
-## 8. Bust / Correction / Amendment
+## 8. Trade Correction / Bust
 
-Production market có thể có correction/bust/adjustment flow tùy venue. Không xóa trade cũ rồi insert lại silently.
-
-Mental model:
+Production cần adjustment/reversal semantics, không DELETE trade.
 
 ```text
 Original Trade
-    ↓
-Correction / Reversal reference
-    ↓
-Adjustment entries
-    ↓
-Recalculate projections
-    ↓
-Reconcile
+→ Correction/Bust Event
+→ Reversal/Adjustment Entries
+→ New Effective State
 ```
 
-History phải giữ được cả original và correction evidence.
+## 9. Late / Duplicate Execution
 
-## 9. Trade date vs settlement date
+Duplicate: no second effect.
 
-Trade booking tạo nghĩa vụ từ ngày giao dịch; settlement diễn ra theo cycle/rule của instrument/market.
+Late but valid: apply according to authoritative order/session/business-date semantics.
 
-```text
-TradeDate
-  ↓
-Trade booked
-  ↓
-Clearing obligation
-  ↓
-SettlementDate
-  ↓
-Cash/Securities finality
-```
+## 10. Unknown Order Link
 
-Không dùng `tradeDate + 2 calendar days` generic; settlement calendar là domain data.
-
-## 10. Downstream events
-
-Trade booked có thể fan-out tới:
-
-```text
-Post-trade
-Ledger/Accounting
-Portfolio
-Risk
-Customer Notification
-Rewards
-Reporting
-Analytics
-```
-
-Event contract nên stable và chứa business identity, không ép downstream parse raw FIX.
+Nếu execution về nhưng OMS không tìm thấy order mapping, không drop. Tạo exception/reconciliation workflow.
 
 ## 11. Reconciliation
 
 ```text
-Venue Executions
-      ↕
 Internal Trades
+↔ Venue Trade Reports
 ```
 
-So theo stable identity + quantity/price/business date. Nếu venue có trade mà internal không có, đó là break severity cao vì position/cash có thể sai.
+Compare identity, account, instrument, qty, price, time, side, status.
 
-## 12. Observability
+## 12. Event Publication
+
+Booking + integration event tránh dual-write hole bằng outbox hoặc equivalent.
+
+## 13. Audit
+
+Trade phải trace về:
 
 ```text
-execution receive lag
-booking latency
-booking failures
-inbox duplicate hits
-trade correction count
-outbox backlog
-venue-vs-internal trade breaks
-unbooked execution age
+Order
+Execution raw message/evidence
+Fee/tax policy
+Booking transaction
+Corrections
+Settlement references
 ```
 
-## Failure lab
+## 14. Common mistakes
 
-1. Duplicate cùng `ExecId` 10 lần.
-2. Crash sau DB commit trước publish.
-3. Out-of-order fills.
-4. Fill làm CumQty vượt OrderQty do upstream bug.
-5. Fee service unavailable nếu fee tính ngoài boundary.
-6. Trade correction sau EOD.
+- duplicate ExecId double position;
+- Trade == Order;
+- DELETE correction;
+- fee current rate applied to historical trade;
+- booking = settlement;
+- publish event after commit without recovery mechanism.
 
-Với case 4, core phải **reject/quarantine invariant violation** thay vì ép số cho khớp.
+<div class="key-takeaway"><strong>Takeaway</strong>Trade booking là **financial posting boundary**: execution phải tạo business effect đúng một lần, traceable và reversible bằng accounting semantics.</div>
 
-## Definition of Done
+## Checklist
 
-- [ ] Execution identity/dedup rõ.
-- [ ] Trade là entity/business transaction riêng order.
-- [ ] Booking transaction bảo vệ order + trade + resource effect.
-- [ ] Outbox đóng dual-write hole.
-- [ ] Fee/tax có rule version.
-- [ ] Correction/reversal không xóa lịch sử.
-- [ ] Trade-date và settled state được tách.
-- [ ] Reconciliation venue ↔ internal trades.
+- [ ] Stable Exec identity.
+- [ ] Atomic booking.
+- [ ] Versioned fees/tax.
+- [ ] Pending vs settled separated.
+- [ ] Correction/reversal.
+- [ ] Trade reconciliation.
 
 ## Bài tập
 
-Mô phỏng một BUY order nhận 3 partial fills, trong đó fill thứ hai bị redeliver 5 lần và process crash sau commit của fill thứ ba. Chứng minh final CumQty, trade count, reservation, position và downstream `TradeBooked` đều đúng.
+1. Book 3 partial executions và tính AvgPx.
+2. Send duplicate ExecId 10 lần.
+3. Model trade bust.
+4. Design booking transaction + outbox.
+
+## Đọc tiếp
+
+[Bài 17 — Clearing, Netting & Settlement](../17-clearing-netting-settlement/).

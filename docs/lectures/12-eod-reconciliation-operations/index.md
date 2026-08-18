@@ -1,10 +1,25 @@
-# Bài 12 — EOD, Reconciliation và Securities Operations
+---
+title: "Bài 12 — EOD, Reconciliation & Securities Operations"
+description: "End-of-day dependency graph, reconciliation breaks, business date, rerun, manual operations và recovery."
+---
 
-Một hệ thống trading tốt không chỉ chạy nhanh trong phiên. Nó phải **chứng minh sau phiên rằng trạng thái nội bộ khớp với exchange, depository, bank và các hệ thống kế toán liên quan**.
+# Bài 12 — EOD & Reconciliation: làm sao chứng minh hệ thống đúng sau khi thị trường đóng cửa?
 
-Đây là nơi software engineering gặp operations thật sự.
+<div class="lesson-meta"><span><strong>Track</strong> Market & Brokerage Core</span><span><strong>Mức độ</strong> Core</span><span><strong>Mục tiêu</strong> Productize EOD/reconciliation thay vì coi là script vận hành</span></div>
 
-## 1. FILLED không phải kết thúc
+Trading chạy nhanh trong phiên chưa đủ. Sau phiên phải chứng minh internal state khớp venue, depository, bank và accounting evidence.
+
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
+
+- FILLED vì sao chưa phải done;
+- reconciliation cần independent source;
+- break lifecycle;
+- EOD là dependency graph;
+- business date khác wall-clock date;
+- rerun/manual adjustment phải idempotent và auditable.
+</div>
+
+## 1. Full Lifecycle
 
 ```text
 Order
@@ -18,101 +33,70 @@ Order
 → EOD Close
 ```
 
-Một trade có thể FILLED hoàn hảo nhưng post-trade bị break.
-
-## 2. Reconciliation là control độc lập
-
-Không nên coi reconciliation là “query lại cùng database xem giống nhau không”. Phải so hai source có tính độc lập đủ để phát hiện lỗi.
+## 2. Reconciliation Pairs
 
 ```text
 Internal Orders      ↔ Venue Orders
 Internal Executions  ↔ Venue Trades
-Internal Securities  ↔ VSDC/Custodian
 Internal Cash        ↔ Bank
-Internal Obligations ↔ Clearing/Settlement result
+Internal Securities  ↔ Depository
+Internal Obligations ↔ Settlement Results
 ```
 
-## 3. Reconciliation key
-
-Muốn đối soát được cần stable identity:
+## 3. Stable Keys
 
 ```text
 ClientOrderId
 VenueOrderId
-ExecId / TradeId
+ExecId
+TradeId
 SettlementInstructionId
 AccountId
 InstrumentId
 BusinessDate
 ```
 
-Nếu hệ thống mất mapping external IDs, reconciliation sẽ cực kỳ khó.
-
-## 4. Break lifecycle
-
-Break không nên chỉ là log text.
+## 4. Break Lifecycle
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Open
-    Open --> Investigating
-    Investigating --> AutoResolved
-    Investigating --> ManualAction
-    ManualAction --> Recompare
-    Recompare --> Resolved
-    Recompare --> Investigating
-    AutoResolved --> Resolved
-    Resolved --> [*]
+[*] --> Open
+Open --> Investigating
+Investigating --> AutoResolved
+Investigating --> ManualAction
+ManualAction --> Recompare
+Recompare --> Resolved
+Recompare --> Investigating
 ```
 
-Break record có thể gồm `BreakId`, `ReconType`, `BusinessKey`, `InternalValue`, `ExternalValue`, `Difference`, `Severity`, `DetectedAt`, `Owner`, `Status`, `ResolutionCode`, `ResolvedAt`, `AuditTrail`.
-
-## 5. Các loại mismatch
-
-### Missing internal
-
-External có trade, nội bộ không có.
-
-### Missing external
-
-Nội bộ nghĩ đã gửi/book nhưng venue/external không có.
-
-### Quantity mismatch
+## 5. Break Types
 
 ```text
-Internal ExecQty 1,000
-External ExecQty 1,500
+Missing Internal
+Missing External
+Quantity Mismatch
+Cash Mismatch
+Timing Mismatch
+Status Mismatch
 ```
 
-### Cash mismatch
+## 6. EOD Dependency Graph
 
-Fee, tax, settlement amount hoặc posting sai.
-
-### Timing mismatch
-
-Hai bên đúng nhưng cutoff/data arrival khác nhau. Reconciliation cần tolerance/window thay vì báo false break hàng loạt.
-
-## 6. EOD không phải một cron job khổng lồ
-
-End-of-day nên được nhìn như **dependency graph**.
-
-```mermaid
-flowchart TD
-    CLOSE[Market Close / Cutoff] --> INGEST[Complete external files/messages]
-    INGEST --> ORDERREC[Order/Trade Recon]
-    ORDERREC --> LEDGER[Finalize postings]
-    LEDGER --> POS[Position/Cash snapshots]
-    POS --> SETTLE[Settlement obligations]
-    SETTLE --> RECON[Cash/Securities Recon]
-    RECON --> REPORT[Reports / Statements]
-    REPORT --> CLOSEDATE[Business Date Close]
+```text
+Market Close
+→ Input Completeness
+→ Order/Trade Recon
+→ Ledger Finalization
+→ Position/Cash Snapshot
+→ Settlement Obligations
+→ Cash/Securities Recon
+→ Reports
+→ Business Date Close
 ```
 
-Mỗi step cần input completeness, retryability và observable status.
+## 7. Business Date
 
-## 7. Business Date khác wall-clock date
-
-Trading system cần concept:
+Không dùng `DateTime.Today` như business truth.
 
 ```text
 BusinessDate
@@ -123,105 +107,112 @@ Holiday
 Session
 ```
 
-Không dùng `DateTime.Today` làm business truth. Job chạy lúc 00:05 không có nghĩa mọi market operation đã chuyển sang business date mới.
+## 8. Completeness Gates
 
-## 8. Completeness check
-
-Trước khi EOD bước tiếp, hỏi:
+Trước step tiếp theo:
 
 ```text
-Đã nhận đủ file/message chưa?
-Sequence feed có gap không?
-Có unknown order nào chưa resolve?
-Có settlement batch nào pending?
-Có reconciliation break severity cao không?
+đủ external files/messages?
+feed còn gap?
+unknown orders resolved?
+settlement batches complete?
+high-severity breaks còn mở?
 ```
 
-Nếu không, close date có thể phải block/escalate theo policy.
+## 9. Rerun
 
-## 9. Rerun phải an toàn
+Operations sẽ rerun.
 
-Operations sẽ rerun job. Nếu rerun làm `post fee` hai lần thì core sai ngay.
+Step phải có:
 
-EOD step cần:
+```text
+RunId
+BusinessKey
+Checkpoint
+Idempotency
+Resume semantics
+Audit
+```
 
-- idempotency/business key;
-- checkpoint;
-- immutable run record;
-- rerun/resume semantics;
-- adjustment thay vì silent overwrite khi đã finalized.
+## 10. Manual Operations
 
-## 10. Manual operations phải là first-class workflow
-
-Production chắc chắn có exception cần con người xử lý. Đừng sửa DB trực tiếp rồi gửi Slack.
-
-Nên có:
+Không sửa DB trực tiếp.
 
 ```text
 Ops Task
 Maker
 Checker
-Reason Code
+Reason
 Before/After
-Attachment/Evidence
+Evidence
 Approval
 Audit
 ```
 
-Manual adjustment trong financial core phải trace được.
-
-## 11. Unknown outcome queue
-
-Những case như order submit timeout, settlement instruction timeout hoặc bank transfer timeout không nên bị ép thành failed.
+## 11. Unknown Queue
 
 ```text
 UNKNOWN
 → query external source
 → reconcile
-→ resolve SUCCESS / FAILED
+→ resolve success/failed
 ```
 
-Unknown queue cần aging/SLA/alert.
+Có aging/SLA/alerts.
 
-## 12. EOD metrics
+## 12. EOD Metrics
 
 ```text
-EOD start/end duration
+EOD duration
 pending stages
-unknown orders
-open breaks by severity
+open breaks
 oldest break age
-unbalanced ledger count
+unknown orders
 unsettled obligations
-external file lateness
 manual adjustments
-rerun count
+reruns
 ```
 
-## 13. DR và EOD
+## 13. DR and EOD
 
-Sau failover/DR:
+Sau failover:
 
-1. xác định last durable checkpoint;
-2. recover/replay inbound/outbound state;
-3. reconcile với external systems;
-4. chỉ tiếp tục business date close khi convergence được chứng minh.
+```text
+recover durable state
+→ replay inbound/outbound
+→ reconcile external
+→ prove convergence
+→ resume close
+```
 
-DR “app lên xanh” chưa có nghĩa business state đúng.
+## 14. Common mistakes
+
+- recon cùng một DB rồi gọi là independent control;
+- break chỉ là log;
+- EOD là một cron script opaque;
+- rerun double-post;
+- manual fix không audit;
+- app healthy = business state correct.
+
+<div class="key-takeaway"><strong>Takeaway</strong>Reconciliation là **control plane cho financial correctness**; EOD là stateful workflow có dependency và evidence.</div>
 
 ## Checklist
 
-- [ ] Reconciliation so hai nguồn độc lập phù hợp.
-- [ ] Stable external/internal IDs được giữ.
-- [ ] Break có lifecycle, owner, SLA, audit.
-- [ ] EOD là dependency graph, không phải script opaque.
-- [ ] BusinessDate/calendar explicit.
-- [ ] Input completeness được kiểm tra.
-- [ ] Rerun/resume idempotent.
-- [ ] Manual adjustment có maker/checker/audit khi cần.
-- [ ] Unknown outcome có queue và recovery.
-- [ ] DR kết thúc bằng reconciliation, không chỉ health check.
+- [ ] Independent recon sources.
+- [ ] Stable IDs.
+- [ ] Break lifecycle/SLA.
+- [ ] EOD dependency graph.
+- [ ] BusinessDate explicit.
+- [ ] Rerun safe.
+- [ ] Manual ops audited.
 
 ## Bài tập
 
-Thiết kế EOD run cho một ngày có 1 triệu executions. Inject ba lỗi: thiếu một external trade file, duplicate fee posting khi rerun, và một bank settlement chưa biết kết quả. Chỉ ra stage nào block, stage nào retry, và break nào cần manual operation.
+1. Thiết kế trade reconciliation table.
+2. Build EOD dependency DAG.
+3. Mô phỏng late external file.
+4. Design manual adjustment workflow maker/checker.
+
+## Đọc tiếp
+
+[Bài 13 — OMS Internals & State Machine](../13-oms-internals-state-machine/).

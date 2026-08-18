@@ -1,267 +1,161 @@
-# Bài 18 — Ledger, Accounting & Projections: đừng xây financial core quanh một field Balance
+---
+title: "Bài 18 — Ledger, Accounting & Projections"
+description: "Immutable business entries, balances, double-entry thinking, reversals, projections, rebuild và reconciliation."
+---
 
-Trong hệ thống tài chính, một con số hiện tại chưa đủ. Bạn cần trả lời:
+# Bài 18 — Ledger & Accounting: tại sao financial system không nên chỉ UPDATE Balance?
 
-> Tại sao balance/position lại có giá trị này, business event nào tạo ra nó, nếu projection hỏng có dựng lại được không, và external statement có reconcile được không?
+<div class="lesson-meta"><span><strong>Track</strong> Production Securities Engineering</span><span><strong>Mức độ</strong> Advanced</span><span><strong>Mục tiêu</strong> Thiết kế auditable financial state</span></div>
 
-Đó là lý do phải phân biệt **ledger/history** với **projection/current state**.
+Nếu một customer hỏi “vì sao số dư giảm 120.180.000?”, hệ thống phải trả lời bằng transaction history, không phải “column hiện tại đang như vậy”.
 
-## 1. Sai lầm phổ biến
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
 
-```text
-Account
-- Balance
-- UpdatedAt
-```
+- ledger vs balance projection;
+- debit/credit mental model;
+- immutable entry + reversal;
+- reservation/pending/settled states;
+- rebuild projection;
+- ledger reconciliation.
+</div>
 
-Mỗi workflow tự:
-
-```sql
-UPDATE accounts SET balance = balance + @delta
-```
-
-Sau vài tháng, không ai trả lời chắc được delta nào đến từ trade, fee, settlement, reversal hay manual fix.
-
-## 2. Business entries
-
-Mental model:
+## 1. History First
 
 ```text
-Business Transaction
-        ↓
-Ledger Entries
-        ↓
-Projection
-        ↓
-Available Cash / Settled Cash / Position / P&L
+Business Transactions / Entries
+→ Projection
+→ Current Balance / Position
 ```
 
-Ví dụ cash effects:
+## 2. Cash Example
 
 ```text
-Deposit
-Order Reservation
-Reservation Release
-Trade Payable
-Trade Receivable
-Fee
-Tax
-Settlement
-Dividend
-Withdrawal
-Adjustment/Reversal
+Deposit              +500m
+Reservation           available -120m / reserved +120m
+Trade Booking         pending payable
+Settlement            settled cash movement
+Fee                   -0.18m
+Release remainder
 ```
 
-## 3. Ledger identity
+Implementation có thể dùng sub-ledger/double-entry tùy model.
 
-Một entry cần trace được:
+## 3. Double-entry Mental Model
+
+Mọi financial effect có đối ứng để hệ thống cân bằng trong accounting boundary.
+
+Không nhất thiết expose accounting chart directly cho domain, nhưng invariants cần rõ.
+
+## 4. Entry Identity
 
 ```text
 EntryId
 TransactionId
-AccountId
-LedgerAccount / Bucket
-Amount or Quantity
-Currency / Instrument
+Account/LedgerAccount
+Amount
+Currency/Instrument
 Direction
 BusinessDate
-ValueDate
-SourceType
-SourceId
-RuleVersion
+Reference
 CreatedAt
-ReversalOf nếu có
 ```
 
-Tên/model production tùy accounting design, nhưng **source identity + immutable audit** là điểm cốt lõi.
+Unique business key ngăn duplicate posting.
 
-## 4. Single-entry vs double-entry
+## 5. Immutable + Reversal
 
-Không phải mọi subsystem buộc phải full general-ledger, nhưng với money/accounting core, double-entry giúp encode invariant:
-
-```text
-sum(debits) = sum(credits)
-```
-
-Ví dụ reservation có thể là reclassification giữa bucket `Available` và `Reserved`, thay vì làm tổng tài sản biến mất.
-
-## 5. Cash buckets
-
-Một model brokerage có thể phân biệt:
-
-```text
-Available
-Reserved
-Pending Receivable
-Pending Payable
-Settled
-Blocked
-```
-
-Bucket names tùy firm, nhưng semantics phải rõ. Không cộng/trừ một `Balance` rồi suy luận ngược.
-
-## 6. Securities ledger
-
-Tương tự cho quantity:
-
-```text
-Settled Position
-Pending Buy
-Pending Sell
-Reserved for Sell Order
-Blocked/Pledged
-Corporate Action Receivable
-```
-
-`TotalPosition`, `SellableQty`, `AvailableToPledge` là projection/rule output khác nhau.
-
-## 7. Projection
-
-Projection phục vụ query nhanh:
-
-```text
-Ledger Entries
-    ↓
-Position Projector
-Cash Projector
-PnL Projector
-Portfolio Projector
-    ↓
-Read Models
-```
-
-Nếu projection corrupt, hệ thống tốt có cách rebuild từ source history hoặc ít nhất reconcile/repair có kiểm soát.
-
-## 8. Idempotent posting
-
-Nếu `TradeId=T100` được deliver hai lần:
-
-```text
-PostingKey = TradeBooked:T100
-```
-
-Lần hai phải trở thành no-op/conflict có kiểm soát, không tạo thêm entries.
-
-Constraint business key thường mạnh hơn check bằng timestamp.
-
-## 9. Reversal, không xóa lịch sử
-
-Sai:
-
-```sql
-DELETE FROM ledger_entries WHERE entry_id = ...
-```
-
-hoặc sửa amount của entry cũ để “cho đúng”.
-
-Tốt hơn:
+Không sửa/xóa historical entry để “fix”.
 
 ```text
 Original Entry
-     ↓
-Reversal Entry references original
-     ↓
-Corrected Entry
+→ Reversal
+→ Correcting Entry
 ```
 
-Audit nhìn thấy toàn bộ chuỗi.
+## 6. Projection
 
-## 10. Effective-dated rule
+Balances phục vụ read nhanh.
 
-Fee, tax, interest, margin rate, corporate-action ratio có thể thay đổi.
-
-Posting cần lưu rule/version đủ để reproduce:
+Projection có thể:
 
 ```text
-Source event + RuleVersion + Inputs
-→ deterministic calculated entries
+incrementally update
+rebuild from ledger
+snapshot + replay
 ```
 
-## 11. Transaction boundary
+## 7. Reservation
 
-Nếu trade booking và ledger posting cùng bảo vệ một invariant critical, cân nhắc cùng local transaction hoặc mô hình ownership khác bảo đảm consistency.
+Reservation có thể model như separate business state/sub-ledger, miễn audit và invariant rõ.
 
-Nếu tách async:
+## 8. Cash vs Securities Ledger
+
+Cash theo currency; securities theo instrument/position semantics.
+
+Không giả định chúng giống hệt nhau.
+
+## 9. Pending vs Settled
+
+Trade booking và settlement là hai moments khác nhau.
+
+Projection nên thể hiện pending receivable/payable nếu business cần.
+
+## 10. Fees/Tax
+
+Mỗi posting trace tới policy version và trade/source.
+
+## 11. Rebuild
+
+Nếu projection corrupt:
 
 ```text
-Trade DB committed
-→ event
-→ Ledger posts later
+freeze scope
+→ determine trusted ledger range
+→ rebuild
+→ compare
+→ switch/readiness
 ```
 
-thì phải chấp nhận/thiết kế trạng thái tạm thời, idempotency, lag SLO và reconciliation. Không gọi đó là “eventual consistency” rồi bỏ qua nghĩa vụ vận hành.
+Không rebuild live mù quáng.
 
-## 12. Snapshots
+## 12. Reconciliation
 
-Với history lớn, snapshot có thể tăng tốc rebuild:
+Ledger internal vẫn cần so external bank/depository/settlement evidence.
 
-```text
-Snapshot at sequence N
-+ entries N+1..
-→ current projection
-```
+Balanced internal ledger không chứng minh external reality đúng.
 
-Snapshot là optimization, không nên trở thành nguồn history duy nhất nếu audit/rebuild cần entries trước đó.
+## 13. Precision
 
-## 13. Reconciliation
+Money/quantity cần decimal/fixed precision, rounding convention, currency/instrument scale.
 
-```text
-Internal Cash Ledger     ↔ Bank/Settlement statement
-Internal Securities      ↔ Depository/Custodian
-Internal Trade Entries   ↔ Trade evidence
-Internal Fees/Taxes      ↔ Accounting/reporting controls
-```
+## 14. Common mistakes
 
-Reconciliation break phải tạo workflow, không sửa balance trực tiếp.
+- mutable history;
+- duplicate posting;
+- balance không trace được;
+- current fee rule áp historical;
+- projection = source of truth duy nhất;
+- internal balance = external reconciliation.
 
-## 14. Ledger invariants
+<div class="key-takeaway"><strong>Takeaway</strong>Ledger cho **explainability, audit, replay và reconciliation**; balance chỉ là current view.</div>
 
-Ví dụ:
+## Checklist
 
-```text
-No duplicate PostingKey
-No impossible negative bucket ngoài policy
-Balanced transaction nếu dùng double-entry
-Every adjustment has reason + actor/source
-Every projection version traceable to source sequence
-```
-
-## 15. Observability
-
-```text
-posting latency
-posting duplicate count
-unbalanced transactions
-projection lag
-rebuild duration
-reconciliation breaks
-manual adjustments
-reversals/corrections
-negative-bucket violations
-```
-
-## Failure lab
-
-- duplicate `TradeBooked`;
-- crash giữa các entries của cùng transaction;
-- projection consumer đi chậm 30 phút;
-- manual correction nhập sai;
-- historical fee rule bị overwrite;
-- bank statement có payment mà internal ledger thiếu.
-
-Mỗi case phải có control/recovery.
-
-## Definition of Done
-
-- [ ] History/business entries tách current projection.
-- [ ] Posting có stable idempotency key.
-- [ ] Adjustment dùng reversal/correction có audit.
-- [ ] Rule version lưu đủ để reproduce.
-- [ ] Ledger transaction atomic theo invariant.
-- [ ] Projection có lag/rebuild strategy.
-- [ ] Reconciliation với external evidence.
-- [ ] Manual adjustment có maker/checker/audit khi policy yêu cầu.
+- [ ] Entry/transaction IDs.
+- [ ] Immutable history.
+- [ ] Reversal semantics.
+- [ ] Pending/settled modeled.
+- [ ] Projection rebuildable.
+- [ ] Precision/rounding explicit.
+- [ ] External recon.
 
 ## Bài tập
 
-Thiết kế cash + securities ledger cho một BUY order: reserve 100m, partial fill 40m, cancel remainder, settle trade và thu fee. Viết các entries/projections sao cho ở mỗi bước bạn giải thích được `Available`, `Reserved`, `PendingPayable`, `SettledPosition`.
+1. Model cash ledger cho BUY partial fills.
+2. Implement reversal.
+3. Rebuild balance from entries.
+4. Inject duplicate booking and prove unique constraint catches it.
+
+## Đọc tiếp
+
+[Bài 19 — Event Delivery Semantics](../19-event-driven-delivery-semantics/).

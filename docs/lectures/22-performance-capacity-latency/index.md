@@ -1,251 +1,180 @@
-# Bài 22 — Performance, Capacity & Latency: nhanh nhưng phải đúng dưới tải
+---
+title: "Bài 22 — Performance, Capacity & Latency"
+description: "Latency percentiles, throughput, capacity planning, overload protection, queues, contention và recovery capacity."
+---
 
-Trading systems cần latency thấp, nhưng tối ưu latency mà phá ordering, durability hay risk control là tối ưu sai. Câu hỏi production phải là:
+# Bài 22 — Performance & Capacity: nhanh trong benchmark có đủ cho ngày thị trường biến động mạnh?
 
-> Ở peak load, hệ thống còn bảo vệ invariant, giữ backlog bounded và đáp ứng SLO end-to-end không?
+<div class="lesson-meta"><span><strong>Track</strong> Production Securities Engineering</span><span><strong>Mức độ</strong> Advanced</span><span><strong>Mục tiêu</strong> Thiết kế performance theo end-to-end business path và overload</span></div>
 
-## 1. Latency budget theo flow
+Trading system thường hỏng không phải ở average load mà ở **burst + dependency slowdown + retry storm**.
 
-Ví dụ:
+<div class="learning-objectives"><strong>Sau bài này bạn phải giải thích được:</strong>
+
+- throughput vs latency;
+- p50/p95/p99;
+- queueing/backpressure;
+- capacity headroom;
+- hot partitions/contention;
+- overload/degraded mode và recovery capacity.
+</div>
+
+## 1. Throughput
 
 ```text
-Client
-→ API/BFF
-→ Auth
-→ Risk/Reservation
-→ OMS Commit
-→ Gateway Queue
-→ Venue Send
-→ Venue ACK
+orders/sec
+messages/sec
+trades/sec
+market events/sec
 ```
 
-Tổng latency là sum/queueing của từng stage. Đừng chỉ benchmark controller 5 ms.
+Không nói hết latency.
 
-## 2. Percentile thay average
+## 2. Latency Percentiles
 
 Average che tail latency.
-
-Theo dõi:
 
 ```text
 p50
 p95
 p99
-p99.9 khi critical
-max trong window phù hợp
+p99.9
 ```
 
-Một số request 5 giây trong market spike có thể nguy hiểm dù average 30 ms.
+Financial user experience thường bị tail ảnh hưởng mạnh.
 
-## 3. Little's Law mental model
-
-Với system ổn định:
+## 3. End-to-End Latency
 
 ```text
-Concurrency ≈ Throughput × Latency
+Client submit
+→ API
+→ risk
+→ reservation
+→ OMS
+→ gateway
+→ venue ack
 ```
 
-Nếu throughput tăng nhưng dependency latency tăng, số in-flight request/queue sẽ phình nhanh.
+Đo từng hop + correlation ID.
 
-## 4. Capacity envelope
-
-Không chỉ “requests/sec”. Tách workload:
+## 4. Little's Law Mental Model
 
 ```text
-new orders/sec
-cancel/sec
-execution reports/sec
-market messages/sec
-websocket fanout/sec
-ledger postings/sec
-reconciliation records/sec
-EOD batch volume
-replay/backlog drain
+L = λW
 ```
 
-Peak của các workload có thể xảy ra cùng lúc.
+Queue length phụ thuộc arrival rate và time-in-system. Khi service chậm, backlog có thể bùng nổ dù arrival rate không tăng.
 
-## 5. Bounded queue
+## 5. Bounded Queue
 
-Unbounded queue biến overload thành memory/latency catastrophe.
+Unbounded queue = memory outage delayed.
+
+Need:
 
 ```text
-Producer
-→ bounded queue
-→ consumers
+max depth
+TTL
+priority
+reject/degrade
+metrics
 ```
 
-Khi đầy, cần policy:
+## 6. Backpressure
 
-- reject/throttle upstream;
-- prioritize critical message;
-- shed noncritical work;
-- pause consumer source;
-- spill/rely on durable broker nếu phù hợp.
+Producer phải biết downstream saturation ở boundary phù hợp.
 
-## 6. Backpressure priority
+## 7. Retry Storm
 
-Không phải message nào cũng ngang nhau.
+Dependency slow → timeout → clients retry → more load → dependency slower.
 
-Ví dụ khi overload:
+Use bounded retry + backoff + jitter + admission control.
+
+## 8. Hot Key / Hot Partition
+
+Một symbol/account/session hot có thể bottleneck shard.
+
+Partition strategy cần real traffic distribution.
+
+## 9. Lock Contention
+
+Atomic invariants có thể tạo contention. Optimize bằng scope nhỏ, partitioned ownership, batching phù hợp — không bỏ invariant để lấy speed.
+
+## 10. Capacity Headroom
+
+Plan peak plus failure mode:
 
 ```text
-Execution processing > marketing notification
-Cancel/kill-switch > historical analytics refresh
-Risk-critical feed > UI decoration
+normal peak
++ one node down
++ replay/recovery traffic
++ external slowdown
 ```
 
-Priority là business decision, không chỉ thread priority.
+## 11. Recovery Capacity
 
-## 7. Database contention
+Sau outage, system vừa nhận live traffic vừa replay backlog. Nếu capacity chỉ đủ live traffic, never catch up.
 
-Hot account/instrument có thể tạo lock contention.
+## 12. Load Shedding
 
-Patterns cần cân nhắc:
+Không mọi request equal.
+
+Có thể ưu tiên:
 
 ```text
-short transactions
-proper indexes
-optimistic versioning
-partition ownership
-batching khi không phá latency/invariant
-avoid global lock
+order cancel > analytics query
+risk controls > reports
+session heartbeat > noncritical batch
 ```
 
-Benchmark phải có concurrent conflicts, không chỉ single-thread inserts.
+Policy business-aware.
 
-## 8. Cache
+## 13. Caching
 
-Cache phù hợp cho read-heavy/reference/read-model data, nhưng critical pre-trade invariant không nên tin stale cache nếu có thể overspend/oversell.
+Cache phù hợp read-heavy/reference/query path, nhưng critical state cần consistency semantics rõ.
 
-Mỗi cache cần:
+## 14. Benchmarking
+
+Benchmark phải gần production:
 
 ```text
-source of truth
-TTL/invalidation
-stale behavior
-fallback
-warm-up
-rebuild
+data size
+concurrency
+network
+DB
+serialization
+GC
+failure injection
+burst shape
 ```
 
-## 9. Market data fan-out
+## 15. Common mistakes
 
-Một tick có thể fan-out tới hàng nghìn/millions client subscriptions. Tách ingestion/normalization critical path khỏi client fan-out chậm.
+- optimize average only;
+- unbounded queues;
+- retries amplify outage;
+- benchmark toy dataset;
+- read cache stale dùng cho critical limits;
+- no catch-up capacity.
 
-```text
-Feed
-→ Normalize
-→ Durable/Hot Distribution
-   ├→ Risk
-   ├→ Conditional Orders
-   ├→ Analytics
-   └→ WebSocket Fanout
-```
+<div class="key-takeaway"><strong>Takeaway</strong>Performance production = **tail latency + bounded overload + enough recovery capacity**, không chỉ requests/sec.</div>
 
-Client chậm không được block ingestion.
+## Checklist
 
-## 10. Replay storm
-
-Sau outage:
-
-```text
-live traffic
-+ backlog replay
-+ cache warmup
-+ reconciliation
-```
-
-cùng lúc. Capacity test phải có recovery load, không chỉ steady-state.
-
-## 11. GC / allocation / runtime tuning
-
-Với .NET/Java, allocation rate và GC pause có thể ảnh hưởng tail latency. Nhưng đừng micro-optimize object allocation trước khi đo queueing/database/network bottleneck.
-
-Quy trình:
-
-```text
-measure
-profile
-identify dominant bottleneck
-change one thing
-a/b/load test
-verify correctness
-```
-
-## 12. Load model phải giống market
-
-Uniform load không thực tế. Market có burst:
-
-```text
-open auction
-market open
-large price move
-close auction
-news event
-reconnect after outage
-```
-
-Test burst/ramp/spike/soak.
-
-## 13. Capacity headroom
-
-Không chạy production thường xuyên ở 95-100% sustainable throughput. Cần headroom cho burst, failover (mất một node/site), replay và unexpected market activity.
-
-## 14. Degraded mode
-
-Khi near-capacity:
-
-```text
-pause expensive analytics
-reduce UI refresh rate
-limit noncritical history query
-preserve order/cancel/execution/risk path
-```
-
-Degradation phải graceful và observable.
-
-## 15. Performance invariant tests
-
-Load test không chỉ assert latency. Assert:
-
-```text
-no duplicate trades
-no overspend
-no negative reservation
-no lost sequence
-no ledger imbalance
-no unbounded backlog
-```
-
-Nhanh mà sai là fail.
-
-## Metrics
-
-```text
-throughput by operation
-p50/p95/p99 end-to-end latency
-queue depth/age
-DB lock wait/deadlock
-consumer lag
-GC pause/allocation
-connection pool utilization
-cache hit/stale rate
-websocket slow consumers
-replay drain ETA
-```
-
-## Definition of Done
-
-- [ ] Có latency budget end-to-end.
-- [ ] Capacity model theo business workload.
-- [ ] Queue bounded + overload policy.
-- [ ] Recovery/replay load được test.
-- [ ] Critical vs noncritical priority rõ.
-- [ ] Tail latency được theo dõi.
-- [ ] Cache có stale semantics.
-- [ ] Load tests kiểm tra business invariants.
+- [ ] End-to-end latency.
+- [ ] Percentiles.
+- [ ] Bounded queues.
+- [ ] Retry controls.
+- [ ] Capacity headroom.
+- [ ] Hot partition analysis.
+- [ ] Catch-up capacity.
 
 ## Bài tập
 
-Tạo load profile market-open: 5x order submit trong 60 giây, 10x market ticks, sau đó gateway reconnect và replay backlog. Xác định queue nào được phép tăng, queue nào phải bounded nghiêm ngặt, và SLO nào ưu tiên để bảo vệ trading correctness.
+1. Load-test OMS with burst 10x.
+2. Simulate venue latency + retries.
+3. Measure p99 submit-to-ack.
+4. Calculate recovery time for 1M backlog.
+
+## Đọc tiếp
+
+[Bài 23 — Production Runbook & Incidents](../23-production-runbook-incident-operations/).
