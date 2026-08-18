@@ -1,0 +1,16 @@
+{
+  "name": "securities-engineering",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Vietnamese curriculum from economics and finance to core securities engineering.",
+  "scripts": {
+    "dev": "vitepress dev docs",
+    "build": "vitepress build docs",
+    "preview": "vitepress preview docs"
+  },
+  "devDependencies": {
+    "mermaid": "^11.14.0",
+    "vitepress": "^1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.17"
+  }
+}
