@@ -50,6 +50,13 @@ const domains = [
   { text: '08. Enterprise Workflow', link: '/domains/08-enterprise-workflow' }
 ]
 
+const caseStudies = [
+  { text: 'Tổng quan SSI / VPS / TCBS', link: '/case-studies/' },
+  { text: '01. SSI iBoard', link: '/case-studies/ssi-iboard' },
+  { text: '02. VPS SmartOne', link: '/case-studies/vps-smartone' },
+  { text: '03. TCBS / TCInvest', link: '/case-studies/tcbs-tcinvest' }
+]
+
 const engineering = [
   { text: 'Engineering overview', link: '/engineering/' },
   { text: 'Core Securities Engineering', link: '/engineering/core-securities-engineering' },
@@ -94,6 +101,7 @@ export default withMermaid(defineConfig({
     nav: [
       { text: 'Bài giảng', link: '/lectures/' },
       { text: '8 Domains', link: '/domains/' },
+      { text: 'Broker Cases', link: '/case-studies/' },
       { text: 'Engineering', link: '/engineering/' },
       { text: 'Projects', link: '/projects/' },
       { text: 'Resources', link: '/resources/' }
@@ -105,6 +113,7 @@ export default withMermaid(defineConfig({
         { text: 'III. Production Securities Engineering', items: productionLectures }
       ],
       '/domains/': [{ text: '8 Core Domains', items: domains }],
+      '/case-studies/': [{ text: 'Broker App Case Studies', items: caseStudies }],
       '/engineering/': [{ text: 'Core Engineering', items: engineering }],
       '/projects/': [{ text: 'Projects', items: projects }],
       '/resources/': [{ text: 'Resources', items: resources }]
