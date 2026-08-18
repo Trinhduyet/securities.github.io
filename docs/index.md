@@ -7,22 +7,22 @@ titleTemplate: false
 hero:
   name: Securities Engineering
   text: Finance → Core Trading → Production
-  tagline: 24 bài + 8 core domains + 5 project dành cho backend engineer muốn hiểu nghiệp vụ chứng khoán đủ sâu để thiết kế và vận hành Order, Trade, Ledger, Risk, KRX/FIX, Clearing, Settlement và Reconciliation.
+  tagline: 24 bài + 8 core domains + 3 Broker App Case Studies + 5 project dành cho backend engineer muốn hiểu nghiệp vụ chứng khoán đủ sâu để thiết kế và vận hành Order, Trade, Ledger, Risk, KRX/FIX, Clearing, Settlement và Reconciliation.
   actions:
     - theme: brand
       text: Bắt đầu từ Bài 01
       link: /lectures/01-microeconomics/
     - theme: alt
-      text: Xem Competency Matrix
-      link: /resources/competency-matrix
+      text: Xem Broker Case Studies
+      link: /case-studies/
 
 features:
   - title: Finance trước Architecture
     details: Hiểu tiền, công cụ tài chính, định giá, risk và market microstructure trước khi chọn microservice hay event bus.
   - title: Trading end-to-end
     details: Order → Matching → Execution → Trade → Clearing → Settlement → Reconciliation, không dừng ở trạng thái FILLED.
-  - title: Production Engineering
-    details: FIX recovery, ledger, idempotency, unknown outcome, replay, HA/DR, audit, capacity và incident runbook.
+  - title: Broker Apps → Backend
+    details: Dùng SSI iBoard, VPS SmartOne và TCInvest để map UI thật sang domain, state machine, API, ledger và failure modes.
 ---
 
 ## Một lộ trình, từ nền tảng tới production
@@ -32,12 +32,13 @@ flowchart LR
     A[Economics] --> B[Finance]
     B --> C[Securities]
     C --> D[Market Microstructure]
-    D --> E[OMS / Risk]
-    E --> F[KRX / FIX Gateway]
-    F --> G[Trade / Clearing / Settlement]
-    G --> H[Ledger / Reconciliation]
-    H --> I[HA / DR / Operations]
-    I --> J[Core Securities Engineer]
+    D --> E[Broker App Case Studies]
+    E --> F[OMS / Risk]
+    F --> G[KRX / FIX Gateway]
+    G --> H[Trade / Clearing / Settlement]
+    H --> I[Ledger / Reconciliation]
+    I --> J[HA / DR / Operations]
+    J --> K[Core Securities Engineer]
 ```
 
 <div class="learning-path">
@@ -67,6 +68,27 @@ Order & Matching
 ```
 
 Đây là track biến kiến thức chứng khoán thành domain model và business invariants.
+
+## Broker App Case Studies — nối UI thật với core nghiệp vụ
+
+<div class="course-grid">
+  <a class="course-card" href="./case-studies/ssi-iboard"><strong>SSI iBoard</strong><span>Trading, phái sinh, cash operations, tài sản, P&L, ứng trước tiền bán và lệnh điều kiện.</span></a>
+  <a class="course-card" href="./case-studies/vps-smartone"><strong>VPS SmartOne</strong><span>Order lifecycle, buying power, CK khả dụng, tiền/CK chờ về và chuyển tiền.</span></a>
+  <a class="course-card" href="./case-studies/tcbs-tcinvest"><strong>TCBS / TCInvest</strong><span>Multi-product platform: cổ phiếu, margin, bond, fund, conditional order, odd-lot và IPO.</span></a>
+</div>
+
+Mỗi case study đi theo cùng một khung:
+
+```text
+UI Feature
+→ Business Meaning
+→ Entity / State
+→ Invariant
+→ API / Command / Event
+→ Database / Ledger / Projection
+→ Failure Mode
+→ Recovery / Reconciliation
+```
 
 ## Track III — Production Securities Engineering · Bài 13–24
 
@@ -130,6 +152,7 @@ Nếu câu trả lời đều dẫn về **business identity + state machine + i
 
 ## Tự kiểm tra
 
+- [Broker App Case Studies](./case-studies/)
 - [Competency Matrix](./resources/competency-matrix)
 - [50 Failure Scenarios](./resources/failure-scenarios)
 - [Review Checklist](./resources/checklist)
