@@ -9,6 +9,7 @@ description: "Dùng hệ sinh thái TCInvest để học multi-product brokerage
   <span><strong>Nền tảng</strong> TCInvest</span>
   <span><strong>Góc nhìn</strong> Multi-product Brokerage / Wealth Platform</span>
   <span><strong>Ví dụ</strong> Cổ phiếu · Trái phiếu · Quỹ · Margin · Conditional Order</span>
+  <span><strong>UI Inspection</strong> <a href="./ui-inspection-tcbs-tcinvest">Playwright 18/08/2026 — public only</a></span>
 </div>
 
 TCInvest là case study tốt để học một điểm rất quan trọng: **brokerage platform không chỉ có equity OMS**. Tài liệu công khai của TCBS cho thấy một tài khoản có thể tiếp cận nhiều sản phẩm như cổ phiếu, trái phiếu, quỹ đầu tư, phái sinh, chứng quyền và các tính năng quản lý tài sản.
@@ -16,33 +17,17 @@ TCInvest là case study tốt để học một điểm rất quan trọng: **br
 ## 1. Feature / product inventory công khai
 
 ```text
-Equity / Listed Products
-├── Cổ phiếu
-├── Chứng quyền
-├── Chứng chỉ quỹ niêm yết
-├── Margin
-├── Lệnh điều kiện
-├── TWAP
-└── Odd-lot 1–99
-
-Bonds
-├── iBond
-├── iConnect
-├── Bond order flows
-└── Bond conditional features
-
-Funds
-├── iFund
-├── Fundmart
-├── Quỹ mở / ETF
-└── Đầu tư định kỳ
-
-Other
-├── Phái sinh
-├── IPO
-├── Portfolio / wealth management
-├── TCAnalysis
-└── TCWealth / advisory context
+TCBS (brokerage business)
+└── TCInvest / iWealth (customer platform)
+    ├── iStock — cổ phiếu, CW, CCQ niêm yết, odd-lot, lệnh điều kiện, TWAP, margin
+    ├── iBond / iConnect / AllConnect — trái phiếu
+    ├── iFund / Fundmart — quỹ mở, ETF, đầu tư định kỳ, Micro Saving
+    ├── iFuture — phái sinh
+    ├── iPO — đăng ký mua IPO
+    ├── TCAnalysis / TCPrice — research + bảng giá
+    ├── TCWealth / iPlan — kế hoạch / robo
+    ├── iXu / iWealth Partner / iCopy — rewards / copy-trading
+    └── Onboarding / quyền / tiền — enterprise workflow
 ```
 
 Không phải tất cả các sản phẩm này dùng cùng một trading lifecycle. Đây chính là bài học lớn nhất.
@@ -537,13 +522,105 @@ Portfolio
 → Multi-asset projection
 ```
 
-## 19. Nguồn chính thức
+## 19. TCBS / TCInvest liên quan tới 8 Core Domains thế nào?
+
+Chi tiết feature card: [ui-inspection-tcbs-tcinvest](./ui-inspection-tcbs-tcinvest). Matrix: [broker-domain-matrix](./broker-domain-matrix).
+
+### 01 Securities Core
+
+Observed/public: iStock, đặt lệnh cổ phiếu, sổ lệnh, lô lẻ 1–99, sức mua, margin, ứng trước tiền bán chờ về, thỏa thuận.
+
+Business flow: User → Trading API → Account/Buying Power → Reservation → OMS → Market → Execution → Booking → Settlement → Position.
+
+Xem [01 Securities Core](/domains/01-securities-core), [Bài 06](/lectures/06-order-matching/), [Bài 08](/lectures/08-account-cash-position-buying-power/), [Bài 13](/lectures/13-oms-internals-state-machine/).
+
+### 02 Derivatives Core
+
+Observed/public: iFuture; help lãi/lỗ, long/short, T+0, ngưỡng 85/87/90%, multiplier HĐTL chỉ số 100,000.
+
+Chưa xác minh: ticket đặt lệnh phái sinh sau login.
+
+Xem [02 Derivatives Core](/domains/02-derivatives-core), [Bài 11](/lectures/11-risk-margin-controls/).
+
+### 03 Bonds Core
+
+Observed/public: iBond, iConnect, AllConnect, đặt lệnh trái phiếu, coupon định kỳ.
+
+Chưa xác minh: màn hình holding/yield sau login.
+
+Xem [03 Bonds Core](/domains/03-bonds-core).
+
+### 04 Funds Core
+
+Observed/public: iFund, Fundmart, đầu tư định kỳ từ 10,000 VND, NAV/unit, cut-off, auto-hủy sau 5 kỳ thiếu tiền.
+
+Xem [04 Funds Core](/domains/04-funds-core).
+
+### 05 Realtime Analytics
+
+Observed/public: Bảng giá TCPrice, guest module Bảng giá, TCAnalysis, bộ lọc, đồ thị.
+
+Xem [05 Realtime Analytics](/domains/05-realtime-analytics), [Bài 10](/lectures/10-market-data-engineering/).
+
+### 06 Conditional Orders
+
+Observed/public: Lệnh điều kiện (chốt lãi/cắt lỗ), Lệnh 24/7, TWAP.
+
+Chưa xác minh: form trigger/TWAP slice trên authenticated UI.
+
+Xem [06 Conditional Orders](/domains/06-conditional-orders).
+
+### 07 Rewards
+
+Observed/public: iXu, giới thiệu bạn bè, iWealth Partner, lịch sử chi trả iXu.
+
+Xem [07 Rewards](/domains/07-rewards).
+
+### 08 Enterprise Workflow
+
+Observed/public: mở tài khoản 3 phút, iPO (đặt cọc, iOTP, phân bổ, hoàn tiền), thực hiện quyền online, HĐ điện tử phái sinh.
+
+Xem [08 Enterprise Workflow](/domains/08-enterprise-workflow), [Bài 09](/lectures/09-security-master-corporate-actions/), [Bài 12](/lectures/12-eod-reconciliation-operations/), [Bài 17](/lectures/17-clearing-netting-settlement/), [Bài 18](/lectures/18-ledger-accounting-projections/).
+
+## 20. One App ≠ One Domain
+
+```text
+TCInvest UI
+    ↓
+Unified Customer Experience
+    ↓
+Domain-specific capabilities
+    ├── Securities
+    ├── Bonds
+    ├── Funds
+    ├── Derivatives
+    ├── Conditional Orders
+    └── Workflow
+          ↓
+Shared cross-cutting
+    ├── Customer
+    ├── Account
+    ├── Cash
+    ├── Portfolio (projection)
+    ├── Ledger
+    ├── Identity
+    └── Notifications
+```
+
+Không nên tạo `UniversalInvestmentEntity { Type, Amount, Status }` cho mọi sản phẩm chỉ vì UI gom chúng vào một màn hình. Portfolio trên UI là **projection**.
+
+## 21. Nguồn chính thức
 
 - https://www.tcbs.com.vn/ca-nhan/he-thong/
 - https://www.tcbs.com.vn/ca-nhan/san-pham/
+- https://www.tcbs.com.vn/ca-nhan/co-phieu-istock/
+- https://www.tcbs.com.vn/ca-nhan/trai-phieu-ibond/
+- https://www.tcbs.com.vn/ca-nhan/ifund/
 - https://help.tcbs.com.vn/hoi-nhanh-dap-hay/co-phieu/
 - https://help.tcbs.com.vn/lenh-dieu-kien/
+- https://help.tcbs.com.vn/dat-lenh-chien-luoc-twap/
 - https://help.tcbs.com.vn/ufaq/huong-dan-giao-dich-lo-le-tren-tcinvest/
+- https://help.tcbs.com.vn/giao-dich-va-thanh-toan-lai-lo-krx/
 - https://www.tcbs.com.vn/ca-nhan/san-pham/dau-tu-dinh-ky/
 - https://www.tcbs.com.vn/ca-nhan/san-pham/ipo/
 

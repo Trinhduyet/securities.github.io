@@ -160,7 +160,21 @@ TotalPosition != SellableQuantity
 
 Nếu SELL API chỉ check `SellQty <= TotalPosition`, hệ thống có thể cho khách bán nhiều hơn resource hợp lệ.
 
-## 6. Case Studies
+## 6. UI Inspection (Playwright MCP)
+
+Khảo sát read-only trực tiếp trên broker web app — phân tách **UI quan sát** vs **reference architecture**:
+
+| Nền tảng | Phiên 18/08/2026 | Tài liệu |
+|---|---|---|
+| **VPS SmartOne Web** | ✅ Bảng giá + Thị trường (public); auth pages crash | [ui-inspection-vps-smartone.md](./ui-inspection-vps-smartone.md) |
+| **SSI iBoard** | ❌ WAF 403 — inventory từ tài liệu công khai | [ui-inspection-ssi-iboard.md](./ui-inspection-ssi-iboard.md) |
+| **TCBS / TCInvest** | ✅ Public iWealth/sản phẩm/help; ❌ chưa login | [ui-inspection-tcbs-tcinvest.md](./ui-inspection-tcbs-tcinvest.md) |
+
+Ma trận 8 domain: [broker-domain-matrix.md](./broker-domain-matrix.md)
+
+Screenshot public: `docs/case-studies/screenshots/ssi-iboard/`, `vps-smartone/`, `tcbs/`.
+
+## 7. Case Studies
 
 <div class="course-grid">
 <a class="course-card" href="./ssi-iboard">
@@ -175,9 +189,13 @@ Nếu SELL API chỉ check `SellQty <= TotalPosition`, hệ thống có thể ch
 <strong>TCBS / TCInvest</strong>
 <span>Multi-product wealth platform: stock, bond, fund, margin, conditional order, IPO.</span>
 </a>
+<a class="course-card" href="./broker-domain-matrix">
+<strong>Broker Domain Matrix</strong>
+<span>SSI · VPS · TCBS mapped to 8 Core Domains — ✓ / ? / —.</span>
+</a>
 </div>
 
-## 7. Cách review một tính năng broker app
+## 8. Cách review một tính năng broker app
 
 Mỗi khi thấy một menu mới, dùng checklist này:
 
@@ -216,7 +234,7 @@ Reconciliation
 → settlement proceeds phải bù đúng khoản advance
 ```
 
-## 8. Điều không được suy luận từ UI
+## 9. Điều không được suy luận từ UI
 
 Không viết:
 
@@ -236,7 +254,7 @@ Capability đó đòi hỏi một số business state/invariant.
 Ta thiết kế một reference architecture có thể đáp ứng chúng.
 ```
 
-## 9. Nguồn chính thức tham khảo
+## 10. Nguồn chính thức tham khảo
 
 ### SSI
 - https://www.ssi.com.vn/khach-hang-ca-nhan/nen-tang-giao-dich/nen-tang-giao-dich-web-trading/iboard-web
@@ -251,7 +269,10 @@ Ta thiết kế một reference architecture có thể đáp ứng chúng.
 - https://www.tcbs.com.vn/ca-nhan/he-thong/
 - https://www.tcbs.com.vn/ca-nhan/san-pham/
 - https://help.tcbs.com.vn/lenh-dieu-kien/
+- https://help.tcbs.com.vn/dat-lenh-chien-luoc-twap/
 - https://help.tcbs.com.vn/ufaq/huong-dan-giao-dich-lo-le-tren-tcinvest/
+- https://www.tcbs.com.vn/ca-nhan/san-pham/dau-tu-dinh-ky/
+- https://www.tcbs.com.vn/ca-nhan/san-pham/ipo/
 
 ## Bài tập
 

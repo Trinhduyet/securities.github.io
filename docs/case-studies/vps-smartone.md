@@ -9,6 +9,7 @@ description: "Dùng các chức năng công khai của VPS SmartOne/HomeTrade đ
   <span><strong>Nền tảng</strong> VPS SmartOne / HomeTrade</span>
   <span><strong>Góc nhìn</strong> Order State + Buying Power + Pending Assets</span>
   <span><strong>Nguyên tắc</strong> Public capability → reference backend model</span>
+  <span><strong>UI Inspection</strong> <a href="./ui-inspection-vps-smartone">Playwright 18/08/2026</a></span>
 </div>
 
 Tài liệu công khai của VPS rất hữu ích cho người học core chứng khoán vì nó mô tả trực tiếp những khái niệm người dùng thường thấy: **đặt/hủy lệnh, trạng thái lệnh, sức mua, chứng khoán khả dụng, tiền chờ nhận về, chứng khoán chờ nhận/gửi đi, danh mục và chuyển tiền**.

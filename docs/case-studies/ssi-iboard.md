@@ -9,6 +9,7 @@ description: "Từ các tính năng công khai của SSI iBoard đến order lif
   <span><strong>Nền tảng</strong> SSI iBoard</span>
   <span><strong>Góc nhìn</strong> Trading + Asset + Cash + Derivatives</span>
   <span><strong>Nguyên tắc</strong> Chỉ suy luận business capability, không suy luận architecture nội bộ</span>
+  <span><strong>UI Inspection</strong> <a href="./ui-inspection-ssi-iboard">Playwright 18/08/2026</a></span>
 </div>
 
 SSI iBoard là case study tốt để học vì tài liệu công khai cho thấy một broker web platform có khá đầy đủ các capability: giao dịch cơ sở, phái sinh, lệnh điều kiện, giao dịch tiền, quản lý tài sản, hiệu suất đầu tư, SBOND và nhiều tiện ích khác.
