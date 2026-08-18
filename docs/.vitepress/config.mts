@@ -5,6 +5,7 @@ const isGitHubActions = process.env.GITHUB_ACTIONS === 'true'
 const base = isGitHubActions ? '/securities.github.io/' : '/'
 
 const foundationLectures = [
+  { text: 'Tổng quan 24 bài', link: '/lectures/' },
   { text: '01. Kinh tế học vi mô', link: '/lectures/01-microeconomics/' },
   { text: '02. Kinh tế học vĩ mô', link: '/lectures/02-macroeconomics/' },
   { text: '03. Tài chính nền tảng', link: '/lectures/03-finance-foundations/' },
@@ -91,7 +92,7 @@ export default withMermaid(defineConfig({
       dark: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%23f59e0b"/><path d="M13 43h8V29h-8v14zm15 0h8V19h-8v24zm15 0h8V10h-8v33z" fill="%23111827"/><path d="M11 49h42" stroke="%23111827" stroke-width="4" stroke-linecap="round"/></svg>'
     },
     nav: [
-      { text: 'Bài giảng', link: '/lectures/01-microeconomics/' },
+      { text: 'Bài giảng', link: '/lectures/' },
       { text: '8 Domains', link: '/domains/' },
       { text: 'Engineering', link: '/engineering/' },
       { text: 'Projects', link: '/projects/' },
