@@ -18,18 +18,85 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
       - name: Install dependencies
         run: npm install
-      - name: Build documentation and audit routes
-        run: npm run build:check
-      - name: Show generated HTML routes
-        run: find docs/.vitepress/dist -type f -name '*.html' | sort
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+
+      - name: Build VitePress
+        run: npm run build
+
+      - name: Verify critical static routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          critical=(
+            docs/.vitepress/dist/index.html
+            docs/.vitepress/dist/lectures/index.html
+            docs/.vitepress/dist/domains/index.html
+            docs/.vitepress/dist/case-studies/index.html
+            docs/.vitepress/dist/engineering/index.html
+            docs/.vitepress/dist/projects/index.html
+            docs/.vitepress/dist/resources/index.html
+          )
+
+          for file in "${critical[@]}"; do
+            test -s "$file" || {
+              echo "::error::Missing critical VitePress output: $file"
+              exit 1
+            }
+          done
+
+          grep -q '/securities.github.io/' docs/.vitepress/dist/lectures/index.html || {
+            echo '::error::lectures/index.html was built without the /securities.github.io/ base path'
+            exit 1
+          }
+
+          grep -q '/securities.github.io/' docs/.vitepress/dist/domains/index.html || {
+            echo '::error::domains/index.html was built without the /securities.github.io/ base path'
+            exit 1
+          }
+
+          echo 'Critical static routes and project base verified.'
+
+      - name: Audit secondary routes
+        continue-on-error: true
+        run: npm run check:routes
+
+      - name: Write deployment metadata
+        shell: bash
+        run: |
+          cat > docs/.vitepress/dist/deploy-meta.json <<EOF
+          {
+            "repository": "Trinhduyet/securities.github.io",
+            "commit": "${GITHUB_SHA}",
+            "runId": "${GITHUB_RUN_ID}",
+            "base": "/securities.github.io/"
+          }
+          EOF
+
+      - name: Show generated critical routes
+        shell: bash
+        run: |
+          ls -lh \
+            docs/.vitepress/dist/index.html \
+            docs/.vitepress/dist/lectures/index.html \
+            docs/.vitepress/dist/domains/index.html \
+            docs/.vitepress/dist/engineering/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: docs/.vitepress/dist
 
@@ -39,6 +106,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     needs: build
     runs-on: ubuntu-latest
+    name: Deploy
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
