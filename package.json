@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vitepress dev docs",
     "build": "vitepress build docs",
+    "check:routes": "node scripts/check-routes.mjs",
+    "build:check": "npm run build && npm run check:routes",
     "preview": "vitepress preview docs"
   },
   "devDependencies": {
