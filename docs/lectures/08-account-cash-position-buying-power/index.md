@@ -28,6 +28,11 @@ Dùng được bao nhiêu để mua?        → buying power
 Bán được bao nhiêu ngay?           → sellable quantity
 ```
 
+<div class="callout">
+<strong>Broker UI (🟢)</strong><br/>
+SSI iBoard có <em>Margin - Vay ký quỹ</em> với Tỷ lệ KQ và trạng thái An toàn — sức mua không đồng nghĩa cash. VPS SmartOne có label <em>Sức mua từ tiền mặt</em> tách khỏi sức mua tổng. Guide VPS: CK khả dụng ≠ tổng vị thế; tiền chờ về ≠ settled cash. Số liệu dưới đây là ví dụ tham chiếu, không phải số tài khoản thật.
+</div>
+
 ## 2. Cash State
 
 ```text

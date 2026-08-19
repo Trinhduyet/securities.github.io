@@ -44,6 +44,12 @@ Nhìn từ UI, đó chỉ là một nút **Đặt lệnh**. Nhìn từ core syst
 - ledger và reconciliation giúp chứng minh hệ thống đúng ra sao.
 </div>
 
+<div class="callout">
+<strong>Ví dụ broker UI</strong><br/>
+SSI iBoard Sổ lệnh minh họa Order Read Model. VPS “chờ tại VPS / chờ tại sàn” minh họa internal vs external order lifecycle. SSI ứng trước tiền bán minh họa PendingSettlementReceivable. VPS CK khả dụng minh họa SellableQuantity. Không suy ra schema nội bộ.
+</div>
+
+
 ## 1. Từ điển thuật ngữ trước khi đi vào flow
 
 | Thuật ngữ | Nghĩa dễ hiểu | Ví dụ |

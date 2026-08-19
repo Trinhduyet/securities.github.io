@@ -19,6 +19,12 @@ Một OMS production không phải CRUD `orders` table. Nó là stateful transac
 - why actor/single-writer is an option, not a religion.
 </div>
 
+<div class="callout">
+<strong>Broker UI (🟢)</strong><br/>
+SSI <em>Sổ lệnh cơ sở / phái sinh / điều kiện</em> là ba read model khác nhau — conditional rule ≠ trading order. VPS tách <em>Sổ lệnh trong ngày</em> và <em>Lịch sử lệnh</em>. Timeout trên UI không chứng minh venue đã reject.
+</div>
+
+
 ## 1. Core Responsibilities
 
 ```text

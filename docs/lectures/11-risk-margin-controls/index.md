@@ -19,6 +19,11 @@ Risk engine không phải `if (balance >= amount)`. Nó bảo vệ exposure, mar
 - stale data và kill switch controls.
 </div>
 
+<div class="callout">
+<strong>Broker UI (🟢 SSI)</strong><br/>
+Màn hình Margin tổng quan iBoard cho thấy <em>Tỷ lệ KQ</em>, <em>Tổng nợ</em>, <em>Lãi tạm tính</em>, trạng thái <em>An toàn</em>. Nút <em>Tăng sức mua</em> là workflow credit — phiên khảo sát không click. Điều đó minh họa margin là state + policy, không phải một field Balance.
+</div>
+
 ## 1. Ba lớp risk
 
 ```text

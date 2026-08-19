@@ -186,6 +186,11 @@ B. Venue đã nhận, response bị mất
 
 `timeout != failed`.
 
+<div class="callout">
+<strong>Broker UI (🟢 SSI / VPS)</strong><br/>
+Trên SSI iBoard, Sổ lệnh là read model: người dùng thấy khớp một phần / còn lại, không phải toàn bộ OMS. Trên VPS, wording <em>chờ khớp tại VPS</em> vs <em>chờ khớp tại sàn</em> minh họa Broker Accepted ≠ Market Accepted. UI không cho ta suy ra SSI/VPS dùng FIX engine nào.
+</div>
+
 ## 14. Idempotency
 
 Client retry cùng `ClientOrderId` không được tạo hai business orders ngoài ý muốn.

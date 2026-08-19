@@ -9,7 +9,7 @@ description: "Từ các tính năng công khai của SSI iBoard đến order lif
   <span><strong>Nền tảng</strong> SSI iBoard</span>
   <span><strong>Góc nhìn</strong> Trading + Asset + Cash + Derivatives</span>
   <span><strong>Nguyên tắc</strong> Chỉ suy luận business capability, không suy luận architecture nội bộ</span>
-  <span><strong>UI Inspection</strong> <a href="./ui-inspection-ssi-iboard">Playwright 18/08/2026</a></span>
+  <span><strong>UI Inspection</strong> <a href="./ui-inspection-ssi-iboard">Playwright 19/08/2026 authenticated</a></span>
 </div>
 
 SSI iBoard là case study tốt để học vì tài liệu công khai cho thấy một broker web platform có khá đầy đủ các capability: giao dịch cơ sở, phái sinh, lệnh điều kiện, giao dịch tiền, quản lý tài sản, hiệu suất đầu tư, SBOND và nhiều tiện ích khác.
@@ -487,7 +487,43 @@ Fast Connect API
 → multi-channel trading boundary
 ```
 
-## 15. Nguồn chính thức
+## 15. SSI / VPS liên quan tới 8 Core Domains thế nào? (SSI)
+
+Chi tiết feature card: [ui-inspection-ssi-iboard](./ui-inspection-ssi-iboard) · [broker-domain-matrix](./broker-domain-matrix).
+
+### 01 Securities Core
+
+Observed: Bảng giá, Đặt lệnh, Sổ lệnh, lô lẻ, thỏa thuận, sức mua (qua margin/board).
+
+### 02 Derivatives Core
+
+Observed: menu Giao dịch phái sinh, tab board Phái sinh.
+
+### 03 Bonds Core
+
+Observed: Trái phiếu riêng lẻ trên board; SBOND labels trong client.
+
+### 04 Funds Core
+
+Chưa xác minh màn hình; client có label CCQ mở.
+
+### 05 Realtime Analytics
+
+Observed: board VN30/HOSE, Trần/Sàn/TC, 3 mức bid/ask, ĐTNN, phiên Liên tục; submenu Thông tin thị trường (biểu đồ, heatmap, dòng tiền, top cổ phiếu).
+
+### 06 Conditional Orders
+
+Observed: labels Đặt lệnh điều kiện / Sổ lệnh điều kiện.
+
+### 07 Rewards
+
+Chưa xác minh từ UI/tài liệu hiện tại.
+
+### 08 Enterprise Workflow
+
+Observed: Margin tổng quan (gói vay, Tỷ lệ KQ); labels quyền, IPO, chuyển tiền — không submit.
+
+## 16. Nguồn chính thức
 
 - https://www.ssi.com.vn/khach-hang-ca-nhan/nen-tang-giao-dich/nen-tang-giao-dich-web-trading/iboard-web
 - https://www.ssi.com.vn/khach-hang-ca-nhan/giao-dich-chung-khoan-ib-web

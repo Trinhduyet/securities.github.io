@@ -17,6 +17,12 @@ Nếu equity core xoay quanh câu hỏi **“khách đang sở hữu bao nhiêu 
 
 Phái sinh không phải chỉ là securities core cộng thêm `ContractCode`.
 
+<div class="callout">
+<strong>Broker UI (🟢)</strong><br/>
+SSI và VPS đều có menu <em>Giao dịch phái sinh</em> / <em>Phái sinh</em> tách khỏi cơ sở. iBoard còn tab board Phái sinh cạnh HOSE. Cùng UI “Đặt lệnh” không có nghĩa cùng position/margin model với cổ phiếu.
+</div>
+
+
 <div class="learning-objectives">
 <strong>Sau domain này bạn phải giải thích được:</strong>
 

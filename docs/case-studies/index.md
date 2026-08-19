@@ -166,8 +166,8 @@ Khảo sát read-only trực tiếp trên broker web app — phân tách **UI qu
 
 | Nền tảng | Phiên 18/08/2026 | Tài liệu |
 |---|---|---|
-| **VPS SmartOne Web** | ✅ Bảng giá + Thị trường (public); auth pages crash | [ui-inspection-vps-smartone.md](./ui-inspection-vps-smartone.md) |
-| **SSI iBoard** | ❌ WAF 403 — inventory từ tài liệu công khai | [ui-inspection-ssi-iboard.md](./ui-inspection-ssi-iboard.md) |
+| **VPS SmartOne Web** | ✅ Authenticated 19/08 — bảng giá + `/market`; không chụp PII header | [ui-inspection-vps-smartone.md](./ui-inspection-vps-smartone.md) |
+| **SSI iBoard** | ✅ Authenticated 19/08 — bảng giá, margin tổng quan, submenu Thông tin thị trường | [ui-inspection-ssi-iboard.md](./ui-inspection-ssi-iboard.md) |
 | **TCBS / TCInvest** | ✅ Public iWealth/sản phẩm/help; ❌ chưa login | [ui-inspection-tcbs-tcinvest.md](./ui-inspection-tcbs-tcinvest.md) |
 
 Ma trận 8 domain: [broker-domain-matrix.md](./broker-domain-matrix.md)

@@ -19,6 +19,12 @@ Nếu một customer hỏi “vì sao số dư giảm 120.180.000?”, hệ th�
 - ledger reconciliation.
 </div>
 
+<div class="callout">
+<strong>Broker UI (🟢)</strong><br/>
+Sao kê trên SSI/VPS là projection có audit: người dùng hỏi “vì sao số dư đổi?” phải trả lời bằng lịch sử bút toán (nộp, khớp, phí, settlement, ứng trước), không phải một cột Balance.
+</div>
+
+
 ## 1. History First
 
 ```text

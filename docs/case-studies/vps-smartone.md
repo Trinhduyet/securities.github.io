@@ -9,7 +9,7 @@ description: "Dùng các chức năng công khai của VPS SmartOne/HomeTrade đ
   <span><strong>Nền tảng</strong> VPS SmartOne / HomeTrade</span>
   <span><strong>Góc nhìn</strong> Order State + Buying Power + Pending Assets</span>
   <span><strong>Nguyên tắc</strong> Public capability → reference backend model</span>
-  <span><strong>UI Inspection</strong> <a href="./ui-inspection-vps-smartone">Playwright 18/08/2026</a></span>
+  <span><strong>UI Inspection</strong> <a href="./ui-inspection-vps-smartone">Playwright 19/08/2026 authenticated</a></span>
 </div>
 
 Tài liệu công khai của VPS rất hữu ích cho người học core chứng khoán vì nó mô tả trực tiếp những khái niệm người dùng thường thấy: **đặt/hủy lệnh, trạng thái lệnh, sức mua, chứng khoán khả dụng, tiền chờ nhận về, chứng khoán chờ nhận/gửi đi, danh mục và chuyển tiền**.
@@ -451,7 +451,43 @@ Chuyển tiền
 → external payment workflow + reconciliation
 ```
 
-## 16. Nguồn chính thức
+## 16. VPS liên quan tới 8 Core Domains thế nào?
+
+Chi tiết: [ui-inspection-vps-smartone](./ui-inspection-vps-smartone) · [broker-domain-matrix](./broker-domain-matrix).
+
+### 01 Securities Core
+
+Observed: bảng giá, đặt/hủy/sổ lệnh (labels + public guide), sức mua, CK khả dụng, tiền/CK chờ về.
+
+### 02 Derivatives Core
+
+Observed: menu Phái sinh, board Phái sinh.
+
+### 03 Bonds Core
+
+Label tài sản trái phiếu / VPS bond — màn hình chưa mở.
+
+### 04 Funds Core
+
+Label tài sản quỹ — màn hình chưa mở.
+
+### 05 Realtime Analytics
+
+Observed: Bảng giá, Thị trường `/market` (độ sâu, khối ngoại, top tăng/giảm, dòng chảy).
+
+### 06 Conditional Orders
+
+Observed: STOP / TCO / Trailing stop / SL-TP labels.
+
+### 07 Rewards
+
+Observed: Ưu đãi / Discover.
+
+### 08 Enterprise Workflow
+
+Observed: chuyển tiền, ứng trước, lịch sử quyền — không submit.
+
+## 17. Nguồn chính thức
 
 - https://smartone.vps.com.vn/vi-VN/Home/BriefUserGuide
 

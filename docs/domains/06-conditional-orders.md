@@ -22,6 +22,12 @@ Nếu FPT <= 100.000
 
 Nếu venue không native-support rule này, chính broker phải theo dõi market, quyết định trigger và đảm bảo **chỉ tạo đúng một order**.
 
+<div class="callout">
+<strong>Broker UI (🟢 labels)</strong><br/>
+SSI: Đặt lệnh điều kiện / Sổ lệnh điều kiện — rule khác trading order. VPS client có STOP, TCO, Trailing stop, SL/TP. Không mở form thật trong phiên READ-ONLY.
+</div>
+
+
 <div class="learning-objectives">
 <strong>Sau domain này bạn phải giải thích được:</strong>
 

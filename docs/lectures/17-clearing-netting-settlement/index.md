@@ -19,6 +19,12 @@ FILLED chỉ kết thúc execution lifecycle. Post-trade mới biến trade thà
 - fail/shortfall/reconciliation workflow.
 </div>
 
+<div class="callout">
+<strong>Broker UI (🟡 VPS / 🟢 SSI)</strong><br/>
+VPS mô tả CK chờ nhận/gửi T1–T3 và tiền chờ về sau bán. SSI có <em>Ứng trước tiền bán</em>: biến pending receivable thành cash usable trước settlement. Đó là post-trade, không phải matching.
+</div>
+
+
 ## 1. Trade to Obligation
 
 ```text

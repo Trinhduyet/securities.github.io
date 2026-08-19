@@ -19,6 +19,12 @@ Trading chạy nhanh trong phiên chưa đủ. Sau phiên phải chứng minh in
 - rerun/manual adjustment phải idempotent và auditable.
 </div>
 
+<div class="callout">
+<strong>Broker UI (🟢 / 🟡)</strong><br/>
+SSI có Sao kê tiền cơ sở/phái sinh; VPS có Sao kê tiền, Sao kê VSD, tiền chờ VSD xử lý. Đó là chỗ học reconciliation: FILLED trên sổ lệnh chưa phải tiền/CK đã settled. Không suy ra job EOD nội bộ của broker.
+</div>
+
+
 ## 1. Full Lifecycle
 
 ```text

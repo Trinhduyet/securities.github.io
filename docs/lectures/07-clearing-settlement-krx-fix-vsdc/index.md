@@ -52,6 +52,11 @@ Bài này không giả định bạn đã biết `OMS`, `FIX`, `KRX`, `VSDC`, `D
 
 > **Lưu ý về SSI/VPS/TCBS:** các tài liệu công khai cho thấy trải nghiệm người dùng và chức năng của nền tảng. Chúng ta dùng chúng để minh họa **business lifecycle chung**. Tài liệu này **không khẳng định architecture nội bộ, FIX engine, message dictionary hay topology production riêng của SSI, VPS hoặc TCBS**, vì các chi tiết đó không được suy ra từ UI công khai.
 
+<div class="callout">
+<strong>Broker UI authenticated (🟢 19/08/2026)</strong><br/>
+Trên SSI iBoard, sau đăng nhập người dùng vẫn thấy cùng nút <em>Đặt lệnh</em> cạnh bảng giá và <em>Sổ lệnh</em> trong menu — đó là command + read model, không phải bằng chứng SSI dùng FIX session nào. Trên VPS SmartOne, wording <em>chờ khớp tại VPS</em> vs <em>chờ khớp tại sàn</em> (guide + label SPA) minh họa Broker Accepted ≠ Market Accepted. Bài này giải thích infrastructure <em>chung</em> sau nút Đặt lệnh; không mô tả backend riêng của từng CTCK.
+</div>
+
 <div class="learning-objectives">
 <strong>Sau bài này bạn phải giải thích được:</strong>
 
