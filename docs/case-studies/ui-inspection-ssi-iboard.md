@@ -90,10 +90,13 @@ S-CASH:  sản phẩm sinh lời trên tiền
 
 ## Screenshots
 
-| File | Ghi chú |
-|---|---|
-| `./screenshots/ssi/ssi-market-board.png` | Board VN30; đã ẩn nút số tài khoản |
-| `./screenshots/ssi/ssi-margin.png` | Tổng quan margin; số nợ/lãi = 0 trên UI |
+| File | Evidence | Ghi chú |
+|---|---|---|
+| `./screenshots/ssi/authenticated/ssi-auth-market-board-redacted.png` | 🟢 redacted | Board VN30 |
+| `./screenshots/ssi/authenticated/ssi-auth-margin-overview-redacted.png` | 🟢 redacted | Margin tổng quan |
+| `./screenshots/ssi/authenticated/ssi-auth-market-analytics-redacted.png` | 🟢 redacted | Top đột phá / vượt đỉnh |
+| `./screenshots/ssi/public/ssi-public-hero-iboard.png` | 🟡 | Product hero |
+| Inventory | — | [screenshots/README](./screenshots/README) |
 
 ---
 

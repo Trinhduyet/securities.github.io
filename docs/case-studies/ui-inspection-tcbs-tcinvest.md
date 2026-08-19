@@ -598,14 +598,17 @@ Ví dụ: mở TK online; kích hoạt tiểu khoản PS bằng HĐ điện tử
 
 | File | Nội dung |
 |---|---|
-| `./screenshots/tcbs/tcbs-system-overview.png` | Hệ thống iWealth |
-| `./screenshots/tcbs/tcbs-products.png` | Catalog sản phẩm |
-| `./screenshots/tcbs/tcinvest-ipo.png` | iPO |
-| `./screenshots/tcbs/tcinvest-funds.png` | Đầu tư định kỳ quỹ |
-| `./screenshots/tcbs/tcinvest-conditional-orders.png` | Help lệnh điều kiện |
-| `./screenshots/tcbs/tcinvest-odd-lot.png` | Help lô lẻ |
+| `./screenshots/tcbs/public/tcbs-public-system-overview.png` | Hệ thống iWealth |
+| `./screenshots/tcbs/public/tcbs-public-products-overview.png` | Catalog sản phẩm |
+| `./screenshots/tcbs/public/tcbs-public-stocks-product.png` | iStock |
+| `./screenshots/tcbs/public/tcbs-public-bonds-product.png` | iBond |
+| `./screenshots/tcbs/public/tcbs-public-funds-product.png` | iFund |
+| `./screenshots/tcbs/public/tcbs-public-derivatives-product.png` | iFuture |
+| `./screenshots/tcbs/public/tcbs-public-recurring-investment.png` | Đầu tư định kỳ |
+| `./screenshots/tcbs/public/tcbs-public-conditional-order.png` | Help lệnh điều kiện |
+| Inventory | [screenshots/README](./screenshots/README) |
 
-Không commit: QR login, số dư, holdings, account number.
+Authenticated: **not verified**. Không commit QR login.
 
 ## Chưa xác minh (authenticated)
 

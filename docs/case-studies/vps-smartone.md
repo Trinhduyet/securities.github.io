@@ -14,6 +14,10 @@ description: "Dùng các chức năng công khai của VPS SmartOne/HomeTrade đ
 
 Tài liệu công khai của VPS rất hữu ích cho người học core chứng khoán vì nó mô tả trực tiếp những khái niệm người dùng thường thấy: **đặt/hủy lệnh, trạng thái lệnh, sức mua, chứng khoán khả dụng, tiền chờ nhận về, chứng khoán chờ nhận/gửi đi, danh mục và chuyển tiền**.
 
+![VPS SmartOne hero](./screenshots/vps/public/vps-public-smartone-hero.png)
+
+> Ảnh minh họa landing SmartOne (trang công khai). Dùng để giới thiệu sản phẩm — **không** chứng minh backend. **Source:** 🟡 Public Marketing Page.
+
 ## 1. Feature inventory công khai
 
 ```text
@@ -483,7 +487,45 @@ Chi tiết: [ui-inspection-vps-smartone](./ui-inspection-vps-smartone) · [broke
 
 🟣 chuyển tiền, ứng trước, quyền — không submit. Margin VPS: 🔴 trong phiên 19/08.
 
-## 17. Nguồn chính thức
+## 17. Visual Gallery
+
+Inventory: [screenshots/README](./screenshots/README).
+
+### Public Product Images
+
+![VPS user guide](./screenshots/vps/public/vps-public-user-guide-overview.png)
+
+**Source:** 🟡 Public Documentation — Brief User Guide / HomeTrade.
+
+**Why this image matters:** capability đặt/hủy lệnh, bảng giá realtime, danh mục — không cần login.
+
+![VPS public market board](./screenshots/vps/public/vps-public-market-board.png)
+
+**Source:** 🟡 Public Marketing Page — bảng giá khi chưa đăng nhập.
+
+![VPS market depth widget](./screenshots/vps/public/vps-public-market-depth.png)
+
+**Source:** 🟡 Public — widget độ sâu. Domain [05](/domains/05-realtime-analytics).
+
+### Authenticated UI Screenshots
+
+![VPS authenticated market board](./screenshots/vps/authenticated/vps-auth-market-board-redacted.png)
+
+**Source:** 🟢 Authenticated UI (redacted — đã ẩn tên khách hàng).
+
+**Why this image matters:** bid/ask 3 mức, Trần/Sàn/TC minh họa market data fan-out. → [Domain 05](/domains/05-realtime-analytics).
+
+![VPS market insight](./screenshots/vps/authenticated/vps-auth-market-insight-redacted.png)
+
+**Source:** 🟢 Authenticated UI (redacted) — `/market`.
+
+**Why this image matters:** dòng chảy, khối ngoại, chuyển động ngành — analytics, không phải sổ lệnh. Order state *chờ tại VPS / chờ tại sàn* **không** có trên ảnh này (chỉ 🟡 guide + 🟣 labels). → [Bài 13 OMS](/lectures/13-oms-internals-state-machine/).
+
+**Không chụp:** Sức mua số thật, CK khả dụng, tiền chờ VSD, Tài sản, trạng thái lệnh bảng thật, chuyển tiền — PII / số dư.
+
+Pending VSD / Buying Power vẫn học từ guide: [Bài 07](/lectures/07-clearing-settlement-krx-fix-vsdc/) · [Bài 08](/lectures/08-account-cash-position-buying-power/) · [Bài 17](/lectures/17-clearing-netting-settlement/).
+
+## 18. Nguồn chính thức
 
 - https://smartone.vps.com.vn/vi-VN/Home/BriefUserGuide
 

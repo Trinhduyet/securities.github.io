@@ -14,6 +14,10 @@ description: "Từ các tính năng công khai của SSI iBoard đến order lif
 
 SSI iBoard là case study tốt để học vì tài liệu công khai cho thấy một broker web platform có khá đầy đủ các capability: giao dịch cơ sở, phái sinh, lệnh điều kiện, giao dịch tiền, quản lý tài sản, hiệu suất đầu tư, SBOND và nhiều tiện ích khác.
 
+![SSI iBoard hero](./screenshots/ssi/public/ssi-public-hero-iboard.png)
+
+> Ảnh minh họa từ trang công khai SSI (Web Trading / iBoard). Dùng để giới thiệu bối cảnh sản phẩm — **không** chứng minh architecture nội bộ. **Source:** 🟡 Public Marketing Page.
+
 ## 1. Feature inventory công khai
 
 Theo các hướng dẫn chính thức của SSI, iBoard có các nhóm chức năng đáng chú ý:
@@ -527,7 +531,47 @@ Chi tiết feature card: [ui-inspection-ssi-iboard](./ui-inspection-ssi-iboard) 
 
 🟣 Tăng sức mua, IPO, quyền, chuyển tiền (không submit). Margin **overview** thuộc 01+Risk, không map toàn bộ margin vào 08.
 
-## 16. Nguồn chính thức
+## 16. Visual Gallery
+
+Inventory đầy đủ: [screenshots/README](./screenshots/README).
+
+### Public Product Images
+
+![SSI iBoard product overview](./screenshots/ssi/public/ssi-public-product-overview.png)
+
+**Source:** 🟡 Public Documentation — hướng dẫn giao dịch trên iBoard.
+
+**Why this image matters:** liệt kê capability bảng giá, watchlist, công cụ phân tích mà không cần login.
+
+![SSI cash operations guide](./screenshots/ssi/public/ssi-public-cash-operations.png)
+
+**Source:** 🟡 Public Documentation — Giao dịch tiền.
+
+**Why this image matters:** Ứng trước tiền bán và sao kê là capability post-trade / financing, không phải matching. Cross-link: [Domain 01](/domains/01-securities-core) · [Domain 08](/domains/08-enterprise-workflow) · [Bài 18 Ledger](/lectures/18-ledger-accounting-projections/).
+
+### Authenticated UI Screenshots
+
+![SSI market board](./screenshots/ssi/authenticated/ssi-auth-market-board-redacted.png)
+
+**Source:** 🟢 Authenticated UI (redacted — đã ẩn số tài khoản).
+
+**Why this image matters:** Trần/Sàn/TC, 3 mức bid/ask, phiên Liên tục minh họa [Domain 05 Realtime Analytics](/domains/05-realtime-analytics) · [Bài 10 Market Data](/lectures/10-market-data-engineering/). Ảnh không chứng minh FIX feed nội bộ.
+
+![SSI margin overview](./screenshots/ssi/authenticated/ssi-auth-margin-overview-redacted.png)
+
+**Source:** 🟢 Authenticated UI (redacted).
+
+**Why this image matters:** Tỷ lệ KQ, trạng thái An toàn, Tổng nợ, Lãi tạm tính, Gói vay — **01 + Risk**, không gom toàn bộ vào Domain 08. Nút *Tăng sức mua* là workflow (không click). → [Bài 11 Risk/Margin](/lectures/11-risk-margin-controls/).
+
+![SSI market analytics](./screenshots/ssi/authenticated/ssi-auth-market-analytics-redacted.png)
+
+**Source:** 🟢 Authenticated UI (redacted).
+
+**Why this image matters:** Top đột phá / vượt đỉnh là fan-out analytics, không phải OMS write path.
+
+Không chụp sổ lệnh / danh mục / sao kê vì holdings và số dư thật.
+
+## 17. Nguồn chính thức
 
 - https://www.ssi.com.vn/khach-hang-ca-nhan/nen-tang-giao-dich/nen-tang-giao-dich-web-trading/iboard-web
 - https://www.ssi.com.vn/khach-hang-ca-nhan/giao-dich-chung-khoan-ib-web

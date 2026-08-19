@@ -14,6 +14,10 @@ description: "Dùng hệ sinh thái TCInvest để học multi-product brokerage
 
 TCInvest là case study tốt để học một điểm rất quan trọng: **brokerage platform không chỉ có equity OMS**. Tài liệu công khai của TCBS cho thấy một tài khoản có thể tiếp cận nhiều sản phẩm như cổ phiếu, trái phiếu, quỹ đầu tư, phái sinh, chứng quyền và các tính năng quản lý tài sản.
 
+![TCBS iWealth / TCInvest system](./screenshots/tcbs/public/tcbs-public-system-overview.png)
+
+> Ảnh minh họa trang hệ thống iWealth công khai. **Source:** 🟡 Public Marketing Page. Authenticated TCInvest: **not verified**.
+
 ## 1. Feature / product inventory công khai
 
 ```text
@@ -611,7 +615,47 @@ Shared cross-cutting
 
 Không nên tạo `UniversalInvestmentEntity { Type, Amount, Status }` cho mọi sản phẩm chỉ vì UI gom chúng vào một màn hình. Portfolio trên UI là **projection**.
 
-## 21. Nguồn chính thức
+## 21. Visual Gallery
+
+Inventory: [screenshots/README](./screenshots/README). **Authenticated UI:** not verified.
+
+### Public Product Images
+
+![TCBS products overview](./screenshots/tcbs/public/tcbs-public-products-overview.png)
+
+**Source:** 🟡 Public Marketing Page — catalog đa sản phẩm.
+
+![TCBS iStock](./screenshots/tcbs/public/tcbs-public-stocks-product.png)
+
+**Source:** 🟡 Public — iStock. Domain [01](/domains/01-securities-core) + [05](/domains/05-realtime-analytics) + [06](/domains/06-conditional-orders).
+
+![TCBS iBond](./screenshots/tcbs/public/tcbs-public-bonds-product.png)
+
+**Source:** 🟡 Public — iBond. Domain [03](/domains/03-bonds-core).
+
+![TCBS iFund](./screenshots/tcbs/public/tcbs-public-funds-product.png)
+
+**Source:** 🟡 Public — Fundmart. Domain [04](/domains/04-funds-core).
+
+![TCBS iFuture](./screenshots/tcbs/public/tcbs-public-derivatives-product.png)
+
+**Source:** 🟡 Public — iFuture. Domain [02](/domains/02-derivatives-core).
+
+![TCBS recurring investment](./screenshots/tcbs/public/tcbs-public-recurring-investment.png)
+
+**Source:** 🟡 Public — đầu tư định kỳ quỹ. Domain 04.
+
+### Public Documentation
+
+![TCBS conditional order help](./screenshots/tcbs/public/tcbs-public-conditional-order.png)
+
+**Source:** 🟡 Public Documentation — lệnh điều kiện, link TWAP. Domain [06](/domains/06-conditional-orders).
+
+### Authenticated UI Screenshots
+
+Chưa có — TCInvest redirect `guest/login` (18/08/2026).
+
+## 22. Nguồn chính thức
 
 - https://www.tcbs.com.vn/ca-nhan/he-thong/
 - https://www.tcbs.com.vn/ca-nhan/san-pham/

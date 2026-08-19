@@ -60,8 +60,8 @@ Rights:  Lịch sử hưởng quyền
 ```
 
 **Screens inspected:** Bảng giá `/` · Thị trường `/market`  
-**Không commit screenshot header** (có tên khách hàng). Dùng board public cũ: `./screenshots/vps/vps-market-board.png`. Widget thị trường đã chụp phiên public: `./screenshots/vps-smartone/vps-market-*.png`.  
-**Skipped:** Đặt/Hủy lệnh, Chuyển tiền, Ứng trước, Tài sản (holdings), bất kỳ nút không chắc READ.
+**Screenshot authenticated:** `./screenshots/vps/authenticated/` (đã ẩn tên). Public: `./screenshots/vps/public/`. Inventory: [screenshots/README](./screenshots/README).  
+**Skipped:** Đặt/Hủy lệnh, Chuyển tiền, Ứng trước, Tài sản (holdings), sức mua số thật, sổ lệnh bảng thật.
 
 ### Widgets `/market` (🟢 authenticated)
 

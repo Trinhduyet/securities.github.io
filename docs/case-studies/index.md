@@ -172,7 +172,11 @@ Khảo sát read-only trực tiếp trên broker web app — phân tách **obser
 
 Ma trận evidence-level: [broker-domain-matrix.md](./broker-domain-matrix.md) (🟢 🟣 🟡 🔴 —, không chỉ ✓/✗).
 
-Screenshot public: `docs/case-studies/screenshots/ssi-iboard/`, `vps-smartone/`, `tcbs/`. Authenticated (redacted): `screenshots/ssi/`, `screenshots/vps/`.
+Screenshot inventory: [screenshots/README](./screenshots/README) (`public/` vs `authenticated/`).
+
+![SSI iBoard](./screenshots/ssi/public/ssi-public-hero-iboard.png)
+![VPS SmartOne](./screenshots/vps/public/vps-public-smartone-hero.png)
+![TCBS iWealth](./screenshots/tcbs/public/tcbs-public-system-overview.png)
 
 ## 6b. Cross-Broker Deep Dives
 

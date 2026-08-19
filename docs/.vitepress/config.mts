@@ -58,7 +58,8 @@ const caseStudies = [
   { text: 'UI Inspection — VPS SmartOne', link: '/case-studies/ui-inspection-vps-smartone' },
   { text: '03. TCBS / TCInvest', link: '/case-studies/tcbs-tcinvest' },
   { text: 'UI Inspection — TCBS / TCInvest', link: '/case-studies/ui-inspection-tcbs-tcinvest' },
-  { text: 'Broker Domain Matrix', link: '/case-studies/broker-domain-matrix' }
+  { text: 'Broker Domain Matrix', link: '/case-studies/broker-domain-matrix' },
+  { text: 'Screenshot inventory', link: '/case-studies/screenshots/' }
 ]
 
 const engineering = [
