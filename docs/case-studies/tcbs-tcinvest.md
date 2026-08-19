@@ -572,7 +572,9 @@ Xem [06 Conditional Orders](/domains/06-conditional-orders).
 
 ### 07 Rewards
 
-Observed/public: iXu, giới thiệu bạn bè, iWealth Partner, lịch sử chi trả iXu.
+🟡 Public: iXu, giới thiệu bạn bè, iWealth Partner, copy lịch sử chi trả iXu.
+
+🔴 Authenticated reward ledger / redemption workflow **chưa verified** — product copy ≠ đủ evidence Domain 07 end-to-end (Campaign, Points, Voucher, Reversal…).
 
 Xem [07 Rewards](/domains/07-rewards).
 

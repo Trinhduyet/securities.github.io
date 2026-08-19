@@ -457,35 +457,31 @@ Chi tiết: [ui-inspection-vps-smartone](./ui-inspection-vps-smartone) · [broke
 
 ### 01 Securities Core
 
-Observed: bảng giá, đặt/hủy/sổ lệnh (labels + public guide), sức mua, CK khả dụng, tiền/CK chờ về.
+🟢 Bảng giá, `/market`. 🟣+🟡 order status, sức mua, CK khả dụng, pending VSD (labels + guide).
 
 ### 02 Derivatives Core
 
-Observed: menu Phái sinh, board Phái sinh.
+🟢 menu + board Phái sinh.
 
-### 03 Bonds Core
+### 03 / 04 Bonds / Funds
 
-Label tài sản trái phiếu / VPS bond — màn hình chưa mở.
-
-### 04 Funds Core
-
-Label tài sản quỹ — màn hình chưa mở.
+🟣 asset labels — screen 🔴.
 
 ### 05 Realtime Analytics
 
-Observed: Bảng giá, Thị trường `/market` (độ sâu, khối ngoại, top tăng/giảm, dòng chảy).
+🟢 Bảng giá + widgets `/market`.
 
 ### 06 Conditional Orders
 
-Observed: STOP / TCO / Trailing stop / SL-TP labels.
+🟣+🟡 STOP/TCO/Trailing/SL-TP labels.
 
 ### 07 Rewards
 
-Observed: Ưu đãi / Discover.
+🟣 menu Ưu đãi/Discover only — **Domain 07 loyalty ledger not verified** (Campaign/Points/Voucher chưa thấy).
 
 ### 08 Enterprise Workflow
 
-Observed: chuyển tiền, ứng trước, lịch sử quyền — không submit.
+🟣 chuyển tiền, ứng trước, quyền — không submit. Margin VPS: 🔴 trong phiên 19/08.
 
 ## 17. Nguồn chính thức
 

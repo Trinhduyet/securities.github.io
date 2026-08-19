@@ -466,7 +466,7 @@ Trading UI
 → OMS
 
 Sổ lệnh
-→ read model / lifecycle
+→ read model / projection (không phải source of truth duy nhất)
 
 Ứng trước tiền bán
 → pending settlement + financing
@@ -493,35 +493,39 @@ Chi tiết feature card: [ui-inspection-ssi-iboard](./ui-inspection-ssi-iboard) 
 
 ### 01 Securities Core
 
-Observed: Bảng giá, Đặt lệnh, Sổ lệnh, lô lẻ, thỏa thuận, sức mua (qua margin/board).
+🟢 Observed screens: Bảng giá, board filters (lô lẻ, thỏa thuận trên board).
+
+🟣 Authenticated client evidence: Đặt lệnh, Sổ lệnh, lệnh điều kiện, ứng trước, cash labels.
+
+🟡 Official: flow đặt/sửa/hủy lệnh trên tài liệu SSI.
 
 ### 02 Derivatives Core
 
-Observed: menu Giao dịch phái sinh, tab board Phái sinh.
+🟢 board tab Phái sinh · 🟣 menu Giao dịch phái sinh.
 
 ### 03 Bonds Core
 
-Observed: Trái phiếu riêng lẻ trên board; SBOND labels trong client.
+🟢 filter trái phiếu riêng lẻ trên board · 🟣 SBOND labels.
 
 ### 04 Funds Core
 
-Chưa xác minh màn hình; client có label CCQ mở.
+🟣 CCQ labels — authenticated screen 🔴.
 
 ### 05 Realtime Analytics
 
-Observed: board VN30/HOSE, Trần/Sàn/TC, 3 mức bid/ask, ĐTNN, phiên Liên tục; submenu Thông tin thị trường (biểu đồ, heatmap, dòng tiền, top cổ phiếu).
+🟢 board VN30/HOSE, submenu Thông tin thị trường (DOM popup).
 
 ### 06 Conditional Orders
 
-Observed: labels Đặt lệnh điều kiện / Sổ lệnh điều kiện.
+🟣+🟡 labels — screen/form 🔴.
 
 ### 07 Rewards
 
-Chưa xác minh từ UI/tài liệu hiện tại.
+🔴 / — (không thấy trong phiên 19/08).
 
 ### 08 Enterprise Workflow
 
-Observed: Margin tổng quan (gói vay, Tỷ lệ KQ); labels quyền, IPO, chuyển tiền — không submit.
+🟣 Tăng sức mua, IPO, quyền, chuyển tiền (không submit). Margin **overview** thuộc 01+Risk, không map toàn bộ margin vào 08.
 
 ## 16. Nguồn chính thức
 

@@ -57,12 +57,14 @@ ExecutedAt
 
 ```text
 RequiredCash <= AvailableBuyingPower
-CumQty + LeavesQty = OrderQty
+OrderQty = CumQty + LeavesQty + CancelledQty   (working orders; CancelledQty=0 nếu chưa cancel)
 CumQty <= OrderQty
 Reservation không âm
 ExecId không apply business effect hai lần
 Cancelled order không nhận new fill trừ race event đã hợp lệ theo simulator sequence
 ```
+
+Sau cancel terminal: `LeavesQty = 0`; `CumQty + CancelledQty = OrderQty` — **không** dùng `CumQty + LeavesQty = OrderQty` cho mọi state.
 
 ## Scenario 1 — Happy path
 

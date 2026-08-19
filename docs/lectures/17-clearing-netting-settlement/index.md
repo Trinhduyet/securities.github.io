@@ -20,8 +20,8 @@ FILLED chỉ kết thúc execution lifecycle. Post-trade mới biến trade thà
 </div>
 
 <div class="callout">
-<strong>Broker UI (🟡 VPS / 🟢 SSI)</strong><br/>
-VPS mô tả CK chờ nhận/gửi T1–T3 và tiền chờ về sau bán. SSI có <em>Ứng trước tiền bán</em>: biến pending receivable thành cash usable trước settlement. Đó là post-trade, không phải matching.
+<strong>Broker UI (🟡 VPS guide / 🟣 SSI labels)</strong><br/>
+VPS CK/tiền chờ VSD (🟡+🟣) minh họa pending settlement sau FILLED. SSI <em>Ứng trước tiền bán</em> (🟣) biến pending receivable thành cash usable — cross-domain (01 + financing + 08 + ledger), không phải matching.
 </div>
 
 

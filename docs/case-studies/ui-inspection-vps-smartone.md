@@ -19,9 +19,18 @@ platform: "VPS SmartOne Web"
 
 ## Legend
 
-🟢 OBSERVED · 🟡 OFFICIAL ([Brief User Guide](https://smartone.vps.com.vn/vi-VN/Home/BriefUserGuide)) · 🔵 REFERENCE · 🔴 screen không mở
+| Ký hiệu | Nghĩa |
+|---|---|
+| 🟢 | **Observed screen** — màn hình authenticated thực sự đã mở |
+| 🟣 | **Authenticated client evidence** — label/route/menu SPA; screen chưa inspect đầy đủ |
+| 🟡 | **Official documentation** — [Brief User Guide](https://smartone.vps.com.vn/vi-VN/Home/BriefUserGuide) |
+| 🔵 | **Reference design** |
+| 🔴 | **Not verified** |
+| — | **Not found** |
 
-## Top-level menus (🟢)
+**Client evidence** ≠ observed workflow. **Projection** = read model tổng hợp, không nhất thiết source of truth.
+
+## Top-level menus (🟢 observed screen)
 
 ```text
 Bảng giá
@@ -35,7 +44,7 @@ Tiện ích
 
 Board tabs (🟢): HOSE, VN30, HNX, HNX30, UPCOM, Phái sinh, CP Ngành, Thỏa thuận, Tự doanh, Lô lẻ, Chứng quyền, ETF.
 
-### Capability labels trong client authenticated (🟢 SPA)
+### Capability labels trong client authenticated (🟣 SPA)
 
 ```text
 Orders:  Đặt lệnh cơ sở/phái sinh, Sổ lệnh trong ngày, Sổ lệnh thường,
@@ -83,61 +92,69 @@ Tick, Quote, Bid, Ask, Spread, Depth, OHLCV — cùng nghĩa SSI. Ví dụ publi
 
 ## Feature: Trạng thái lệnh (VPS wording)
 
-**Status:** 🟡 official guide · 🟢 SPA `Trạng thái lệnh`  
-**Domain:** 01
+**Status:** 🟡 official guide · 🟣 SPA label `Trạng thái lệnh` · 🔴 không mở bảng lệnh thật  
+**Domain:** 01 · Cross-link: [Bài 13 OMS](/lectures/13-oms-internals-state-machine/)
 
 ### 1. UI
 
-Guide + labels SPA: chờ khớp tại VPS / tại sàn; khớp 1 phần / hoàn toàn; chờ hủy tại VPS / tại sàn; từ chối tại VPS / tại sàn.
+Guide + 🟣 labels SPA: chờ khớp tại VPS / tại sàn; khớp 1 phần / hoàn toàn; chờ hủy; từ chối.
 
 ### 2. Business meaning
 
-Tách **broker accepted** khỏi **market accepted**. Timeout trên UI không chứng minh venue đã reject.
+Tách **broker received** khỏi **market handoff**. UI wording **không** chứng minh exchange internal queue, central order book placement, hay exact gateway session state.
+
+Mental model (🔵 reference):
+
+```text
+Broker Received → Market Handoff → Market Accepted / Working
+→ Matching eligibility → Execution
+```
 
 ### 3. Glossary
 
-| UI | Ý nghĩa |
+| UI | Ý nghĩa thận trọng |
 |---|---|
-| Chờ khớp tại VPS | Broker đã nhận, chưa (hoặc chưa xong) gửi sàn |
-| Chờ khớp tại sàn | Đã vào sổ lệnh thị trường |
-| Khớp 1 phần | Execution nhưng LeavesQty > 0 |
+| Chờ khớp tại VPS | Broker đã nhận; chưa xong bước nội bộ trước/sau handoff |
+| Chờ khớp tại sàn | Broker cho biết order đã sang lifecycle phía sàn/thị trường và đang chờ xử lý hoặc khớp theo rule thị trường — **không** đồng nghĩa “đã nằm trong central order book” |
+| Khớp 1 phần | Execution; LeavesQty > 0 (🔵) |
 | Khớp hoàn toàn | FILLED; chưa Settled |
-| Từ chối tại VPS / sàn | Reject nội bộ vs reject venue |
+| Từ chối tại VPS / sàn | Reject nội bộ vs reject phía thị trường |
 
-### 4. Example
+### 4. Example — BUY + partial + cancel race (🔵)
 
 ```text
 BUY 1,000 FPT @ 120,000
-→ chờ VPS → chờ sàn → khớp 400 → PARTIALLY_FILLED
-CumQty 400 ≠ Settled
+→ chờ VPS → chờ sàn → khớp 400 (CumQty=400, LeavesQty=600)
+User cancel — Case A: CumQty=400, CancelledQty=600, LeavesQty=0
+Case B (race): fill thêm 200 → CumQty=600, CancelledQty=400, LeavesQty=0
 ```
+
+FILLED / partial fill trên UI ≠ Settled.
 
 ### 5. State
 
 ```text
-CREATED → ACCEPTED_AT_BROKER → SENT_TO_EXCHANGE → WORKING
+CREATED → ACCEPTED_AT_BROKER → SENT_TO_EXCHANGE / MARKET_HANDOFF → WORKING
 → PARTIALLY_FILLED → FILLED
 → PENDING_CANCEL → CANCELLED
 ```
 
 ### 6. Invariants
 
-`CumQty <= OrderQty`. FILLED ≠ Settled.
+`OrderQty = CumQty + LeavesQty + CancelledQty` (khi model có CancelledQty). `CumQty <= OrderQty`. FILLED ≠ Settled.
 
-### 7–10. Reference
+### 7–12. Reference / failure / recon
 
-`GET /orders/{id}` · `Order`/`Execution`/`Trade`. Events: `OrderAccepted` · `ExecutionReceived`. Deps: OMS · Exchange.
-
-### 11–12. Failure / recon
-
-Cancel race khi đang partial fill; timeout UNKNOWN; duplicate fill. Reconcile internal order ↔ venue.
+`GET /orders/{id}`. Cancel race + timeout UNKNOWN. Reconcile internal order ↔ venue facts (không suy từ label UI).
 
 ---
 
 ## Feature: Buying power / sức mua
 
-**Status:** 🟢 labels `Sức mua`, `Sức mua từ tiền mặt` · 🔴 không chụp số  
-**Domain:** 01 + Risk
+**Status:** 🟣 labels `Sức mua`, `Sức mua từ tiền mặt` · 🔴 không chụp số  
+**Domain:** 01 + Risk · Cross-link: [Bài 08 Buying Power](/lectures/08-account-cash-position-buying-power/)
+
+**Buying Power UI** = derived projection — không `Account.Balance = BuyingPower`.
 
 ### 1–2. UI / business
 
@@ -169,10 +186,33 @@ BuyingPower snapshot theo lệnh/phiên. `RequiredCash <= BuyingPower` tại lú
 
 ---
 
-## Feature: CK khả dụng / pending settlement
+## Feature: CK khả dụng / pending settlement / Tiền chờ VSD
 
-**Status:** 🟡 guide · 🟢 labels tài sản / tiền chờ VSD  
-**Domain:** 01
+**Status:** 🟡 guide · 🟣 labels tài sản / tiền chờ VSD · 🔴 không mở Tài sản  
+**Domain:** 01 + Settlement · Cross-link: [Bài 07 KRX/VSDC](/lectures/07-clearing-settlement-krx-fix-vsdc/) · [Bài 17 Settlement](/lectures/17-clearing-netting-settlement/)
+
+**Pending Settlement** = tiền/CK đã phát sinh từ trade nhưng chưa hoàn tất settlement.
+
+### Mini-case: SELL + Tiền chờ VSD (🔵 illustrative)
+
+```text
+User SELL 1,000 FPT — trade đã khớp (FILLED trên sổ lệnh)
+→ Trade exists → broker ghi PendingSaleReceivable
+→ UI có thể hiển thị "Tiền chờ VSD" / tiền chờ về
+→ chưa chắc cash đã settled
+→ settlement hoàn thành → settled/available thay đổi theo rule
+```
+
+Reference state (🔵):
+
+```text
+PendingSaleReceivable { TradeId, Amount, TradeDate, SettlementDate, Status }
+Status: PENDING → SETTLED
+```
+
+Recon: internal receivable ↔ VSDC/settlement result ↔ bank cash leg.
+
+### CK khả dụng (structure ví dụ)
 
 ```text
 Total Position       2,000
@@ -190,14 +230,14 @@ Tiền chờ về / CK chờ nhận / CK chờ gửi: TradeDate → SettlementDa
 
 ## Feature: Portfolio / P&L
 
-**Status:** 🟢 `Danh mục đầu tư`, `Sao kê lãi lỗ` · 🔴 không chụp P&L thật  
+**Status:** 🟣 labels · 🔴 không chụp P&L · **Portfolio UI** = projection
 Unrealized vs Realized. Giá TB vs Giá TT (guide PVA lỗ 522,000đ / 6.79%).
 
 ---
 
 ## Feature: Cash transfer / ứng trước
 
-**Status:** 🟢 labels Chuyển tiền, Ứng trước · 🔴 không submit · **Domain:** 01 + 08
+**Status:** 🟣 labels · 🔴 không submit · **Domain:** 01 + Financing + [08](/domains/08-enterprise-workflow) + Ledger/Settlement
 
 Internal / Napas / NH liên kết. Timeout ≠ failed; cần inquiry.
 
@@ -207,25 +247,26 @@ Internal / Napas / NH liên kết. Timeout ≠ failed; cần inquiry.
 
 | Feature | Status | Domain |
 |---|---|---|
-| Phái sinh menu + board | 🟢 | 02 |
-| Lệnh điều kiện STOP/TCO/Trailing/SLTP | 🟢 labels | 06 |
-| Ưu đãi / Discover | 🟢 | 07 |
-| Tài sản trái phiếu / VPS bond / quỹ | 🟢 labels | 03 / 04 — screen 🔴 |
-| Lịch sử hưởng quyền | 🟢 labels | 01 + 08 |
+| Phái sinh menu + board tab | 🟢 | 02 |
+| Lệnh điều kiện STOP/TCO/Trailing/SLTP | 🟣+🟡 | 06 |
+| Ưu đãi / Discover | 🟣 promotion UI | **07 Rewards: 🔴 not verified** (chưa thấy points/voucher/ledger) |
+| Tài sản trái phiếu / quỹ | 🟣 | 03 / 04 — screen 🔴 |
+| Lịch sử hưởng quyền | 🟣 | 01 + 08 |
 
 ---
 
 ## VPS → 8 Core Domains
 
-| Domain | Observed |
+| Domain | Evidence |
 |---|---|
-| 01 | Board, đặt lệnh labels, sổ lệnh, sức mua, CK khả dụng, pending VSD |
-| 02 | Menu + board Phái sinh |
-| 03 | Label tài sản trái phiếu — screen 🔴 |
-| 04 | Label tài sản quỹ — screen 🔴 |
-| 05 | Bảng giá, Thị trường |
-| 06 | STOP/TCO/Trailing/SLTP labels |
-| 07 | Ưu đãi |
-| 08 | Chuyển tiền, ứng trước, quyền (không submit) |
+| 01 | 🟢 board/market · 🟣+🟡 order, sức mua, CK khả dụng, pending VSD |
+| 02 | 🟢 menu + board Phái sinh |
+| 03 / 04 | 🟣 asset labels — screen 🔴 |
+| 05 | 🟢 Bảng giá + `/market` widgets |
+| 06 | 🟣+🟡 conditional labels |
+| 07 | 🟣 Ưu đãi only — **loyalty ledger 🔴** |
+| 08 | 🟣 chuyển tiền, ứng trước, quyền (không submit) |
+
+Margin overview VPS: 🔴 trong phiên 19/08. Order state deep dive → [ssi-iboard](./ssi-iboard) companion + [Bài 13](/lectures/13-oms-internals-state-machine/).
 
 Xem [vps-smartone](./vps-smartone)

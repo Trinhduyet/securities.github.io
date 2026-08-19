@@ -1,64 +1,95 @@
 ---
 title: "Broker Domain Matrix — SSI / VPS / TCBS"
-description: "Bảng map capability công khai/quan sát được của SSI iBoard, VPS SmartOne và TCInvest sang 8 Core Domains."
+description: "Bảng map capability theo mức evidence (observed screen, client evidence, official docs) sang 8 Core Domains."
 ---
 
 # Broker Domain Matrix
 
 <div class="lesson-meta">
   <span><strong>Cập nhật</strong> 19/08/2026</span>
-  <span><strong>Nguồn</strong> UI public + tài liệu chính thức + UI inspection</span>
+  <span><strong>Evidence</strong> 🟢 🟣 🟡 🔴 —</span>
   <span><strong>Không suy luận</strong> kiến trúc nội bộ từng broker</span>
 </div>
 
-Ký hiệu:
+## Evidence taxonomy
 
 | Ký hiệu | Nghĩa |
 |---|---|
-| ✓ | Observed authenticated UI **hoặc** official public documentation |
-| ? | Chưa xác minh trong phạm vi kiểm tra |
-| — | Không thấy trong phạm vi kiểm tra |
+| 🟢 | **Observed screen** — màn hình authenticated/public thực sự đã mở và nhìn thấy |
+| 🟣 | **Authenticated client evidence** — label / route / menu / component trong SPA sau login; screen chưa inspect đầy đủ |
+| 🟡 | **Official documentation** — help, hướng dẫn, product page chính thức |
+| 🔵 | **Reference design** — state / API / model do course đề xuất (dùng trong feature cards, không ghi trong cell matrix) |
+| 🔴 | **Not verified** — chưa đủ evidence |
+| — | **Not found** — không thấy trong phạm vi khảo sát |
 
-Cập nhật **19/08/2026**: SSI iBoard và VPS SmartOne đã khảo sát authenticated (READ-ONLY). Không commit PII.
+Một cell có thể kết hợp: `🟢+🟡`, `🟣+🟡`.
+
+**SPA** (*Single Page Application*) = web app tải phần lớn UI bằng JavaScript, đổi màn hình không reload toàn trang.
+
+**Client evidence** = bằng chứng từ code/menu/route/label phía ứng dụng sau login — **không** đồng nghĩa đã kiểm tra workflow thực tế hay submit form.
+
+Phiên READ-ONLY: SSI + VPS authenticated **19/08/2026**. TCBS authenticated **chưa xác minh** (public **18/08/2026**).
 
 | Capability | SSI | VPS | TCBS | Core Domain |
-|---|:---:|:---:|:---:|---|
-| Market Board | ✓ | ✓ | ✓ | [05](/domains/05-realtime-analytics) |
-| Order Entry | ✓ | ✓ | ✓ | [01](/domains/01-securities-core) |
-| Order Status | ✓ | ✓ | ✓ | [01](/domains/01-securities-core) |
-| Partial Fill | ✓ | ✓ | ✓ | [01](/domains/01-securities-core) |
-| Buying Power | ✓ | ✓ | ✓ | [01](/domains/01-securities-core) |
-| Margin | ✓ | ? | ✓ | [01](/domains/01-securities-core) / Risk |
-| Portfolio | ✓ | ✓ | ✓ | Cross-domain |
-| Cash | ✓ | ✓ | ✓ | [01](/domains/01-securities-core) |
-| Pending Settlement | ✓ | ✓ | ✓ | [01](/domains/01-securities-core) |
-| Cash Advance | ✓ | ✓ | ? | [01](/domains/01-securities-core) |
-| Derivatives | ✓ | ✓ | ✓ | [02](/domains/02-derivatives-core) |
-| Bonds | ✓ | ? | ✓ | [03](/domains/03-bonds-core) |
-| Funds | ? | ? | ✓ | [04](/domains/04-funds-core) |
-| Technical Analytics | ✓ | ✓ | ✓ | [05](/domains/05-realtime-analytics) |
-| Conditional Orders | ✓ | ✓ | ✓ | [06](/domains/06-conditional-orders) |
-| TWAP | — | — | ✓ | [06](/domains/06-conditional-orders) / [01](/domains/01-securities-core) |
-| Rewards | — | ✓ | ✓ | [07](/domains/07-rewards) |
-| eKYC / Workflow | ? | ? | ✓ | [08](/domains/08-enterprise-workflow) |
-| IPO | ✓ | — | ✓ | [08](/domains/08-enterprise-workflow) |
-| Corporate Actions | ✓ | ✓ | ✓ | [01](/domains/01-securities-core) / [08](/domains/08-enterprise-workflow) |
-| Equity Trading | ✓ | ✓ | ✓ | [01](/domains/01-securities-core) |
-| Order History | ✓ | ✓ | ✓ | [01](/domains/01-securities-core) |
-| Cash Operations | ✓ | ✓ | ✓ | [01](/domains/01-securities-core) / [08](/domains/08-enterprise-workflow) |
+|---|---|---|---|---|
+| Market Board | 🟢 | 🟢 | 🟡 | [05](/domains/05-realtime-analytics) |
+| Order Entry | 🟢+🟣 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) |
+| Order Status | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) |
+| Partial Fill | 🟡 | 🟡 | 🟡 | [01](/domains/01-securities-core) |
+| Buying Power | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) + Risk |
+| Margin (overview / ratio / debt) | 🟢 | 🔴 | 🟡 | [01](/domains/01-securities-core) + Risk |
+| Portfolio / P&L | 🟣 | 🟣 | 🟡 | Cross-domain projection |
+| Cash / Statement | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) |
+| Pending Settlement | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) + Settlement |
+| Cash Advance | 🟣+🟡 | 🟣+🟡 | 🔴 | 01 + Financing + [08](/domains/08-enterprise-workflow) + Ledger/Settlement |
+| Derivatives | 🟢+🟣 | 🟢+🟣 | 🟡 | [02](/domains/02-derivatives-core) |
+| Bonds | 🟢+🟣 | 🟣 | 🟡 | [03](/domains/03-bonds-core) |
+| Funds | 🟣 | 🟣 | 🟡 | [04](/domains/04-funds-core) |
+| Technical Analytics | 🟢 | 🟢 | 🟡 | [05](/domains/05-realtime-analytics) |
+| Conditional Orders | 🟣+🟡 | 🟣+🟡 | 🟡 | [06](/domains/06-conditional-orders) |
+| TWAP | — | — | 🟡 | [06](/domains/06-conditional-orders) |
+| Rewards / Loyalty | 🔴 | 🟣* | 🟡 | [07](/domains/07-rewards) — *promotion UI; ledger not verified |
+| eKYC / Onboarding | 🟡 | 🔴 | 🟡 | [08](/domains/08-enterprise-workflow) |
+| IPO | 🟣+🟡 | — | 🟡 | [08](/domains/08-enterprise-workflow) |
+| Corporate Actions | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) + [08](/domains/08-enterprise-workflow) |
+| Order History | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) |
+| Cash Transfer | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) + [08](/domains/08-enterprise-workflow) |
+| Margin apply / Tăng sức mua | 🟣 | 🔴 | 🟡 | [08](/domains/08-enterprise-workflow) + Risk |
+
+## Cross-cutting: Cash Advance
+
+Cash Advance không thuộc một domain duy nhất:
+
+```text
+Cash Advance
+├── Securities Core      → PendingSaleReceivable
+├── Financing / Credit   → AdvancePrincipal + Fee
+├── Enterprise Workflow  → Request / Validate / Status
+├── Ledger               → Accounting entries
+└── Settlement           → Offset khi sale proceeds settle
+```
+
+Ví dụ illustrative (không phải số tài khoản thật):
+
+```text
+SELL trade → PendingReceivable = 100m
+Eligible advance = 95m · Fee illustrative = 0.2m
+→ cash usable tăng theo advance approved
+→ settlement → proceeds clear advance obligation
+```
 
 ## Ghi chú theo nền tảng
 
 ### SSI iBoard
 
-Nguồn: authenticated UI 19/08/2026 (bảng giá, margin tổng quan) + SPA labels + tài liệu công khai SSI. Bonds = trái phiếu riêng lẻ / SBOND. Funds CCQ = label, screen chưa mở. Rewards không thấy.
+🟢 Screens: bảng giá `/`, margin `/margin/general`, submenu Thông tin thị trường (DOM popup). 🟣 SPA: Sổ lệnh, lệnh điều kiện, ứng trước, CCQ, IPO, SBOND. Rewards: 🔴/—.
 
 ### VPS SmartOne
 
-Nguồn: authenticated UI 19/08/2026 (bảng giá, `/market`) + SPA labels + [Brief User Guide](https://smartone.vps.com.vn/vi-VN/Home/BriefUserGuide). Conditional orders và ứng trước = labels client. Bonds/Funds = label tài sản, screen chưa mở. Rewards = Ưu đãi.
+🟢 Screens: bảng giá `/`, thị trường `/market`. 🟡 [Brief User Guide](https://smartone.vps.com.vn/vi-VN/Home/BriefUserGuide): trạng thái lệnh, CK khả dụng, pending. 🟣 Ưu đãi = promotion UI — **Domain 07 loyalty ledger chưa verified**. Margin screen: 🔴.
 
 ### TCBS / TCInvest
 
-Nguồn: [hệ thống iWealth](https://www.tcbs.com.vn/ca-nhan/he-thong/), [sản phẩm](https://www.tcbs.com.vn/ca-nhan/san-pham/), help TCBS. Authenticated screens: **chưa xác minh**. iXu / iWealth Partner = Rewards. iPO / onboarding 3 phút = Workflow.
+🟡 Public iWealth, sản phẩm, help. Authenticated TCInvest: 🔴 (redirect `guest/login`). iXu = 🟡 product copy; authenticated reward ledger 🔴.
 
-Chi tiết: [ui-inspection-tcbs-tcinvest](./ui-inspection-tcbs-tcinvest) · [tcbs-tcinvest](./tcbs-tcinvest)
+Chi tiết: [ui-inspection-ssi-iboard](./ui-inspection-ssi-iboard) · [ui-inspection-vps-smartone](./ui-inspection-vps-smartone) · [ui-inspection-tcbs-tcinvest](./ui-inspection-tcbs-tcinvest)

@@ -25,8 +25,8 @@ Tick giá
 Nếu xử lý sai sequence, duplicate hoặc late event, chart có thể sai, volume có thể bị cộng đôi, conditional order có thể trigger sai và risk engine có thể dùng giá stale.
 
 <div class="callout">
-<strong>Broker UI (🟢)</strong><br/>
-SSI iBoard board VN30 hiển thị Trần/Sàn/TC, 3 mức bid/ask, khớp, ĐTNN, phiên <em>Liên tục</em>. VPS SmartOne tương tự trên Bảng giá/Thị trường. Đây là fan-out market data, không phải OMS write path — dù nút Đặt lệnh nằm cạnh bảng.
+<strong>Broker UI (🟢 observed screen)</strong><br/>
+SSI iBoard board VN30 hiển thị Trần/Sàn/TC, 3 mức bid/ask, khớp, ĐTNN, phiên <em>Liên tục</em>. VPS SmartOne tương tự trên Bảng giá/Thị trường. Đây là fan-out market data — validate bằng price band, sort levels, sequence/stale checks; <em>không</em> dùng <code>Bid ≤ Ask</code> làm invariant cứng.
 </div>
 
 

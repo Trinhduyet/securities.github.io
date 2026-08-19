@@ -19,9 +19,18 @@ platform: "SSI iBoard"
 
 ## Legend
 
-🟢 OBSERVED AUTHENTICATED UI · 🟡 OFFICIAL PUBLIC · 🔵 REFERENCE DESIGN · 🔴 NOT VERIFIED (màn hình không mở)
+| Ký hiệu | Nghĩa |
+|---|---|
+| 🟢 | **Observed screen** — màn hình authenticated thực sự đã mở |
+| 🟣 | **Authenticated client evidence** — label/route/menu trong SPA; screen chưa inspect đầy đủ |
+| 🟡 | **Official documentation** — tài liệu/help SSI công khai |
+| 🔵 | **Reference design** — state/API/model do course đề xuất |
+| 🔴 | **Not verified** — chưa đủ evidence |
+| — | **Not found** |
 
-## Top-level menus discovered (🟢)
+**SPA** = Single Page Application — web app đổi màn hình không reload toàn trang. **Client evidence** ≠ observed workflow.
+
+## Top-level menus discovered (🟢 observed screen)
 
 ```text
 Bảng giá
@@ -58,9 +67,9 @@ Khuyến nghị đầu tư        /trading-recommendations
 
 Các submenu khác (Giao dịch cơ sở / phái sinh / tiền / tài sản / sản phẩm / tiện ích) **không** render popup ổn định khi hover tự động; inventory bên dưới lấy từ **label SPA đã login**, không phải từ screenshot form.
 
-### Capability inventory từ client authenticated (🟢 labels trong SPA)
+### Capability inventory từ client authenticated (🟣 SPA labels)
 
-Không mở form giao dịch. Các label sau tồn tại trong ứng dụng đã login:
+Không mở form giao dịch. Các label sau tồn tại trong ứng dụng đã login — **chưa** mở screen tương ứng trừ khi ghi 🟢 ở mục Screens inspected:
 
 ```text
 Trading: Đặt lệnh cơ sở, Đặt lệnh thỏa thuận, Sổ lệnh cơ sở, Sửa lệnh, Hủy lệnh,
@@ -70,7 +79,7 @@ Cash:    Nộp/chuyển tiền, Ứng trước tiền bán, Sao kê tiền cơ s
 Assets:  Danh mục cơ sở/phái sinh, Tài sản & Hiệu suất, Lãi/Lỗ
 Margin:  Tổng quan, Thông tin khoản vay, Gói vay, Tỷ lệ KQ, Tăng sức mua, Mã cho vay
 Bonds:   Giao dịch trái phiếu, SBOND / SBOND PRO
-Funds:   Giao dịch CCQ mở, Sổ lệnh CCQ, Danh mục CCQ  (🔴 màn hình không mở)
+Funds:   Giao dịch CCQ mở, Sổ lệnh CCQ, Danh mục CCQ  (🟣 — screen 🔴)
 Rights:  Thông tin quyền
 IPO:     IPO Cổ phiếu, IPO Chứng quyền
 S-CASH:  sản phẩm sinh lời trên tiền
@@ -90,7 +99,7 @@ S-CASH:  sản phẩm sinh lời trên tiền
 
 ## Feature: Bảng giá realtime
 
-**Status:** 🟢 · **Domain:** [05](/domains/05-realtime-analytics)
+**Status:** 🟢 observed screen · **Domain:** [05](/domains/05-realtime-analytics)
 
 ### 1. UI
 
@@ -124,9 +133,11 @@ Session: ATO → Liên tục → ATC → Đóng cửa
 QuoteSnapshot cập nhật trong phiên Liên tục
 ```
 
-### 6. Invariants
+### 6. Invariants / reference checks
 
-Giá khớp ∈ [sàn, trần]. Bid ≤ Ask ở cùng mức hợp lệ. Volume ≥ 0.
+Giá khớp ∈ [sàn, trần] theo rule phiên/instrument. Quantity ≥ 0; price/qty precision đúng tick size. Bid levels sort theo rule BUY; ask levels sort theo rule SELL. Mỗi snapshot nên có `source`, `asOf`, `tradingSession`, `instrument`. Sequence gap phải detect/recover; stale feed phải detect.
+
+> Trong snapshot continuous-order-book **sạch và đồng bộ**, best bid **thường** không vượt best ask — nhưng **không** dùng `Bid ≤ Ask` làm invariant cứng (auction, chuyển phiên, snapshot async, recovery).
 
 ### 7. Reference API (🔵 không phải API SSI)
 
@@ -156,7 +167,7 @@ Last quote UI ↔ official HOSE/HNX close. Volume board ↔ exchange volume.
 
 ## Feature: Đặt lệnh cổ phiếu (form, không submit)
 
-**Status:** 🟢 nút **Đặt lệnh** trên board · 🔴 không mở ticket chi tiết / không bấm Mua  
+**Status:** 🟢 nút **Đặt lệnh** trên board (observed) · 🟣 menu Giao dịch cơ sở · 🔴 không mở ticket / không bấm Mua  
 **Domain:** [01](/domains/01-securities-core)
 
 ### 1. UI
@@ -221,22 +232,31 @@ Client ACK ↔ broker order id ↔ venue order id.
 
 ## Feature: Sổ lệnh
 
-**Status:** 🟢 label SPA `Sổ lệnh cơ sở` · 🔴 không mở bảng lệnh thật (tránh holdings)  
+**Status:** 🟣 label SPA `Sổ lệnh cơ sở` · 🔴 không mở bảng lệnh (tránh holdings)  
 **Domain:** 01
 
 ### 1–2. UI / business
 
-Read model: người dùng theo dõi trạng thái lệnh, KL khớp, KL còn lại. **Order ≠ Execution ≠ Trade.**
+**Sổ lệnh UI** = read model / projection cho user — không khẳng định là source of truth duy nhất. **Order ≠ Execution ≠ Trade.**
 
 ### 3. Glossary
 
-Khớp một phần = `PARTIALLY_FILLED`. Khớp hết = `FILLED`. Hủy = `CANCELLED` (sau pending cancel).
+**CancelledQty** = phần quantity bị hủy, không còn working. Khớp một phần = `PARTIALLY_FILLED`. Khớp hết = `FILLED`.
 
-### 4. Example
+### 4. Example — partial fill rồi cancel (🔵 reference)
 
 ```text
-OrderQty 1,000 · CumQty 400 · Leaves 600 → PARTIALLY_FILLED
+BUY 1,000 FPT @ 120,000
+Step 1 — broker accepted: OrderQty=1,000, CumQty=0, LeavesQty=1,000
+Step 2 — fill 400: CumQty=400, LeavesQty=600
+Step 3 — user cancel (Case A: không fill thêm):
+  CumQty=400, CancelledQty=600, LeavesQty=0
+  Status = CANCELLED / PARTIALLY_FILLED_THEN_CANCELLED (tên reference)
+Case B — fill thêm 200 trước cancel ACK:
+  CumQty=600, CancelledQty=400, LeavesQty=0
 ```
+
+Click Cancel ≠ cancel toàn bộ original quantity. Cancel success ≠ zero executions.
 
 ### 5. State
 
@@ -248,7 +268,13 @@ NEW → PENDING_CANCEL → CANCELLED
 
 ### 6. Invariants
 
-`CumQty + LeavesQty = OrderQty` (sau cancel: leaves = 0). `CumQty <= OrderQty`.
+Khi order còn **working** (chưa có cancel terminal):
+
+```text
+OrderQty = CumQty + LeavesQty + CancelledQty   (nếu model có CancelledQty)
+```
+
+Sau cancel terminal: `LeavesQty = 0`; `CumQty + CancelledQty = OrderQty` (nếu không còn working qty). Luôn: `CumQty <= OrderQty`.
 
 ### 7–10. Reference
 
@@ -256,16 +282,16 @@ API: `GET /orders` · `GET /orders/{id}`. Model: `Order` · `Execution` · `Trad
 
 ### 11–12. Failure / recon
 
-Partial fill + cancel race; duplicate execution; timeout hủy. Reconcile: sổ lệnh UI ↔ OMS ↔ venue.
+Partial fill + cancel race; duplicate execution; timeout hủy. Reconcile: sổ lệnh UI ↔ OMS ↔ venue facts.
 
 ---
 
 ## Feature: Portfolio / tài sản
 
-**Status:** 🟢 menu Quản lý tài sản + labels Danh mục/Hiệu suất/Lãi/Lỗ · 🔴 không chụp số dư  
+**Status:** 🟣 menu Quản lý tài sản + labels · 🔴 không chụp số dư  
 **Domain:** Cross 01/02/03
 
-Portfolio = **projection**. Ví dụ reference (không phải số account):
+**Portfolio UI** = projection tổng hợp — không nhất thiết source of truth.
 
 ```text
 Cash             100m
@@ -280,8 +306,10 @@ Net Assets       370m
 
 ## Feature: Cash / ứng trước tiền bán
 
-**Status:** 🟢 menu Giao dịch tiền + label SPA `Ứng trước tiền bán` · 🔴 không submit  
-**Domain:** 01 + 08
+**Status:** 🟣 menu Giao dịch tiền + label `Ứng trước tiền bán` · 🔴 không submit  
+**Domain:** 01 Securities + Financing/Credit + [08](/domains/08-enterprise-workflow) (request/status) + Ledger/Settlement
+
+Cross-domain (xem [broker-domain-matrix](./broker-domain-matrix)):
 
 ```text
 SELL fill → Trade → Pending receivable
@@ -295,7 +323,7 @@ SettledCash ≠ AvailableCash ≠ Reserved ≠ PendingReceivable.
 
 ## Feature: Margin
 
-**Status:** 🟢 `/margin/general`
+**Status:** 🟢 observed screen `/margin/general` · **Domain:** 01 + Risk (overview); 🟣 **Tăng sức mua** / **Lịch sử yêu cầu** → [08](/domains/08-enterprise-workflow) workflow (không click)
 
 UI: Gói của tôi, Tỷ lệ KQ, Trạng thái **An toàn**, Tổng nợ, Lãi tạm tính, Siêu Vốn M+, Thông tin khoản vay, Tăng sức mua (**không click**), Mã cho vay, Lịch sử yêu cầu.
 
@@ -311,13 +339,25 @@ Risk Buffer             -20m
 Buying Power            280m   (reference)
 ```
 
-Skipped: Kích hoạt Siêu Vốn M+, Tăng sức mua.
+Skipped: Kích hoạt Siêu Vốn M+, Tăng sức mua (🟣 workflow — không click).
+
+**Margin Ratio (Tỷ lệ KQ)** = mức an toàn tài khoản ký quỹ theo rule broker/product — **không** ghi công thức broker cụ thể nếu chưa có 🟡 official source.
+
+Reference risk states (🔵): `NORMAL → WARNING → MARGIN_CALL → FORCE_SELL_ELIGIBLE`.
+
+Reference example (illustrative collateral/debt, không phải số TK):
+
+```text
+Market value collateral ≈ 500m (theo rule eligible + haircut)
+Outstanding debt         ≈ 200m
+→ ratio phụ thuộc policy broker; UI hiển thị "An toàn" khi trong ngưỡng
+```
 
 ---
 
 ## Feature: Derivatives
 
-**Status:** 🟢 menu Giao dịch phái sinh + board tab Phái sinh · 🔴 không mở vị thế  
+**Status:** 🟢 board tab Phái sinh (filter) · 🟣 menu Giao dịch phái sinh · 🔴 không mở vị thế  
 **Domain:** [02](/domains/02-derivatives-core)
 
 ```text
@@ -331,8 +371,7 @@ Reverse = đóng vị thế hiện tại + mở chiều ngược (🔵, không q
 
 ## Feature: Conditional orders
 
-**Status:** 🟢 SPA `Đặt lệnh điều kiện`, `Sổ lệnh điều kiện` · 🔴 không tạo rule  
-**Domain:** [06](/domains/06-conditional-orders)
+**Status:** 🟣 SPA labels · 🔴 không tạo rule · **Domain:** [06](/domains/06-conditional-orders)
 
 ```text
 ACTIVE → TRIGGERING → GENERATED_ORDER → SUBMITTED → COMPLETED
@@ -346,13 +385,13 @@ Duplicate tick không được sinh hai trading order: `GeneratedOrderKey = Cond
 
 | Feature | Status | Domain |
 |---|---|---|
-| Trái phiếu riêng lẻ (board) | 🟢 | 03 + 05 |
-| SBOND / SBOND PRO | 🟢 labels SPA | [03](/domains/03-bonds-core) |
-| S-CASH banner | 🟢 | 08 / cash product |
-| Thông tin quyền | 🟢 label | 01 + 08 |
-| IPO cổ phiếu / CW | 🟢 labels | 08 |
-| CCQ mở | 🟢 labels | 04 — màn hình 🔴 |
-| Rewards | 🔴 | 07 |
+| Trái phiếu riêng lẻ (board filter) | 🟢 | 03 + 05 |
+| SBOND / SBOND PRO | 🟣 | [03](/domains/03-bonds-core) |
+| S-CASH banner | 🟢 link observed | cash product / 08 workflow nếu đăng ký |
+| Thông tin quyền | 🟣 | 01 + 08 election |
+| IPO cổ phiếu / CW | 🟣 | 08 |
+| CCQ mở | 🟣 | 04 — screen 🔴 |
+| Rewards | 🔴 / — | 07 |
 
 Corporate action: Record Date, Ex-Date, Payment Date, Entitlement, Election, Allocation.
 
@@ -360,15 +399,17 @@ Corporate action: Record Date, Ex-Date, Payment Date, Entitlement, Election, All
 
 ## SSI → 8 Core Domains
 
-| Domain | Observed |
+| Domain | Evidence |
 |---|---|
-| 01 Securities | Board, Đặt lệnh, Sổ lệnh, lô lẻ, thỏa thuận |
-| 02 Derivatives | Menu + board Phái sinh |
-| 03 Bonds | Trái phiếu riêng lẻ, SBOND labels |
-| 04 Funds | CCQ labels — screen 🔴 |
-| 05 Analytics | Bảng giá, chỉ số, ĐTNN |
-| 06 Conditional | Labels lệnh điều kiện |
-| 07 Rewards | Chưa thấy |
-| 08 Workflow | Margin gói vay, quyền, IPO, chuyển tiền (không submit) |
+| 01 Securities | 🟢 board · 🟣 order book, đặt lệnh, cash labels · 🟡 official |
+| 02 Derivatives | 🟢 board tab · 🟣 menu phái sinh |
+| 03 Bonds | 🟢 filter trái phiếu riêng lẻ · 🟣 SBOND |
+| 04 Funds | 🟣 CCQ labels — screen 🔴 |
+| 05 Analytics | 🟢 board + submenu Thông tin thị trường |
+| 06 Conditional | 🟣+🟡 labels |
+| 07 Rewards | 🔴 / — |
+| 08 Workflow | 🟣 Tăng sức mua, IPO, quyền, chuyển tiền (không submit) — **không** gom margin overview vào đây |
 
-Xem case study: [ssi-iboard](./ssi-iboard)
+Margin overview (Tỷ lệ KQ, nợ, lãi) → **01 + Risk**. Đăng ký gói vay / Tăng sức mua → **08 + Credit**.
+
+Xem case study: [ssi-iboard](./ssi-iboard) · Order state → [Bài 13 OMS](/lectures/13-oms-internals-state-machine/) · Margin → [Bài 11 Risk](/lectures/11-risk-margin-controls/)

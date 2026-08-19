@@ -162,17 +162,55 @@ Nếu SELL API chỉ check `SellQty <= TotalPosition`, hệ thống có thể ch
 
 ## 6. UI Inspection (Playwright MCP)
 
-Khảo sát read-only trực tiếp trên broker web app — phân tách **UI quan sát** vs **reference architecture**:
+Khảo sát read-only trực tiếp trên broker web app — phân tách **observed screen** vs **client evidence** vs **reference design**:
 
-| Nền tảng | Phiên 18/08/2026 | Tài liệu |
+| Nền tảng | Phiên khảo sát gần nhất | Tài liệu |
 |---|---|---|
-| **VPS SmartOne Web** | ✅ Authenticated 19/08 — bảng giá + `/market`; không chụp PII header | [ui-inspection-vps-smartone.md](./ui-inspection-vps-smartone.md) |
-| **SSI iBoard** | ✅ Authenticated 19/08 — bảng giá, margin tổng quan, submenu Thông tin thị trường | [ui-inspection-ssi-iboard.md](./ui-inspection-ssi-iboard.md) |
-| **TCBS / TCInvest** | ✅ Public iWealth/sản phẩm/help; ❌ chưa login | [ui-inspection-tcbs-tcinvest.md](./ui-inspection-tcbs-tcinvest.md) |
+| **VPS SmartOne Web** | Authenticated 19/08/2026 — bảng giá + `/market`; không chụp PII header | [ui-inspection-vps-smartone.md](./ui-inspection-vps-smartone.md) |
+| **SSI iBoard** | Authenticated 19/08/2026 — bảng giá, margin tổng quan, submenu Thông tin thị trường | [ui-inspection-ssi-iboard.md](./ui-inspection-ssi-iboard.md) |
+| **TCBS / TCInvest** | Public 18/08/2026; Authenticated **not verified** | [ui-inspection-tcbs-tcinvest.md](./ui-inspection-tcbs-tcinvest.md) |
 
-Ma trận 8 domain: [broker-domain-matrix.md](./broker-domain-matrix.md)
+Ma trận evidence-level: [broker-domain-matrix.md](./broker-domain-matrix.md) (🟢 🟣 🟡 🔴 —, không chỉ ✓/✗).
 
-Screenshot public: `docs/case-studies/screenshots/ssi-iboard/`, `vps-smartone/`, `tcbs/`.
+Screenshot public: `docs/case-studies/screenshots/ssi-iboard/`, `vps-smartone/`, `tcbs/`. Authenticated (redacted): `screenshots/ssi/`, `screenshots/vps/`.
+
+## 6b. Cross-Broker Deep Dives
+
+Các concept nên đọc chéo SSI/VPS — link tới inspection + lecture thay vì suy backend:
+
+### Order State
+
+VPS wording (🟡 guide + 🟣 labels): *chờ tại VPS / chờ tại sàn / khớp một phần / khớp hết* — minh họa **Broker Received ≠ Market Handoff ≠ Execution**. Không map “chờ tại sàn” = “đã vào central order book”. → [ui-inspection-vps-smartone](./ui-inspection-vps-smartone) · [Bài 13 OMS](/lectures/13-oms-internals-state-machine/)
+
+SSI: 🟣 Sổ lệnh capability; partial fill + cancel race example trong inspection. → [ui-inspection-ssi-iboard](./ui-inspection-ssi-iboard)
+
+### Buying Power
+
+VPS: 🟣 *Sức mua* vs *Sức mua từ tiền mặt* — **Cash ≠ Buying Power**. → [Bài 08](/lectures/08-account-cash-position-buying-power/)
+
+### Sellable Quantity
+
+VPS 🟡 guide: CK khả dụng ≠ tổng vị thế; `SellQty <= SellableQty`. → [ui-inspection-vps-smartone](./ui-inspection-vps-smartone)
+
+### Pending Settlement / VSD
+
+VPS: 🟣 *Tiền chờ VSD* — FILLED → Trade → PendingReceivable → Settlement. → [Bài 07](/lectures/07-clearing-settlement-krx-fix-vsdc/) · [Bài 17](/lectures/17-clearing-netting-settlement/)
+
+### Margin (Risk / Credit)
+
+SSI 🟢 Margin Tổng quan: Tỷ lệ KQ, An toàn, Tổng nợ, Lãi tạm tính, Gói vay — **01 + Risk**, không gom toàn bộ vào Domain 08. Workflow *Tăng sức mua* → 08. → [Bài 11](/lectures/11-risk-margin-controls/)
+
+### Cash Advance
+
+SSI/VPS 🟣 labels + 🟡 docs — cross-domain: PendingReceivable + Financing + Workflow + Ledger. → [broker-domain-matrix](./broker-domain-matrix) · [Bài 18 Ledger](/lectures/18-ledger-accounting-projections/)
+
+### Conditional Orders
+
+🟣+🟡 labels cả ba broker; rule ≠ trading order. → [Domain 06](/domains/06-conditional-orders)
+
+### Portfolio Projection
+
+Danh mục / P&L UI = projection, không source of truth. → [Bài 18](/lectures/18-ledger-accounting-projections/)
 
 ## 7. Case Studies
 
@@ -191,7 +229,7 @@ Screenshot public: `docs/case-studies/screenshots/ssi-iboard/`, `vps-smartone/`,
 </a>
 <a class="course-card" href="./broker-domain-matrix">
 <strong>Broker Domain Matrix</strong>
-<span>SSI · VPS · TCBS mapped to 8 Core Domains — ✓ / ? / —.</span>
+<span>SSI · VPS · TCBS mapped to 8 Core Domains — evidence 🟢 🟣 🟡 🔴.</span>
 </a>
 </div>
 

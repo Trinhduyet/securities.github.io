@@ -46,7 +46,7 @@ Nhìn từ UI, đó chỉ là một nút **Đặt lệnh**. Nhìn từ core syst
 
 <div class="callout">
 <strong>Ví dụ broker UI</strong><br/>
-SSI iBoard Sổ lệnh minh họa Order Read Model. VPS “chờ tại VPS / chờ tại sàn” minh họa internal vs external order lifecycle. SSI ứng trước tiền bán minh họa PendingSettlementReceivable. VPS CK khả dụng minh họa SellableQuantity. Không suy ra schema nội bộ.
+SSI iBoard Sổ lệnh (🟣 client evidence) minh họa <em>Order read model / projection</em>. VPS “chờ tại VPS / chờ tại sàn” (🟡+🟣) minh họa broker vs market handoff — không chứng minh central order book state. SSI ứng trước (🟣) minh họa PendingSettlementReceivable. VPS CK khả dụng (🟡) minh họa SellableQuantity.
 </div>
 
 
@@ -453,10 +453,11 @@ Core domain không nên phải biết raw FIX tag nếu exchange adapter đã no
 1. Không dùng nhiều hơn Buying Power được phép.
 2. Không bán nhiều hơn Sellable Quantity.
 3. CumQty không vượt OrderQty.
-4. Reservation không âm và không leak sau terminal state.
-5. Một execution business identity không được book hai lần.
-6. Cash/Position phải giải thích được từ business history.
-7. Internal state phải reconcile được với venue/VSDC/bank theo flow phù hợp.
+4. `OrderQty = CumQty + LeavesQty + CancelledQty` khi order còn working (nếu model có CancelledQty).
+5. Reservation không âm và không leak sau terminal state.
+6. Một execution business identity không được book hai lần.
+7. Cash/Position phải giải thích được từ business history.
+8. Internal state phải reconcile được với venue/VSDC/bank theo flow phù hợp.
 ```
 
 ## 16. Những lỗi thiết kế thường gặp

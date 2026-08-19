@@ -14,8 +14,8 @@ description: "Giải thích workflow doanh nghiệp từ process definition, tas
 Một công ty chứng khoán không chỉ có trading. Nó còn có hàng trăm quy trình dài nhiều bước, nhiều người và nhiều hệ thống:
 
 <div class="callout">
-<strong>Broker UI (🟢)</strong><br/>
-SSI Margin có <em>Lịch sử yêu cầu</em> và lối <em>Tăng sức mua</em> (không click). VPS có Chuyển tiền Napas/nội bộ và Ứng trước — workflow tiền, không phải matching. Timeout bank ≠ failed.
+<strong>Broker UI</strong><br/>
+SSI Margin <em>overview</em> (🟢 Tỷ lệ KQ, nợ) → <strong>01 + Risk</strong>. Nút <em>Tăng sức mua</em> / <em>Lịch sử yêu cầu</em> (🟣) → <strong>08 Workflow</strong> + credit. VPS Chuyển tiền / Ứng trước (🟣) → workflow tiền. Timeout bank ≠ failed.
 </div>
 
 

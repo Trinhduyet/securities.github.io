@@ -349,8 +349,10 @@ LeavesQty     = 1.000
 Trong đó:
 
 - `CumQty`: tổng quantity đã khớp;
-- `LeavesQty`: quantity còn chờ;
-- invariant cơ bản: `CumQty + LeavesQty = OrderQty`.
+- `LeavesQty`: quantity còn working (chưa khớp, chưa hủy);
+- invariant khi order còn working: `OrderQty = CumQty + LeavesQty + CancelledQty` (nếu model có `CancelledQty`).
+
+Sau partial fill + cancel, `LeavesQty = 0` nhưng **không** có nghĩa `CumQty + LeavesQty = OrderQty` — phần còn lại nằm ở `CancelledQty`.
 
 ## 6. Exchange Gateway là gì?
 

@@ -15,7 +15,7 @@ Dùng checklist này khi review requirement, design hoặc code. Không phải m
 
 - [ ] Buying Power không âm ngoài rule cho phép.
 - [ ] Sellable Qty không bị oversell.
-- [ ] `CumQty + LeavesQty = OrderQty` theo lifecycle phù hợp.
+- [ ] Quantity invariant rõ (`OrderQty = CumQty + LeavesQty + CancelledQty` khi working; partial fill + cancel).
 - [ ] Duplicate execution không double-book.
 - [ ] Reservation không leak.
 - [ ] Reward/entitlement không double-credit.

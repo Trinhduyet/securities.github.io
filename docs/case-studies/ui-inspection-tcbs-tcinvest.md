@@ -5,7 +5,9 @@ inspectionDate: "2026-08-18"
 platform: "TCBS / TCInvest"
 ---
 
-# TCBS / TCInvest — Authenticated UI Inspection
+# TCBS / TCInvest — Public UI Inspection
+
+> **Authenticated UI:** Not yet verified — `tcinvest.tcbs.com.vn` redirect `guest/login` (18/08/2026).
 
 ## Inspection metadata
 
@@ -41,10 +43,12 @@ Screenshot login **không lưu** vì trang có QR.
 
 | Ký hiệu | Ý nghĩa |
 |---|---|
-| 🟢 | Quan sát UI công khai trực tiếp (Playwright) |
-| 🟡 | Tài liệu / help / product page chính thức TCBS |
-| 🔵 | Reference design / suy luận nghiệp vụ — **không** phải kiến trúc nội bộ TCBS |
-| 🔴 | Chưa xác minh (authenticated UI không có trong phiên này) |
+| 🟢 | **Observed screen** — trang public/guest thực sự đã mở (Playwright) |
+| 🟣 | **Client evidence** — label/module trên site chưa inspect workflow đầy đủ |
+| 🟡 | **Official documentation** — help / product page TCBS |
+| 🔵 | **Reference design** — không phải kiến trúc nội bộ TCBS |
+| 🔴 | **Not verified** — authenticated TCInvest chưa có trong phiên này |
+| — | **Not found** |
 
 ## Platform model
 
@@ -562,15 +566,15 @@ Ví dụ: 1,000 FPT × 2,000 VND = 2,000,000 gross — **không** khẳng địn
 
 ## Rewards / loyalty
 
-**Status:** 🟢 iXu, iWealth Partner, giới thiệu bạn bè trên product pages · 🟡 lịch sử iXu
+**Status:** 🟡 iXu, iWealth Partner trên product pages · 🔴 authenticated reward ledger / redemption UI chưa verify
 
 ### Business meaning
 
-Business event (giao dịch, giới thiệu) → eligibility → campaign → **reward ledger** (iXu) → redemption (tiền / VNPAY / dặm bay — theo public copy).
+Domain 07 (Campaign, Eligibility, Reward Ledger, Points, Voucher, Redemption…) cần evidence workflow/ledger — **product copy iXu ≠ đủ** để đánh 🟢 capability loyalty end-to-end.
 
 ### Related Core Domain
 
-[07 Rewards](/domains/07-rewards)
+Potential relation [07 Rewards](/domains/07-rewards) — **NOT YET VERIFIED** trên authenticated TCInvest.
 
 ---
 

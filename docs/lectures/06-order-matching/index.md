@@ -44,13 +44,26 @@ BUY 10,000 FPT @ 120,000
 
 ## 2. Invariant số lượng
 
+Khi order còn **working** (chưa terminal cancel/reject):
+
 ```text
-CumQty + LeavesQty = OrderQty
+OrderQty = CumQty + LeavesQty + CancelledQty   (nếu model có CancelledQty)
 CumQty >= 0
 LeavesQty >= 0
+CancelledQty >= 0
 CumQty không giảm
 Một ExecId không apply business effect hai lần
 ```
+
+Ví dụ partial fill rồi cancel (🔵):
+
+```text
+BUY 1,000 — fill 400 → CumQty=400, LeavesQty=600
+Cancel remainder → CancelledQty=600, LeavesQty=0
+→ CumQty + CancelledQty = OrderQty; LeavesQty = 0
+```
+
+**Không** viết `CumQty + LeavesQty = OrderQty` cho mọi trạng thái — sau cancel, `LeavesQty = 0` nhưng `CumQty + LeavesQty ≠ OrderQty` nếu đã có fill.
 
 ## 3. Pre-trade Flow
 
@@ -257,7 +270,7 @@ Trading core là **state machine + resource reservation + external authority**. 
 1. Implement state machine với partial fill + cancel race.
 2. Simulate two concurrent BUY orders dùng cùng cash pool.
 3. Inject timeout sau outbound submit và thiết kế recovery path.
-4. Viết property test cho `CumQty + LeavesQty = OrderQty`.
+4. Viết property test cho `OrderQty = CumQty + LeavesQty + CancelledQty` trên working orders, và case partial fill + cancel.
 
 ## Đọc tiếp
 
