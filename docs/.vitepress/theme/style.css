@@ -50,6 +50,140 @@
 .course-card strong { display: block; margin-bottom: 8px; font-size: 16px; }
 .course-card span { color: var(--vp-c-text-2); font-size: 14px; line-height: 1.55; }
 
+.broker-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 24px 0 20px;
+}
+
+.broker-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 16px;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-1) !important;
+  text-decoration: none !important;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.broker-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 14px 34px rgba(0,0,0,.10);
+}
+
+.broker-card > img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 0;
+  border-bottom: 1px solid var(--vp-c-divider);
+  border-radius: 0;
+  margin: 0;
+}
+
+.broker-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 9px;
+  padding: 16px 17px 18px;
+}
+
+.broker-card-body > strong {
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.broker-card-body p {
+  margin: 0;
+  color: var(--vp-c-text-1);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.broker-card-body > span:not(.evidence-badge) {
+  color: var(--vp-c-text-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.evidence-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.evidence-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.evidence-green { background: rgba(34, 197, 94, .12); }
+.evidence-yellow { background: rgba(245, 158, 11, .14); }
+.evidence-purple { background: rgba(139, 92, 246, .12); }
+.evidence-red { background: rgba(239, 68, 68, .10); }
+
+.visual-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 22px 0 18px;
+}
+
+.visual-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 0 !important;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 16px;
+  background: var(--vp-c-bg-soft);
+}
+
+.visual-card > img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 0;
+  border-bottom: 1px solid var(--vp-c-divider);
+  border-radius: 0;
+  margin: 0;
+}
+
+.visual-card figcaption {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px 15px 16px;
+}
+
+.visual-card figcaption strong {
+  color: var(--vp-c-text-1);
+  font-size: 15px;
+}
+
+.visual-card figcaption > span:not(.evidence-badge) {
+  color: var(--vp-c-text-2);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .learning-path {
   border-left: 4px solid var(--vp-c-brand-1);
   padding: 12px 18px;
@@ -114,6 +248,11 @@
   overflow-x: auto;
 }
 
+@media (max-width: 900px) {
+  .broker-card-grid,
+  .visual-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 640px) {
   .VPDoc h2 { margin-top: 36px; }
   .lesson-meta { gap: 6px; }
@@ -121,4 +260,6 @@
   .learning-objectives,
   .key-takeaway { padding: 15px 16px; }
   .VPDoc table { display: block; overflow-x: auto; }
+  .broker-card-body { padding: 14px 15px 16px; }
+  .evidence-row { gap: 5px; }
 }
