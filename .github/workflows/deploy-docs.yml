@@ -24,8 +24,10 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install
-      - name: Build documentation
-        run: npm run build
+      - name: Build documentation and audit routes
+        run: npm run build:check
+      - name: Show generated HTML routes
+        run: find docs/.vitepress/dist -type f -name '*.html' | sort
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
