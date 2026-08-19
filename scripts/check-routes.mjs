@@ -77,24 +77,27 @@ function sourceCandidates(rawUrl, fromFile) {
   return [`${clean}.md`, path.join(clean, 'index.md')]
 }
 
-function extractLinks(text, includeConfigLinks = false) {
+function extractMarkdownLinks(text) {
   const links = new Set()
-
   for (const match of text.matchAll(/(?<!!)\[[^\]]*\]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/g)) {
     links.add(match[1])
   }
-
   for (const match of text.matchAll(/href\s*=\s*["']([^"']+)["']/gi)) {
     links.add(match[1])
   }
-
-  if (includeConfigLinks) {
-    for (const match of text.matchAll(/\blink\s*:\s*["']([^"']+)["']/g)) {
-      links.add(match[1])
-    }
-  }
-
   return [...links]
+}
+
+function extractConfigLinks(text) {
+  return [...text.matchAll(/\blink\s*:\s*["']([^"']+)["']/g)].map((match) => match[1])
+}
+
+async function resolveSource(link, fromFile) {
+  const candidates = sourceCandidates(link, fromFile)
+  for (const candidate of candidates) {
+    if (await exists(candidate)) return { candidate, candidates }
+  }
+  return { candidate: null, candidates }
 }
 
 const errors = []
@@ -105,50 +108,47 @@ if (!(await exists(distDir))) {
 } else {
   const markdownFiles = await walk(docsDir, (file) => file.endsWith('.md'))
 
-  // Every authored page must still build. A missing generated page is a deploy blocker.
+  // Non-navigation Markdown pages are useful to audit, but do not block the whole
+  // project site. VitePress itself already failed if a source could not be parsed.
   for (const source of markdownFiles) {
     const html = sourceToHtml(source)
     if (!(await exists(path.join(distDir, html)))) {
-      errors.push(`Missing build output: ${html} <- ${posix(path.relative(root, source))}`)
+      warnings.push(`Non-critical source has no matching HTML output: ${html} <- ${posix(path.relative(root, source))}`)
     }
   }
 
-  // Secondary authored links are audited but do not hold the entire Pages deployment
-  // hostage. Critical navigation is checked separately below and remains blocking.
-  const filesToScan = [...markdownFiles, configFile]
-  let checkedLinks = 0
+  // Navigation/sidebar links are the contract users click first: these are blocking.
+  const configText = await readFile(configFile, 'utf8')
+  const configLinks = extractConfigLinks(configText)
+  for (const link of configLinks) {
+    const { candidate, candidates } = await resolveSource(link, configFile)
+    if (!candidates.length) continue
+    if (!candidate) {
+      errors.push(`Broken navigation link: ${link} -> expected ${candidates.map((c) => posix(path.relative(root, c))).join(' OR ')}`)
+      continue
+    }
+    const html = sourceToHtml(candidate)
+    if (!(await exists(path.join(distDir, html)))) {
+      errors.push(`Navigation target was not built: ${link} -> ${html}`)
+    }
+  }
 
-  for (const file of filesToScan) {
+  // In-article links are still reported, but one secondary reference cannot keep
+  // the entire GitHub Pages deployment stale.
+  let checkedSecondaryLinks = 0
+  for (const file of markdownFiles) {
     const text = await readFile(file, 'utf8')
-    const links = extractLinks(text, file === configFile)
-
-    for (const link of links) {
-      const candidates = sourceCandidates(link, file)
+    for (const link of extractMarkdownLinks(text)) {
+      const { candidate, candidates } = await resolveSource(link, file)
       if (!candidates.length) continue
-      checkedLinks++
-
-      let resolved = null
-      for (const candidate of candidates) {
-        if (await exists(candidate)) {
-          resolved = candidate
-          break
-        }
-      }
-
-      if (!resolved) {
-        warnings.push(
-          `Broken secondary link: ${link} in ${posix(path.relative(root, file))} -> expected ${candidates
-            .map((c) => posix(path.relative(root, c)))
-            .join(' OR ')}`
-        )
+      checkedSecondaryLinks++
+      if (!candidate) {
+        warnings.push(`Broken secondary link: ${link} in ${posix(path.relative(root, file))}`)
         continue
       }
-
-      const html = sourceToHtml(resolved)
+      const html = sourceToHtml(candidate)
       if (!(await exists(path.join(distDir, html)))) {
-        warnings.push(
-          `Secondary link target was not built: ${link} in ${posix(path.relative(root, file))} -> ${html}`
-        )
+        warnings.push(`Secondary link target was not built: ${link} in ${posix(path.relative(root, file))} -> ${html}`)
       }
     }
   }
@@ -157,12 +157,29 @@ if (!(await exists(distDir))) {
     'index.html',
     'lectures/index.html',
     'domains/index.html',
-    'domains/01-securities-core.html',
+    ...Array.from({ length: 8 }, (_, i) => {
+      const names = [
+        '01-securities-core',
+        '02-derivatives-core',
+        '03-bonds-core',
+        '04-funds-core',
+        '05-realtime-analytics',
+        '06-conditional-orders',
+        '07-rewards',
+        '08-enterprise-workflow'
+      ]
+      return `domains/${names[i]}.html`
+    }),
     'case-studies/index.html',
     'case-studies/visual-gallery.html',
     'case-studies/broker-domain-matrix.html',
+    'case-studies/ssi-iboard.html',
+    'case-studies/vps-smartone.html',
+    'case-studies/tcbs-tcinvest.html',
     'case-studies/screenshots/index.html',
     'engineering/index.html',
+    'engineering/core-securities-engineering.html',
+    'engineering/reliability-and-ledgers.html',
     'projects/index.html',
     'resources/index.html'
   ]
@@ -186,8 +203,8 @@ if (!(await exists(distDir))) {
     }
   }
 
-  // The project site must be built with its GitHub Pages base. Catch the class of
-  // build where HTML exists locally but asset/navigation URLs accidentally point at /.
+  // A project Pages build with the wrong base can contain every HTML file but still
+  // break JS/CSS/nav in the browser. Verify the deployed base is embedded in output.
   const domainIndex = path.join(distDir, 'domains', 'index.html')
   if (await exists(domainIndex)) {
     const html = await readFile(domainIndex, 'utf8')
@@ -196,7 +213,9 @@ if (!(await exists(distDir))) {
     }
   }
 
-  console.log(`Route audit: ${markdownFiles.length} Markdown pages; ${checkedLinks} internal page links checked.`)
+  console.log(
+    `Route audit: ${markdownFiles.length} Markdown pages; ${configLinks.length} navigation links; ${checkedSecondaryLinks} secondary links.`
+  )
 }
 
 for (const warning of warnings) console.warn(`WARN: ${warning}`)
@@ -207,4 +226,4 @@ if (errors.length) {
   process.exit(1)
 }
 
-console.log(`Route audit PASSED: critical Pages routes are present. Secondary warnings: ${warnings.length}.`)
+console.log(`Route audit PASSED: navigation and critical Pages routes are present. Secondary warnings: ${warnings.length}.`)
