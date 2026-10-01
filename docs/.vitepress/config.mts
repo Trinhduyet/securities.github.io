@@ -63,6 +63,15 @@ const caseStudies = [
   { text: 'Screenshot inventory', link: '/case-studies/screenshots/index.html' }
 ]
 
+const stockAi = [
+  { text: 'Tổng quan StockAI', link: '/stockai/index.html' },
+  { text: '01. Kiến trúc AI chứng khoán', link: '/stockai/architecture.html' },
+  { text: '02. DNSE & SSI Market Data', link: '/stockai/market-data.html' },
+  { text: '03. RAG & Document CMS', link: '/stockai/rag-documents.html' },
+  { text: '04. OpenRouter AI Assistant', link: '/stockai/ai-assistant.html' },
+  { text: '05. Delivery Checklist', link: '/stockai/delivery-checklist.html' }
+]
+
 const engineering = [
   { text: 'Engineering overview', link: '/engineering/index.html' },
   { text: 'Core Securities Engineering', link: '/engineering/core-securities-engineering.html' },
@@ -98,7 +107,7 @@ export default withMermaid(defineConfig({
   cleanUrls: false,
   lastUpdated: true,
   head: [
-    ['meta', { name: 'theme-color', content: '#b45309' }],
+    ['meta', { name: 'theme-color', content: '#0f766e' }],
     ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }]
   ],
   themeConfig: {
@@ -111,6 +120,7 @@ export default withMermaid(defineConfig({
       { text: '8 Domains', link: '/domains/index.html' },
       { text: 'Broker Cases', link: '/case-studies/index.html' },
       { text: 'Engineering', link: '/engineering/index.html' },
+      { text: 'StockAI', link: '/stockai/index.html' },
       { text: 'Projects', link: '/projects/index.html' },
       { text: 'Resources', link: '/resources/index.html' }
     ],
@@ -123,6 +133,7 @@ export default withMermaid(defineConfig({
       '/domains/': [{ text: '8 Core Domains', items: domains }],
       '/case-studies/': [{ text: 'Broker App Case Studies', items: caseStudies }],
       '/engineering/': [{ text: 'Core Engineering', items: engineering }],
+      '/stockai/': [{ text: 'StockAI — Market Data & RAG', items: stockAi }],
       '/projects/': [{ text: 'Projects', items: projects }],
       '/resources/': [{ text: 'Resources', items: resources }]
     },
