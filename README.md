@@ -4,6 +4,10 @@
 
 Repository dành cho backend engineer muốn đi xa hơn mức “biết API đặt lệnh” để hiểu **order, execution, trade, cash, position, risk, matching, KRX/FIX, VSDC, clearing, settlement, ledger, reconciliation, HA/DR và operations** như những khái niệm nghiệp vụ có invariant rõ ràng.
 
+## Mới: StockAI — Market Data & RAG
+
+Bổ sung [StockAI Engineering](docs/stockai/index.md): Next.js + ASP.NET Core, DNSE LightSpeed trước/SSI FastConnect sau, market-data freshness, CMS đồng bộ tài liệu, Qdrant hybrid retrieval, OpenRouter model routing và checklist kiểm thử. Đây là case study mở rộng, không thay thế curriculum brokerage core.
+
 ## Curriculum
 
 ```text
@@ -62,6 +66,7 @@ securities.github.io/
 │   ├── lectures/      # 24 bài từ economics đến production
 │   ├── domains/       # 8 domain/hệ thống lớn của CTCK
 │   ├── engineering/   # Reliability, ledger, architecture mental models
+│   ├── stockai/       # Market Data, RAG, OpenRouter và AI Assistant
 │   ├── projects/      # 5 lab/capstone dựa trên failure scenario
 │   └── resources/     # Glossary, matrix, scenarios, checklist, references
 ├── .github/workflows/ # VitePress → GitHub Pages
