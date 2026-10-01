@@ -1,20 +1,26 @@
 :root {
-  --vp-c-brand-1: #b45309;
-  --vp-c-brand-2: #d97706;
-  --vp-c-brand-3: #f59e0b;
-  --vp-c-brand-soft: rgba(245, 158, 11, 0.14);
+  --vp-c-brand-1: #0f766e;
+  --vp-c-brand-2: #0d9488;
+  --vp-c-brand-3: #14b8a6;
+  --vp-c-brand-soft: rgba(20, 184, 166, 0.14);
   --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: linear-gradient(120deg, #92400e 10%, #f59e0b 70%);
-  --vp-home-hero-image-background-image: radial-gradient(circle, rgba(245, 158, 11, .24), transparent 65%);
+  --vp-home-hero-name-background: linear-gradient(120deg, #115e59 10%, #14b8a6 70%);
+  --vp-home-hero-image-background-image: radial-gradient(circle, rgba(20, 184, 166, .24), transparent 65%);
   --vp-home-hero-image-filter: blur(42px);
 }
 
 .dark {
-  --vp-c-brand-1: #f59e0b;
+  --vp-c-brand-1: #14b8a6;
   --vp-c-brand-2: #fbbf24;
-  --vp-c-brand-3: #d97706;
+  --vp-c-brand-3: #0d9488;
 }
 
+.VPHome .VPHero .name { letter-spacing: -0.055em; }
+.VPHome .VPHero .text { letter-spacing: -0.035em; line-height: 1.13; }
+.VPHome .VPFeatures .VPFeature { border-radius: 16px; transition: border-color .2s ease, transform .2s ease; }
+.VPHome .VPFeatures .VPFeature:hover { transform: translateY(-2px); border-color: var(--vp-c-brand-1); }
+.VPNavBar { backdrop-filter: saturate(145%) blur(14px); }
+.VPSidebarItem .link:hover .text { color: var(--vp-c-brand-1); }
 .VPDoc h1 { letter-spacing: -0.035em; line-height: 1.13; }
 .VPDoc h2 { border-top: 0; margin-top: 44px; letter-spacing: -0.018em; }
 .VPDoc h3 { margin-top: 28px; }
@@ -132,7 +138,7 @@
 }
 
 .evidence-green { background: rgba(34, 197, 94, .12); }
-.evidence-yellow { background: rgba(245, 158, 11, .14); }
+.evidence-yellow { background: rgba(20, 184, 166, .14); }
 .evidence-purple { background: rgba(139, 92, 246, .12); }
 .evidence-red { background: rgba(239, 68, 68, .10); }
 
@@ -261,5 +267,7 @@
   .key-takeaway { padding: 15px 16px; }
   .VPDoc table { display: block; overflow-x: auto; }
   .broker-card-body { padding: 14px 15px 16px; }
+  .course-grid { grid-template-columns: 1fr; gap: 12px; }
+  .course-card { padding: 15px 16px; }
   .evidence-row { gap: 5px; }
 }
