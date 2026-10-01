@@ -15,6 +15,9 @@ hero:
     - theme: alt
       text: Xem Broker Case Studies
       link: /case-studies/
+    - theme: alt
+      text: Market Data & StockAI
+      link: /stockai/
 
 features:
   - title: Finance trước Architecture
@@ -23,6 +26,8 @@ features:
     details: Order → Matching → Execution → Trade → Clearing → Settlement → Reconciliation, không dừng ở trạng thái FILLED.
   - title: Broker Apps → Backend
     details: Dùng SSI iBoard, VPS SmartOne và TCInvest để map UI thật sang domain, state machine, API, ledger và failure modes.
+  - title: Market Data → AI Assistant
+    details: Case study DNSE/SSI realtime, document CMS, Qdrant RAG, OpenRouter và .NET orchestration.
 ---
 
 ## Một lộ trình, từ nền tảng tới production
@@ -90,6 +95,15 @@ UI Feature
 → Recovery / Reconciliation
 ```
 
+## Case study mới — StockAI: Market Data & RAG
+
+<div class="course-grid">
+  <a class="course-card" href="./stockai/"><strong>StockAI Engineering</strong><span>Thiết kế AI Assistant chứng khoán Việt Nam từ nguồn dữ liệu thật đến câu trả lời có bằng chứng.</span></a>
+  <a class="course-card" href="./stockai/market-data"><strong>DNSE & SSI</strong><span>Realtime quote, index, OHLC, cache, reconnect và multi-ticker.</span></a>
+  <a class="course-card" href="./stockai/rag-documents"><strong>RAG & CMS</strong><span>Auto-sync tài liệu, bảng BCTC, hybrid retrieval, versioning và citation.</span></a>
+  <a class="course-card" href="./stockai/ai-assistant"><strong>OpenRouter & .NET</strong><span>Model capability, free-only routing, tools, SSE và đánh giá câu trả lời.</span></a>
+</div>
+
 ## Track III — Production Securities Engineering · Bài 13–24
 
 ```text
@@ -156,5 +170,6 @@ Nếu câu trả lời đều dẫn về **business identity + state machine + i
 - [Competency Matrix](./resources/competency-matrix)
 - [50 Failure Scenarios](./resources/failure-scenarios)
 - [Review Checklist](./resources/checklist)
+- [StockAI — Market Data & RAG](./stockai/)
 - [System Map](./resources/system-map)
 - [Primary References](./resources/references)
