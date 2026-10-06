@@ -15,7 +15,7 @@ const foundationLectures = [
 
 const marketCoreLectures = [
   { text: '06. Order & Matching', link: '/lectures/06-order-matching/index.html' },
-  { text: '07. KRX / FIX / VSDC', link: '/lectures/07-clearing-settlement-krx-fix-vsdc/index.html' },
+  { text: '07. Market Infrastructure / KRX / FIX / VSDC', link: '/lectures/07-clearing-settlement-krx-fix-vsdc/index.html' },
   { text: '08. Account / Cash / Position / Buying Power', link: '/lectures/08-account-cash-position-buying-power/index.html' },
   { text: '09. Security Master & Corporate Actions', link: '/lectures/09-security-master-corporate-actions/index.html' },
   { text: '10. Market Data Engineering', link: '/lectures/10-market-data-engineering/index.html' },
@@ -39,7 +39,8 @@ const productionLectures = [
 ]
 
 const domains = [
-  { text: 'Tổng quan 8 domain', link: '/domains/index.html' },
+  { text: '00. System Architecture Map', link: '/resources/system-map.html' },
+  { text: 'Tổng quan 8 business domains', link: '/domains/index.html' },
   { text: '01. Securities Core', link: '/domains/01-securities-core.html' },
   { text: '02. Derivatives Core', link: '/domains/02-derivatives-core.html' },
   { text: '03. Bonds Core', link: '/domains/03-bonds-core.html' },
@@ -90,7 +91,7 @@ const projects = [
 const resources = [
   { text: 'Tổng quan', link: '/resources/index.html' },
   { text: 'Glossary', link: '/resources/glossary.html' },
-  { text: 'System Map', link: '/resources/system-map.html' },
+  { text: 'System Architecture Map', link: '/resources/system-map.html' },
   { text: 'Review Checklist', link: '/resources/checklist.html' },
   { text: 'Competency Matrix', link: '/resources/competency-matrix.html' },
   { text: '50 Failure Scenarios', link: '/resources/failure-scenarios.html' },
@@ -117,7 +118,7 @@ export default withMermaid(defineConfig({
     },
     nav: [
       { text: 'Bài giảng', link: '/lectures/index.html' },
-      { text: '8 Domains', link: '/domains/index.html' },
+      { text: 'System & Domains', link: '/domains/index.html' },
       { text: 'Broker Cases', link: '/case-studies/index.html' },
       { text: 'Engineering', link: '/engineering/index.html' },
       { text: 'StockAI', link: '/stockai/index.html' },
@@ -130,7 +131,7 @@ export default withMermaid(defineConfig({
         { text: 'II. Market & Brokerage Core', items: marketCoreLectures },
         { text: 'III. Production Securities Engineering', items: productionLectures }
       ],
-      '/domains/': [{ text: '8 Core Domains', items: domains }],
+      '/domains/': [{ text: 'System & Business Domains', items: domains }],
       '/case-studies/': [{ text: 'Broker App Case Studies', items: caseStudies }],
       '/engineering/': [{ text: 'Core Engineering', items: engineering }],
       '/stockai/': [{ text: 'StockAI — Market Data & RAG', items: stockAi }],
