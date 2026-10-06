@@ -118,7 +118,10 @@ export default withMermaid(defineConfig({
     },
     nav: [
       { text: 'Bài giảng', link: '/lectures/index.html' },
-      { text: 'System & Domains', link: '/domains/index.html' },
+      { text: 'System & Domains', items: [
+        { text: 'System Architecture Map', link: '/resources/system-map.html' },
+        { text: '8 Business Domains', link: '/domains/index.html' }
+      ] },
       { text: 'Broker Cases', link: '/case-studies/index.html' },
       { text: 'Engineering', link: '/engineering/index.html' },
       { text: 'StockAI', link: '/stockai/index.html' },
