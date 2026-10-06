@@ -1,38 +1,42 @@
 # Securities Engineering
 
-> Lộ trình tiếng Việt từ **Kinh tế học → Tài chính → Chứng khoán → Market Infrastructure → 8 Core Domains → Production Securities Engineering**.
+> Lộ trình tiếng Việt để hiểu một nền tảng chứng khoán từ **business lifecycle** đến **production architecture**.
 
-Repository dành cho backend engineer muốn đi xa hơn mức “biết API đặt lệnh” để hiểu **order, execution, trade, cash, position, risk, matching, KRX/FIX, VSDC, clearing, settlement, ledger, reconciliation, HA/DR và operations** như những khái niệm nghiệp vụ có invariant rõ ràng.
+Repository dành cho backend engineer muốn đi xa hơn mức “biết API đặt lệnh” để hiểu rõ Order, Execution, Trade, OMS, Risk, Exchange Gateway, FIX, clearing, settlement, ledger, reconciliation, HA/DR và operations như các khái niệm có boundary rõ ràng.
 
-## Mới: StockAI — Market Data & RAG
+## Bắt đầu ở đâu?
 
-Bổ sung [StockAI Engineering](docs/stockai/index.md): Next.js + ASP.NET Core, DNSE LightSpeed trước/SSI FastConnect sau, market-data freshness, CMS đồng bộ tài liệu, Qdrant hybrid retrieval, OpenRouter model routing và checklist kiểm thử. Đây là case study mở rộng, không thay thế curriculum brokerage core.
+Đừng bắt đầu bằng việc đọc ngẫu nhiên 24 bài hoặc 8 domain.
 
-## Curriculum
+| Mục tiêu | Bắt đầu tại |
+|---|---|
+| Hiểu toàn bộ platform | [System Map](docs/resources/system-map.md) |
+| Hiểu các vùng nghiệp vụ | [8 Core Domains](docs/domains/index.md) |
+| Học tuần tự từ nền tảng | [24 Lectures](docs/lectures/index.md) |
+| Đi sâu production engineering | [Core Securities Engineering](docs/engineering/index.md) |
+| Map UI broker thật sang backend | [Broker App Case Studies](docs/case-studies/index.md) |
+| Xem case AI/market data | [StockAI Engineering](docs/stockai/index.md) |
 
-```text
-24 Lectures
-8 Core Domains
-5 Failure-driven Projects
-Competency Matrix
-50 Failure Scenarios
-Review Checklist
-Primary References
-```
+Mental model đầu tiên:
 
-### Track I — Economics & Finance
+~~~text
+ORDER FLOW
+Investor → Trading API → OMS/Risk → Exchange Gateway → Trading Venue
 
-Bài 01–05: vi mô, vĩ mô, finance, securities market, investment analysis.
+MARKET DATA FLOW
+Market Feed → Market Data Platform → UI / Risk / Analytics
 
-### Track II — Market & Brokerage Core
+POST-TRADE FLOW
+Execution → Trade Booking → Clearing/Settlement → VSDC/Bank → Reconciliation
+~~~
 
-Bài 06–12: order/matching, KRX/FIX/VSDC, account/cash/position/buying power, security master/corporate actions, market data, risk/margin, EOD/reconciliation.
+Ba flow có liên quan nhưng **không phải cùng một system**.
 
-### Track III — Production Securities Engineering
+## Hai taxonomy phải tách biệt
 
-Bài 13–24: OMS internals, FIX session recovery, exchange gateway/KRX connectivity, trade capture, clearing/netting/settlement, ledger, delivery semantics, HA/DR/BCP, security/audit, performance, incident runbook và architecture boundaries.
+### Business Domains
 
-## 8 Domains
+Trả lời: **nghiệp vụ nào phải được quản lý?**
 
 1. Securities Core
 2. Derivatives Core
@@ -43,50 +47,59 @@ Bài 13–24: OMS internals, FIX session recovery, exchange gateway/KRX connecti
 7. Rewards
 8. Enterprise Workflow
 
-## Projects
+### Production Engineering
 
-1. Order Lifecycle Simulator
-2. Brokerage Platform End-to-End
-3. FIX Gateway & Recovery Lab
-4. Ledger & Reconciliation Lab
-5. Brokerage Production Game Day
+Trả lời: **làm sao chạy nghiệp vụ đó đúng khi có concurrency, timeout, duplicate, failover và scale?**
 
-## Cách học
+~~~text
+Risk / Limits
+→ OMS Internals
+→ FIX Session
+→ Exchange Gateway
+→ Trade Capture
+→ Clearing / Settlement
+→ Ledger / Reconciliation
+→ Event Delivery
+→ HA / DR
+→ Performance / Operations
+~~~
 
-Tài liệu lấy cảm hứng từ cách tổ chức của Learn Harness Engineering: **mỗi bài tập trung vào một câu hỏi lớn**, có mental model, ví dụ, sơ đồ, failure mode, checklist và bài tập; tránh một file lý thuyết khổng lồ.
+**Domain không đồng nghĩa với microservice. OMS/FIX/Gateway cũng không phải các domain ngang hàng với 8 business domains.**
 
-Bắt đầu tại [`docs/index.md`](docs/index.md).
+## Curriculum
 
-## Cấu trúc
+- **Track I — Economics & Finance (01–05):** economics, finance, securities, investment.
+- **Track II — Market & Brokerage Core (06–12):** matching, market infrastructure, account/cash/position, market data, risk, reconciliation.
+- **Track III — Production Securities Engineering (13–24):** OMS, FIX, gateway, post-trade, ledger, event delivery, HA/DR, security, performance, operations, architecture boundaries.
 
-```text
-securities.github.io/
-├── docs/
-│   ├── index.md
-│   ├── lectures/      # 24 bài từ economics đến production
-│   ├── domains/       # 8 domain/hệ thống lớn của CTCK
-│   ├── engineering/   # Reliability, ledger, architecture mental models
-│   ├── stockai/       # Market Data, RAG, OpenRouter và AI Assistant
-│   ├── projects/      # 5 lab/capstone dựa trên failure scenario
-│   └── resources/     # Glossary, matrix, scenarios, checklist, references
-├── .github/workflows/ # VitePress → GitHub Pages
-├── package.json
-└── README.md
-```
+Chi tiết: [docs/lectures/index.md](docs/lectures/index.md).
 
 ## Nguyên tắc xuyên suốt
 
-> Đừng bắt đầu từ Microservices. Hãy bắt đầu từ **business invariant**.
+> Đừng bắt đầu từ Microservices. Hãy bắt đầu từ **business invariant + state + authority + failure semantics**.
 
-```text
+~~~text
 Không bán > Sellable Quantity
 Không dùng > Available Buying Power
 Một ExecID không được book hai lần
-Một conditional order không được trigger hai lần
-Ledger không được mất/double transaction
-Settlement phải reconcile được với external evidence
-FIX failover không được tạo dual session owner
 Timeout không tự động đồng nghĩa Failed
-```
+FIX failover không được tạo dual session owner
+Settlement phải reconcile được với external evidence
+~~~
 
-Khi invariant, source of truth, transaction boundary, failure semantics và reconciliation đã rõ, lựa chọn SQL Server, Kafka, Redis, BackgroundService, modular monolith hay microservices mới có cơ sở.
+Khi các điều trên đã rõ, việc chọn SQL, Kafka, Redis, modular monolith hay microservices mới có cơ sở.
+
+## Chạy tài liệu local
+
+~~~bash
+npm install
+npm run dev
+~~~
+
+Kiểm tra build và route:
+
+~~~bash
+npm run build:check
+~~~
+
+Website: https://trinhduyet.github.io/securities.github.io/

@@ -6,170 +6,117 @@ titleTemplate: false
 
 hero:
   name: Securities Engineering
-  text: Finance → Core Trading → Production
-  tagline: 24 bài + 8 core domains + 3 Broker App Case Studies + 5 project dành cho backend engineer muốn hiểu nghiệp vụ chứng khoán đủ sâu để thiết kế và vận hành Order, Trade, Ledger, Risk, KRX/FIX, Clearing, Settlement và Reconciliation.
+  text: Business Domains → Trading Systems → Production
+  tagline: Hiểu một nền tảng chứng khoán từ Order, Risk và OMS đến Exchange Gateway, FIX, Clearing, VSDC, Ledger, Reconciliation và HA/DR.
   actions:
     - theme: brand
-      text: Bắt đầu từ Bài 01
-      link: /lectures/01-microeconomics/
+      text: Xem System Map
+      link: /resources/system-map.html
     - theme: alt
-      text: Xem Broker Case Studies
-      link: /case-studies/
+      text: 8 Business Domains
+      link: /domains/index.html
     - theme: alt
-      text: Market Data & StockAI
-      link: /stockai/
+      text: 24 bài giảng
+      link: /lectures/index.html
 
 features:
-  - title: Finance trước Architecture
-    details: Hiểu tiền, công cụ tài chính, định giá, risk và market microstructure trước khi chọn microservice hay event bus.
-  - title: Trading end-to-end
-    details: Order → Matching → Execution → Trade → Clearing → Settlement → Reconciliation, không dừng ở trạng thái FILLED.
-  - title: Broker Apps → Backend
-    details: Dùng SSI iBoard, VPS SmartOne và TCInvest để map UI thật sang domain, state machine, API, ledger và failure modes.
-  - title: Market Data → AI Assistant
-    details: Case study DNSE/SSI realtime, document CMS, Qdrant RAG, OpenRouter và .NET orchestration.
+  - title: System-first
+    details: Biết OMS, Gateway, Market Data, Post-trade và VSDC nằm ở đâu trước khi học chi tiết từng domain.
+  - title: Business-first
+    details: Mỗi thiết kế bắt đầu từ lifecycle, invariant, authority và state — không bắt đầu từ framework.
+  - title: Failure-driven
+    details: Timeout, duplicate, retry, replay, split brain và reconciliation là phần của thiết kế.
+  - title: Evidence-aware
+    details: Phân biệt UI/public evidence, internal state và external authoritative state.
 ---
 
-## Một lộ trình, từ nền tảng tới production
+## Bắt đầu bằng bản đồ hệ thống
 
-```mermaid
-flowchart LR
-    A[Economics] --> B[Finance]
-    B --> C[Securities]
-    C --> D[Market Microstructure]
-    D --> E[Broker App Case Studies]
-    E --> F[OMS / Risk]
-    F --> G[KRX / FIX Gateway]
-    G --> H[Trade / Clearing / Settlement]
-    H --> I[Ledger / Reconciliation]
-    I --> J[HA / DR / Operations]
-    J --> K[Core Securities Engineer]
-```
+Nếu mới vào ngành chứng khoán, hãy đọc **[System Map](./resources/system-map.html)** trước.
 
-<div class="learning-path">
-<strong>Mental model:</strong> Đừng bắt đầu từ Microservices. Bắt đầu từ business rule → state → invariant → failure mode → durable identity → recovery → reconciliation; sau đó mới chọn architecture.
-</div>
+Nó trả lời bốn câu hỏi nền tảng:
 
-## Track I — Economics & Finance · Bài 01–05
+1. Trading Core / OMS chịu trách nhiệm gì?
+2. Exchange Gateway khác OMS ở đâu?
+3. Trading Venue / Market Infrastructure khác broker system thế nào?
+4. Vì sao VSDC / Settlement Bank thuộc post-trade path chứ không phải cùng một order gateway?
 
-<div class="course-grid">
-  <a class="course-card" href="./lectures/01-microeconomics/"><strong>01 — Microeconomics</strong><span>Cung cầu, incentives, market structure và price discovery.</span></a>
-  <a class="course-card" href="./lectures/02-macroeconomics/"><strong>02 — Macroeconomics</strong><span>Lãi suất, lạm phát, chính sách và chu kỳ kinh tế.</span></a>
-  <a class="course-card" href="./lectures/03-finance-foundations/"><strong>03 — Finance</strong><span>Time value, risk/return, valuation và corporate finance.</span></a>
-  <a class="course-card" href="./lectures/04-securities-market/"><strong>04 — Securities</strong><span>Equity, bonds, funds, derivatives và market structure.</span></a>
-  <a class="course-card" href="./lectures/05-investment-analysis/"><strong>05 — Investment Analysis</strong><span>Fundamental, technical, portfolio và data lineage.</span></a>
-</div>
+~~~text
+ORDER
+Investor
+→ Trading API
+→ Risk / Reservation
+→ OMS
+→ Exchange Gateway
+→ Trading Venue
 
-## Track II — Market & Brokerage Core · Bài 06–12
+POST-TRADE
+Execution
+→ Trade Booking
+→ Clearing / Settlement
+→ VSDC / Settlement Bank
+→ Reconciliation
 
-```text
-Order & Matching
-→ KRX / FIX / VSDC
-→ Account / Cash / Position / Buying Power
-→ Security Master / Corporate Actions
-→ Market Data
-→ Risk / Margin
-→ EOD / Reconciliation / Operations
-```
+MARKET DATA
+Market Feed
+→ Normalize / Sequence / Freshness
+→ Realtime Platform
+→ UI / Risk / Analytics
+~~~
 
-Đây là track biến kiến thức chứng khoán thành domain model và business invariants.
-
-## Broker App Case Studies — nối UI thật với core nghiệp vụ
+## Sau System Map, chọn mục tiêu học
 
 <div class="course-grid">
-  <a class="course-card" href="./case-studies/ssi-iboard"><strong>SSI iBoard</strong><span>Trading, phái sinh, cash operations, tài sản, P&L, ứng trước tiền bán và lệnh điều kiện.</span></a>
-  <a class="course-card" href="./case-studies/vps-smartone"><strong>VPS SmartOne</strong><span>Order lifecycle, buying power, CK khả dụng, tiền/CK chờ về và chuyển tiền.</span></a>
-  <a class="course-card" href="./case-studies/tcbs-tcinvest"><strong>TCBS / TCInvest</strong><span>Multi-product platform: cổ phiếu, margin, bond, fund, conditional order, odd-lot và IPO.</span></a>
+  <a class="course-card" href="./domains/"><strong>8 Core Domains</strong><span>Business lifecycle: Securities, Derivatives, Bonds, Funds, Realtime, Conditional Orders, Rewards và Workflow.</span></a>
+  <a class="course-card" href="./lectures/"><strong>24 Lectures</strong><span>Lộ trình tuần tự từ economics/finance đến market infrastructure và production engineering.</span></a>
+  <a class="course-card" href="./engineering/"><strong>Production Engineering</strong><span>OMS, FIX, Gateway, Ledger, idempotency, reconciliation, HA/DR và architecture boundaries.</span></a>
+  <a class="course-card" href="./case-studies/"><strong>Broker App Case Studies</strong><span>Map SSI iBoard, VPS SmartOne và TCInvest từ UI sang entity, state và failure mode.</span></a>
+  <a class="course-card" href="./projects/"><strong>Projects & Game Day</strong><span>Order lifecycle, FIX recovery, ledger/reconciliation và production failure drills.</span></a>
+  <a class="course-card" href="./stockai/"><strong>StockAI Engineering</strong><span>Case study market data, RAG, AI assistant và .NET orchestration.</span></a>
 </div>
 
-Mỗi case study đi theo cùng một khung:
+## Hai taxonomy khác nhau
 
-```text
-UI Feature
-→ Business Meaning
-→ Entity / State
-→ Invariant
-→ API / Command / Event
-→ Database / Ledger / Projection
-→ Failure Mode
-→ Recovery / Reconciliation
-```
+### Business taxonomy
 
-## Case study mới — StockAI: Market Data & RAG
+Securities, Derivatives, Bonds, Funds, Realtime Analytics, Conditional Orders, Rewards và Enterprise Workflow là **business domains**.
 
-<div class="course-grid">
-  <a class="course-card" href="./stockai/"><strong>StockAI Engineering</strong><span>Thiết kế AI Assistant chứng khoán Việt Nam từ nguồn dữ liệu thật đến câu trả lời có bằng chứng.</span></a>
-  <a class="course-card" href="./stockai/market-data"><strong>DNSE & SSI</strong><span>Realtime quote, index, OHLC, cache, reconnect và multi-ticker.</span></a>
-  <a class="course-card" href="./stockai/rag-documents"><strong>RAG & CMS</strong><span>Auto-sync tài liệu, bảng BCTC, hybrid retrieval, versioning và citation.</span></a>
-  <a class="course-card" href="./stockai/ai-assistant"><strong>OpenRouter & .NET</strong><span>Model capability, free-only routing, tools, SSE và đánh giá câu trả lời.</span></a>
-</div>
+### Engineering taxonomy
 
-## Track III — Production Securities Engineering · Bài 13–24
+Risk, OMS, FIX Session, Exchange Gateway, Trade Capture, Clearing/Settlement, Ledger/Reconciliation, Event Delivery, HA/DR và Performance là **system/engineering concerns**.
 
-```text
-13 OMS Internals
-14 FIX 4.4 Session Recovery
-15 Exchange Gateway & KRX Connectivity
-16 Trade Capture & Booking
-17 Clearing, Netting & Settlement
-18 Ledger, Accounting & Projections
-19 Event Delivery Semantics
-20 HA / DR / BCP / Observability
-21 Security / Compliance / Audit
-22 Performance / Capacity / Latency
-23 Production Runbook & Incidents
-24 Architecture Boundaries & DDD
-```
+Không nên coi hai danh sách này là các component cùng cấp.
 
-Đây là track trả lời câu hỏi khó nhất: **hệ thống làm sao vẫn đúng khi timeout, duplicate, crash, reconnect, replay, overload, failover và external state khác internal state?**
+## Curriculum 24 bài
 
-## 8 Core Domains
+- **01–05 — Economics & Finance**
+- **06–12 — Market & Brokerage Core**
+- **13–24 — Production Securities Engineering**
 
-<div class="course-grid">
-  <a class="course-card" href="./domains/01-securities-core"><strong>Securities Core</strong><span>OMS, reservations, trades, cash/position.</span></a>
-  <a class="course-card" href="./domains/02-derivatives-core"><strong>Derivatives</strong><span>Position, P&L, margin, liquidation.</span></a>
-  <a class="course-card" href="./domains/03-bonds-core"><strong>Bonds</strong><span>Coupon, yield, cash flows, maturity.</span></a>
-  <a class="course-card" href="./domains/04-funds-core"><strong>Funds</strong><span>NAV, subscription/redemption, cut-off.</span></a>
-  <a class="course-card" href="./domains/05-realtime-analytics"><strong>Realtime Analytics</strong><span>Ticks, candles, indicators, streaming.</span></a>
-  <a class="course-card" href="./domains/06-conditional-orders"><strong>Conditional Orders</strong><span>Atomic trigger, generated order, race.</span></a>
-  <a class="course-card" href="./domains/07-rewards"><strong>Rewards</strong><span>Rules, campaigns, points ledger.</span></a>
-  <a class="course-card" href="./domains/08-enterprise-workflow"><strong>Enterprise Workflow</strong><span>Approval, SLA, maker/checker, audit.</span></a>
-</div>
+→ [Xem toàn bộ 24 bài](./lectures/index.html)
 
-## 5 Projects — từ happy path tới Game Day
+## Golden questions
 
-```text
-01 Order Lifecycle Simulator
-03 FIX Gateway & Recovery Lab
-04 Ledger & Reconciliation Lab
-02 Brokerage Platform End-to-End
-05 Brokerage Production Game Day
-```
+~~~text
+Business fact nào đang thay đổi?
+Ai là authority của fact đó?
+Invariant nào không được phá?
+State transition nào hợp lệ?
+Timeout có thể là UNKNOWN không?
+Duplicate/out-of-order xử lý thế nào?
+Durable identity là gì?
+Recovery/replay từ đâu?
+Reconcile với external evidence nào?
+Ai vận hành khi automation không đủ?
+~~~
 
-Project cuối cố tình phá hệ thống bằng market-open burst, gateway outage, split brain, stale feed, duplicate execution, broker outage, settlement mismatch và DR failover.
+Nếu câu trả lời chưa rõ, việc chọn microservices, Kafka hay database vẫn còn quá sớm.
 
-## Khi nào bạn thực sự hiểu core securities?
+## Tài nguyên tra cứu
 
-Không phải khi biết tạo `POST /orders`, mà khi trả lời chắc được:
-
-- tiền nào **available**, tiền nào **reserved**, tiền nào **pending settlement**?
-- một order partial fill 3 lần tạo bao nhiêu execution/trade và ảnh hưởng position thế nào?
-- timeout lúc submit là failure hay **UNKNOWN**?
-- `MsgSeqNum` khác `ExecId` như thế nào?
-- FIX process restart cần restore state nào?
-- duplicate execution có làm tăng position/ledger hai lần không?
-- clearing khác settlement ở entity và failure mode nào?
-- DR site lên xanh nhưng venue/VSDC/bank khác internal state thì có được mở trading không?
-- modular monolith hay microservices bảo vệ invariant tốt hơn trong boundary đang xét?
-
-Nếu câu trả lời đều dẫn về **business identity + state machine + invariant + durable transaction + recovery + reconciliation**, bạn đang đi đúng hướng.
-
-## Tự kiểm tra
-
-- [Broker App Case Studies](./case-studies/)
-- [Competency Matrix](./resources/competency-matrix)
-- [50 Failure Scenarios](./resources/failure-scenarios)
-- [Review Checklist](./resources/checklist)
-- [StockAI — Market Data & RAG](./stockai/)
-- [System Map](./resources/system-map)
-- [Primary References](./resources/references)
+- [System Map](./resources/system-map.html)
+- [Glossary](./resources/glossary.html)
+- [Competency Matrix](./resources/competency-matrix.html)
+- [50 Failure Scenarios](./resources/failure-scenarios.html)
+- [Review Checklist](./resources/checklist.html)
+- [Primary References](./resources/references.html)

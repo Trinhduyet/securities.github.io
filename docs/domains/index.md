@@ -1,139 +1,183 @@
 ---
 title: "8 Core Domains của một công ty chứng khoán"
-description: "Giải thích 8 hệ thống nghiệp vụ lớn của công ty chứng khoán bằng tiếng Việt, ví dụ cụ thể và góc nhìn backend engineering."
+description: "Định vị 8 business domains trong brokerage platform và nối chúng với OMS, Risk, Gateway, Post-trade và production engineering."
 ---
 
 # 8 Core Domains của một công ty chứng khoán
 
 <div class="lesson-meta">
   <span><strong>Đối tượng</strong> Backend developer chưa làm core chứng khoán</span>
-  <span><strong>Cách học</strong> Nghiệp vụ → ví dụ → state → failure → architecture</span>
+  <span><strong>Cách học</strong> System map → domain → lifecycle → failure → engineering</span>
 </div>
 
-Nếu mới nhìn vào một sơ đồ công ty chứng khoán, bạn rất dễ gặp hàng loạt từ như `OMS`, `margin`, `NAV`, `settlement`, `ledger`, `watermark`, `entitlement`, `SLA` rồi mất phương hướng.
+## 1. Đừng coi 8 domain là 8 service
 
-Phần **8 Domains** được viết lại với một nguyên tắc: **không yêu cầu bạn biết sẵn thuật ngữ**. Mỗi domain sẽ bắt đầu từ một câu chuyện thực tế, sau đó mới đi vào entity, state, API, database, event và failure scenario.
+Đọc **[System Map](../resources/system-map.html)** trước.
 
-## 1. Trước tiên: “Domain” nghĩa là gì?
+Có hai taxonomy khác nhau:
 
-Trong tài liệu này, **domain** là một vùng nghiệp vụ đủ lớn, có dữ liệu, quy tắc và vòng đời riêng.
+### Business taxonomy
 
-Ví dụ:
+Securities, Derivatives, Bonds, Funds, Realtime Analytics, Conditional Orders, Rewards và Enterprise Workflow.
 
-```text
-Khách đặt lệnh mua cổ phiếu
-→ Securities Core
+### Engineering taxonomy
 
-Khách giữ vị thế hợp đồng tương lai và bị thiếu ký quỹ
-→ Derivatives Core
+Risk, OMS, FIX Session, Exchange Gateway, Trade Capture, Clearing/Settlement, Ledger/Reconciliation, Event Delivery, HA/DR và Performance.
 
-Khách mua chứng chỉ quỹ và chờ NAV cuối ngày
-→ Fund Core
-```
+**OMS, FIX và Gateway không phải các domain ngang hàng với Securities/Bonds/Funds.** Chúng là system/engineering concerns phục vụ một hoặc nhiều domain.
 
-Domain **không đồng nghĩa** với một microservice. Một domain có thể được triển khai bằng một module trong modular monolith hoặc nhiều service tùy scale và consistency requirement.
+Domain cũng **không đồng nghĩa với microservice**.
 
-## 2. Từ điển nền tảng trước khi đọc 8 domain
+## 2. Mental model toàn platform
 
-| Thuật ngữ | Giải thích dễ hiểu | Ví dụ |
+~~~text
+ORDER FLOW
+Investor
+→ Trading API
+→ Risk / Reservation
+→ OMS
+→ Exchange Gateway
+→ Trading Venue
+
+MARKET DATA FLOW
+Market Feed
+→ Realtime Platform
+→ UI / Risk / Analytics / Conditional Orders
+
+POST-TRADE FLOW
+Execution
+→ Trade Booking
+→ Clearing / Settlement
+→ VSDC / Settlement Bank
+→ Reconciliation
+~~~
+
+Điểm cần nhớ:
+
+- Broker OMS khác central matching engine.
+- FIX session state khác order business state.
+- Exchange Gateway khác Post-trade connectivity.
+- VSDC không nên được mô hình hóa như một order venue cùng cấp dưới Exchange Gateway.
+- FILLED không đồng nghĩa SETTLED.
+- Timeout không tự động đồng nghĩa FAILED.
+
+## 3. Từ điển nền tảng
+
+| Thuật ngữ | Nghĩa dễ hiểu | Ví dụ |
 |---|---|---|
-| **Lifecycle** | Vòng đời của một object từ lúc sinh ra tới khi kết thúc | Order: `NEW → PARTIALLY_FILLED → FILLED` |
-| **State** | Trạng thái hiện tại | `ACTIVE`, `CANCELLED`, `SETTLED` |
-| **Invariant** | Điều kiện nghiệp vụ tuyệt đối không được phá | Không được bán nhiều hơn số lượng có thể bán |
-| **Source of Truth** | Nơi có quyền xác nhận một loại dữ liệu | OMS là nguồn chính cho internal order state; bank là evidence cho tiền bên bank |
-| **Ledger** | Sổ ghi lịch sử tăng/giảm thay vì chỉ lưu số dư cuối | `+100m deposit`, `-20m settlement`, `-50k fee` |
-| **Projection** | Dữ liệu hiện tại được tính từ history/ledger | `AvailableCash = 79.95m` |
-| **Idempotency** | Cùng một request/event gửi lại không tạo business effect lần hai | Execution `E123` gửi lại vẫn chỉ book trade một lần |
-| **Settlement** | Bước thực sự chuyển tiền/chứng khoán sau khi trade đã hình thành | Buyer trả tiền, seller giao chứng khoán |
-| **Reconciliation** | Đối chiếu nội bộ với hệ thống bên ngoài để phát hiện lệch | Cash ledger nội bộ ↔ settlement bank |
-| **Entitlement** | Quyền lợi mà nhà đầu tư được hưởng | Cổ tức tiền mặt hoặc coupon trái phiếu |
-| **Reservation** | Giữ tạm resource để không bị dùng hai lần | Giữ 120 triệu khi lệnh BUY đang chờ khớp |
-| **Unknown outcome** | Gọi hệ thống ngoài bị timeout nên chưa biết thành công hay thất bại | Gửi lệnh rồi mất ACK |
+| Lifecycle | Vòng đời của business object | NEW → PARTIALLY_FILLED → FILLED |
+| State | Trạng thái hiện tại | WORKING, CANCELLED, SETTLED |
+| Invariant | Điều kiện tuyệt đối không được phá | Không bán > sellable quantity |
+| Authority | Nguồn có quyền xác nhận một fact | Venue evidence cho execution |
+| Ledger | Lịch sử business effects | deposit, reserve, settlement, fee |
+| Projection | Current view tính từ history | available cash, position |
+| Idempotency | Duplicate không tạo effect lần hai | cùng ExecId chỉ book một lần |
+| Reservation | Giữ resource tránh double spending | giữ cash cho BUY |
+| Settlement | Chuyển giao tiền/chứng khoán | cash leg + securities leg |
+| Reconciliation | So internal state với external evidence | internal trade ↔ venue evidence |
+| Unknown outcome | Timeout khiến chưa biết external side đã commit chưa | gửi order rồi mất ACK |
 
-<div class="key-takeaway">
-<strong>Điểm quan trọng:</strong>
+## 4. Bản đồ 8 business domains
 
-Khi gặp một thuật ngữ mới, đừng học thuộc tên. Hãy hỏi: **nó đại diện cho business fact nào, state nào thay đổi, tiền/chứng khoán nào bị ảnh hưởng, và nếu retry/crash thì kết quả phải ra sao?**
-</div>
-
-## 3. Bản đồ 8 domain
-
-| # | Domain | Nó giải quyết câu hỏi gì? | Ví dụ đời thực |
+| # | Domain | Câu hỏi business chính | Ví dụ |
 |---|---|---|---|
-| 1 | [Securities Core](./01-securities-core.md) | Khách đặt lệnh cổ phiếu, khớp lệnh, tiền và chứng khoán thay đổi thế nào? | BUY 1.000 FPT |
-| 2 | [Derivatives Core](./02-derivatives-core.md) | Long/Short, P&L, ký quỹ và margin call được tính thế nào? | Long 2 futures contracts |
-| 3 | [Bonds Core](./03-bonds-core.md) | Coupon, yield, accrued interest và maturity được quản lý thế nào? | Trái phiếu coupon 8% |
-| 4 | [Funds Core](./04-funds-core.md) | Subscription/redemption được pricing theo NAV nào? | Đầu tư 100 triệu vào quỹ mở |
-| 5 | [Realtime Analytics](./05-realtime-analytics.md) | Tick giá được biến thành candle, indicator và signal thế nào? | Tạo candle FPT 10:00–10:01 |
-| 6 | [Conditional Orders](./06-conditional-orders.md) | Khi giá đạt điều kiện, làm sao tạo đúng một order thật? | Stop-loss FPT tại 100.000 |
-| 7 | [Rewards](./07-rewards.md) | Điểm thưởng kiếm, dùng, hết hạn và điều chỉnh thế nào? | Giao dịch 100 triệu nhận 500 điểm |
-| 8 | [Enterprise Workflow](./08-enterprise-workflow.md) | Quy trình nhiều bước/người phê duyệt được chạy và audit thế nào? | Mở tài khoản + eKYC + AML + approval |
+| 1 | [Securities Core](./01-securities-core.html) | Order, execution, trade, cash/position thay đổi thế nào? | BUY 1.000 FPT |
+| 2 | [Derivatives Core](./02-derivatives-core.html) | Long/Short, P&L và margin được quản lý thế nào? | Long futures |
+| 3 | [Bonds Core](./03-bonds-core.html) | Coupon, yield, accrued interest, maturity thế nào? | Bond coupon 8% |
+| 4 | [Funds Core](./04-funds-core.html) | Subscription/redemption dùng NAV và cut-off nào? | Mua quỹ mở |
+| 5 | [Realtime Analytics](./05-realtime-analytics.html) | Tick thành candle/indicator/signal thế nào? | 1-minute candle |
+| 6 | [Conditional Orders](./06-conditional-orders.html) | Condition đúng thì sinh đúng một order thật thế nào? | Stop-loss |
+| 7 | [Rewards](./07-rewards.html) | Earn/use/expire/adjust points thế nào? | Trading reward |
+| 8 | [Enterprise Workflow](./08-enterprise-workflow.html) | Approval/SLA/maker-checker/audit chạy thế nào? | eKYC/approval |
 
-## 4. Mối quan hệ giữa 8 domain
+## 5. Domain map theo system concern
 
-```mermaid
-flowchart TB
-    UI[Investor Web / Mobile] --> EQ[Securities Core]
-    UI --> DER[Derivatives Core]
-    UI --> FUND[Funds Core]
-    UI --> BOND[Bonds Core]
+| Domain | System/engineering concerns |
+|---|---|
+| Securities | Risk, Reservation, OMS, Gateway, Trade, Ledger, Settlement |
+| Derivatives | Position, Margin/Risk, Market Data, Settlement |
+| Bonds | Security Master, Cash Flow, Ledger, Settlement |
+| Funds | NAV, Subscription/Redemption, Cash, Workflow |
+| Realtime Analytics | Market Data, Streaming, Time-series |
+| Conditional Orders | Market Data, Trigger State, Idempotency, OMS |
+| Rewards | Event Delivery, Rules, Points Ledger |
+| Enterprise Workflow | IAM, Approval, SLA, Audit |
 
-    MD[Market Data] --> ANA[Realtime Analytics]
-    ANA --> CO[Conditional Orders]
-    CO --> EQ
+Bảng này chỉ định vị concern, không khẳng định deployment topology.
 
-    EQ --> EVT[Business Events]
-    DER --> EVT
-    FUND --> EVT
-    BOND --> EVT
-    EVT --> REW[Rewards]
+## 6. Hai learning path
 
-    UI --> WF[Enterprise Workflow]
-    WF --> EQ
+### Business track
 
-    EQ --> PT[Clearing / Settlement]
-    DER --> PT
-    BOND --> PT
-    FUND --> PT
-```
+~~~text
+System Map
+→ Securities Core
+→ Derivatives / Bonds / Funds
+→ Realtime Analytics
+→ Conditional Orders
+→ Rewards / Enterprise Workflow
+~~~
 
-Không phải tất cả domain đều nằm trên critical path của một order. Ví dụ Rewards có thể nhận event sau trade; nó không nên làm chậm việc gửi order ra exchange.
+### Production engineering track
 
-## 5. Cách đọc mỗi domain
+~~~text
+System Map
+→ Securities Core
+→ Risk & Limits
+→ OMS Internals
+→ FIX Session
+→ Exchange Gateway
+→ Trade Capture
+→ Clearing / Settlement
+→ Ledger
+→ Event Delivery
+→ HA / DR
+→ Performance / Operations
+~~~
 
-Mỗi bài sẽ theo cùng một khung:
+Đọc tiếp:
+1. [Risk, Margin & Controls](../lectures/11-risk-margin-controls/)
+2. [OMS Internals](../lectures/13-oms-internals-state-machine/)
+3. [FIX Session Recovery](../lectures/14-fix44-session-recovery/)
+4. [Exchange Gateway](../lectures/15-exchange-gateway-krx-connectivity/)
+5. [Trade Capture](../lectures/16-trade-capture-booking/)
+6. [Clearing, Netting & Settlement](../lectures/17-clearing-netting-settlement/)
+7. [Ledger](../lectures/18-ledger-accounting-projections/)
+8. [HA / DR](../lectures/20-ha-dr-bcp-observability/)
+9. [Performance / Capacity](../lectures/22-performance-capacity-latency/)
 
-```text
-1. Câu chuyện thực tế
-2. Từ điển thuật ngữ
-3. Mental model
-4. Ví dụ số cụ thể
-5. Lifecycle / state machine
-6. Data model / API / event
-7. Invariant bằng tiếng Việt
-8. Failure scenario
-9. Metrics / observability
-10. Checklist + bài tập
-```
+## 7. Cách đọc mỗi domain
 
-## 6. Thứ tự nên học
+~~~text
+Business problem là gì?
+→ Entity nào?
+→ State machine nào?
+→ Invariant nào?
+→ Resource nào bị reserve/consume?
+→ Authority nào xác nhận external outcome?
+→ Timeout/duplicate/out-of-order thì sao?
+→ Durable identity là gì?
+→ Recovery/replay thế nào?
+→ Reconcile bằng evidence nào?
+~~~
 
-Nếu mục tiêu là **“backend developer → core securities engineer”**, nên đọc:
+## 8. Những nhầm lẫn cần tránh
 
-```text
-01 Securities Core
-   ↓
-02 Derivatives
-03 Bonds
-04 Funds
-   ↓
-05 Realtime Analytics
-06 Conditional Orders
-   ↓
-07 Rewards
-08 Enterprise Workflow
-```
+- Broker working-order view không phải central order book của venue.
+- Gateway không nên được mặc định coi là stateless REST proxy.
+- KRX không nên được hiểu là một API duy nhất.
+- VSDC không phải “venue thứ ba” của exchange order gateway.
+- FILLED không đồng nghĩa settlement hoàn tất.
 
-Bốn domain đầu giúp bạn hiểu **tiền, vị thế, sản phẩm và settlement**. Hai domain 05–06 giúp hiểu **real-time/event-driven**. Hai domain cuối giúp hiểu **enterprise integration, ledger và workflow dài hạn**.
+## 9. Bắt đầu học
 
-Bắt đầu tại [Domain 01 — Securities Core](./01-securities-core.md).
+1. [System Map](../resources/system-map.html)
+2. [Domain 01 — Securities Core](./01-securities-core.html)
+3. [Bài 11 — Risk](../lectures/11-risk-margin-controls/)
+4. [Bài 13 — OMS](../lectures/13-oms-internals-state-machine/)
+5. [Bài 14 — FIX](../lectures/14-fix44-session-recovery/)
+6. [Bài 15 — Exchange Gateway](../lectures/15-exchange-gateway-krx-connectivity/)
+7. [Bài 16–18 — Post-trade + Ledger](../lectures/16-trade-capture-booking/)
+8. [Engineering Track](../engineering/)
+
+Sau đó quay lại các domain khác với cùng mental model: **business fact → state → invariant → authority → failure → recovery → reconciliation**.
