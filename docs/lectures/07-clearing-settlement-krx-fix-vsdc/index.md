@@ -11,6 +11,11 @@ description: "Giải thích market infrastructure từ số 0 bằng ví dụ SS
   <span><strong>Ví dụ xuyên suốt</strong> BUY 1.000 FPT @ 120.000</span>
 </div>
 
+<div class="callout">
+<strong>Đọc System Map trước</strong><br/>
+Bài này đi qua cả <em>order/trading path</em> và <em>post-trade path</em>. Hai path có boundary khác nhau: Exchange Gateway phục vụ venue connectivity của order flow; VSDC chủ yếu nằm trong depository/clearing/settlement context. Xem <a href="../../resources/system-map.html">System Map</a> để có topology canonical trước khi đi vào FIX, KRX và settlement.
+</div>
+
 Nếu đang dùng **SSI iBoard**, **VPS SmartOne** hoặc **TCInvest**, thứ nhà đầu tư nhìn thấy thường rất đơn giản:
 
 ```text
@@ -25,27 +30,21 @@ Chọn mã FPT
 Nhưng phía sau nút **Xác nhận** là nhiều hệ thống có trách nhiệm hoàn toàn khác nhau:
 
 ```text
+ORDER / TRADING PATH
 Investor App
-   ↓
-Broker Trading API
-   ↓
-OMS + Risk + Cash/Securities Reservation
-   ↓
-Exchange Gateway
-   ↓
-Market / Matching Infrastructure
-   ↓
-Execution / Fill
-   ↓
-Trade Booking
-   ↓
-Clearing
-   ↓
-Settlement
-   ↓
-VSDC + Settlement Bank
-   ↓
-Reconciliation
+→ Broker Trading API
+→ OMS + Risk + Reservation
+→ Exchange Gateway
+→ Trading Venue / Matching Infrastructure
+→ ACK / Reject / Execution
+
+POST-TRADE PATH
+Execution
+→ Trade Booking
+→ Clearing / Netting
+→ Settlement Obligation
+→ VSDC / Settlement Bank
+→ Reconciliation
 ```
 
 Bài này không giả định bạn đã biết `OMS`, `FIX`, `KRX`, `VSDC`, `DVP`, `netting`, `ExecutionReport` hay `T+2`. Mỗi thuật ngữ sẽ được giải thích trước khi dùng.

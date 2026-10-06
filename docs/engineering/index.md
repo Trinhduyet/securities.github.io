@@ -1,8 +1,36 @@
 # Core Securities Engineering
 
-Engineering trong chứng khoán không bắt đầu bằng việc chia service. Nó bắt đầu bằng việc bảo vệ **business invariants trong điều kiện distributed failure**.
+Engineering trong chứng khoán không bắt đầu bằng việc chia service. Nó bắt đầu bằng việc biết **system boundary nào đang bảo vệ business fact nào**.
 
-```text
+Nếu chưa rõ OMS, Gateway, Market Data, Post-trade và VSDC nằm ở đâu, đọc trước:
+
+→ **[System Map — Brokerage Platform Architecture](../resources/system-map.html)**
+
+## Business domain và engineering concern là hai taxonomy khác nhau
+
+~~~text
+BUSINESS
+Securities / Derivatives / Bonds / Funds
+Realtime / Conditional Orders / Rewards / Workflow
+
+ENGINEERING
+Risk
+→ OMS
+→ FIX Session
+→ Exchange Gateway
+→ Trade Capture
+→ Clearing / Settlement
+→ Ledger / Reconciliation
+→ Event Delivery
+→ HA / DR
+→ Performance / Operations
+~~~
+
+Không map 1:1 giữa domain và microservice.
+
+## Mental model production
+
+~~~text
 Correct Domain Model
         ↓
 Explicit State Machine
@@ -16,16 +44,14 @@ Recovery / Replay
 Reconciliation
         ↓
 HA / DR / Operations
-```
+~~~
 
-## Hai tài liệu mental-model
+## Mental-model docs
 
-- [Từ backend developer đến core securities engineer](./core-securities-engineering.md)
-- [Reliability, ledger, idempotency và reconciliation](./reliability-and-ledgers.md)
+- [Từ backend developer đến core securities engineer](./core-securities-engineering.html)
+- [Reliability, ledger, idempotency và reconciliation](./reliability-and-ledgers.html)
 
 ## Production Track
-
-Sau hai bài trên, đọc tiếp Bài 13–24 để đi vào implementation/operations:
 
 1. [OMS Internals & State Machine](../lectures/13-oms-internals-state-machine/)
 2. [FIX 4.4 Session Recovery](../lectures/14-fix44-session-recovery/)
@@ -42,36 +68,24 @@ Sau hai bài trên, đọc tiếp Bài 13–24 để đi vào implementation/ope
 
 ## Definition of Done cho một thiết kế core
 
-Một architecture diagram chưa đủ. Thiết kế cần chỉ rõ:
+Thiết kế cần chỉ rõ:
 
-- ownership của Order, Trade, Cash, Position, Obligation;
+- authority của Order, Trade, Cash, Position, Obligation;
 - transaction boundary;
-- idempotency key/business identity;
-- retry policy và unknown-outcome policy;
+- valid state transitions;
+- idempotency/business identity;
+- timeout và unknown-outcome policy;
+- retry/backpressure policy;
 - replay/recovery source;
 - reconciliation source và break handling;
 - HA ownership/fencing;
 - business metrics và audit trail;
-- degraded mode/runbook khi market đang mở;
+- degraded mode;
 - capacity behavior trong burst và recovery.
 
-## Cách tự kiểm tra
+## Tự kiểm tra
 
-Nếu muốn biết mình mới “đọc hiểu” hay đã “thiết kế được”, dùng:
-
-- [Competency Matrix](../resources/competency-matrix.md)
-- [50 Failure Scenarios](../resources/failure-scenarios.md)
-- [Review Checklist](../resources/checklist.md)
-- [Project 05 — Production Game Day](../projects/project-05-brokerage-production-game-day.md)
-
-Điểm cuối của lộ trình không phải biết nhiều pattern, mà là có thể nhìn một failure mode và trả lời ngay:
-
-```text
-Business identity nào?
-State/invariant nào?
-Transaction boundary ở đâu?
-Unknown/duplicate/out-of-order xử lý thế nào?
-Recovery source là gì?
-Reconcile với external evidence nào?
-Ai vận hành khi automated recovery không đủ?
-```
+- [Competency Matrix](../resources/competency-matrix.html)
+- [50 Failure Scenarios](../resources/failure-scenarios.html)
+- [Review Checklist](../resources/checklist.html)
+- [Project 05 — Production Game Day](../projects/project-05-brokerage-production-game-day.html)

@@ -11,6 +11,11 @@ description: "Giải thích core giao dịch cổ phiếu từ account, cash, bu
   <span><strong>Ví dụ xuyên suốt</strong> BUY 1.000 FPT @ 120.000</span>
 </div>
 
+<div class="callout">
+<strong>Định vị trong toàn hệ thống</strong><br/>
+Securities Core là <em>business domain</em>. OMS/Risk/Gateway/Post-trade là các system/engineering concerns thực thi các phần của lifecycle này. Xem <a href="../resources/system-map.html">System Map</a> trước nếu bạn chưa rõ boundary giữa broker OMS, Exchange Gateway, trading venue và VSDC.
+</div>
+
 Hãy bắt đầu từ thao tác rất quen thuộc: khách mở app chứng khoán, nhập:
 
 ```text
