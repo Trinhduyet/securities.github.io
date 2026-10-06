@@ -26,7 +26,7 @@ flowchart TB
     RISK --> OMS
 
     OMS --> EXGW[Exchange Connectivity / Gateway]
-    EXGW --> VENUE[Trading Venue / Market Infrastructure]
+    EXGW --> VENUE[HOSE / HNX Trading Infrastructure]
     VENUE --> EXGW
     EXGW --> OMS
 
