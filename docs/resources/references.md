@@ -23,6 +23,24 @@ Danh sách này ưu tiên **nguồn chính thức/primary source** cho market in
 
 > Link tra cứu văn bản thuận tiện; khi áp dụng pháp lý/production hãy đối chiếu văn bản chính thức, website VSDC/SSC và các sửa đổi mới nhất.
 
+## Broker Platforms — Public / Official Evidence
+
+Các nguồn dưới đây dùng để học **capability và terminology công khai**. Không dùng chúng để suy database, protocol, service topology hay internal architecture của broker.
+
+### BSC / BIDV Securities
+
+- [BSC Price Board](https://trading.bsc.com.vn/priceboard)
+- [BSC WebTrading](https://www.bsc.com.vn/bsc-web-trading/)
+- [BSC WebTrading User Guide](https://www.bsc.com.vn/Download/HDSD_BSC_Webtrading_ct.pdf)
+- [Giao dịch chứng khoán cơ sở](https://www.bsc.com.vn/giao-dich-chung-khoan-co-so/)
+- [Giao dịch chứng khoán phái sinh](https://www.bsc.com.vn/giao-dich-chung-khoan-phai-sinh/)
+- [BSC Smart Invest](https://www.bsc.com.vn/bsc-smart-invest/)
+- [Hướng dẫn đọc bảng điện](https://www.bsc.com.vn/tin-tuc/tin-chi-tiet/92817-huong-dan-cach-doc-bang-dien-chung-khoan/)
+- [Giao dịch thỏa thuận trực tuyến trên WebTrading](https://www.bsc.com.vn/tin-tuc/tin-chi-tiet/91088-bsc-ra-mat-tinh-nang-giao-dich-thoa-thuan-truc-tuyen-tren-nen-tang-webtrading/)
+- [Quy định giao dịch chung](https://www.bsc.com.vn/quy-dinh-giao-dich-chung/)
+
+Course mapping: [BSC WebTrading Case Study](../case-studies/bsc-webtrading.html).
+
 ## FIX Trading Community
 
 ### Standards & Message Dictionary
