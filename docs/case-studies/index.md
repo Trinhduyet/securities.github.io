@@ -1,17 +1,17 @@
 ---
-title: "Broker App Case Studies — SSI / VPS / TCBS"
-description: "Học core chứng khoán từ SSI iBoard, VPS SmartOne và TCInvest bằng UI inspection, tài liệu chính thức, state, invariant, API tham chiếu và failure modes."
+title: "Broker App Case Studies — SSI / VPS / TCBS / BSC"
+description: "Học core chứng khoán từ SSI iBoard, VPS SmartOne, TCInvest và BSC WebTrading bằng UI inspection, tài liệu chính thức, state, invariant và failure modes."
 ---
 
-# Broker App Case Studies — SSI / VPS / TCBS
+# Broker App Case Studies — SSI / VPS / TCBS / BSC
 
 <div class="lesson-meta">
   <span><strong>Mục tiêu</strong> Nhìn broker app và hiểu business/backend phía sau</span>
-  <span><strong>Phạm vi</strong> SSI iBoard · VPS SmartOne · TCInvest</span>
+  <span><strong>Phạm vi</strong> SSI iBoard · VPS SmartOne · TCInvest · BSC WebTrading</span>
   <span><strong>Cách học</strong> UI → Business → State → Data → Failure</span>
 </div>
 
-Module này kết hợp **public documentation + read-only UI inspection**. SSI và VPS đã được khảo sát trên authenticated session ngày **19/08/2026**; TCBS / TCInvest hiện dùng public/official evidence và **chưa xác minh authenticated UI**.
+Module này kết hợp **public documentation + read-only UI inspection**. SSI và VPS đã được khảo sát trên authenticated session ngày **19/08/2026**; TCBS / TCInvest dùng public/official evidence; BSC được khảo sát qua public priceboard + official docs ngày **14/10/2026**. TCBS và BSC chưa xác minh authenticated UI.
 
 > Screenshot và menu chỉ chứng minh **capability / UI evidence**. Chúng không chứng minh broker dùng database, microservice, Kafka, FIX engine hay topology nội bộ nào cụ thể.
 
@@ -56,10 +56,22 @@ Module này kết hợp **public documentation + read-only UI inspection**. SSI 
       <span>Wealth platform với nhiều product-specific domain.</span>
     </div>
   </a>
+
+  <a class="broker-card" href="./bsc-webtrading">
+    <div class="broker-card-body">
+      <strong>BSC WebTrading</strong>
+      <div class="evidence-row">
+        <span class="evidence-badge evidence-green">🟢 Public priceboard</span>
+        <span class="evidence-badge evidence-yellow">🟡 Official docs</span>
+      </div>
+      <p><strong>Học tốt nhất:</strong> Market Depth, Click-to-Trade, ProTrading, Conditional Orders, GDTT.</p>
+      <span>Market Data projection → Order Command → Risk/OMS.</span>
+    </div>
+  </a>
 </div>
 
 <div class="course-grid">
-  <a class="course-card" href="./broker-domain-matrix"><strong>Broker Domain Matrix</strong><span>So SSI · VPS · TCBS theo 8 Core Domains và mức evidence 🟢 🟣 🟡 🔴.</span></a>
+  <a class="course-card" href="./broker-domain-matrix"><strong>Broker Domain Matrix</strong><span>So SSI · VPS · TCBS · BSC theo 8 Core Domains và mức evidence 🟢 🟣 🟡 🔴.</span></a>
   <a class="course-card" href="./visual-gallery"><strong>Visual Gallery</strong><span>Xem ảnh theo broker, provenance, domain và bài học nghiệp vụ.</span></a>
   <a class="course-card" href="./screenshots/"><strong>Screenshot Inventory</strong><span>Audit source, capture date, PII status và nơi ảnh được sử dụng.</span></a>
 </div>
@@ -84,6 +96,8 @@ Module này kết hợp **public documentation + read-only UI inspection**. SSI 
 </div>
 
 Xem toàn bộ ảnh tại [Visual Gallery](./visual-gallery). Ảnh authenticated đã được redact/crop; các màn hình có holdings, số dư, lệnh thật hoặc bank/PII đã được bỏ qua.
+
+> BSC hiện dùng public live UI + official docs làm evidence; chưa lưu screenshot vào repository để tránh thêm ảnh không có provenance/capture workflow đầy đủ. → [BSC WebTrading case study](./bsc-webtrading)
 
 ## 3. Cách đọc evidence và thuật ngữ
 
@@ -243,6 +257,7 @@ Nếu SELL validation chỉ check `SellQty <= TotalPosition`, hệ thống có t
 | **SSI iBoard** | Authenticated 19/08/2026 | 🟢 Bảng giá, Margin, Market Analytics + 🟣 SPA labels + 🟡 docs | [UI Inspection](./ui-inspection-ssi-iboard) |
 | **VPS SmartOne** | Authenticated 19/08/2026 | 🟢 Bảng giá, `/market` + 🟣 SPA labels + 🟡 guide | [UI Inspection](./ui-inspection-vps-smartone) |
 | **TCBS / TCInvest** | Public 18/08/2026 | 🟡 Public/official; authenticated 🔴 | [UI Inspection](./ui-inspection-tcbs-tcinvest) |
+| **BSC WebTrading** | Public 14/10/2026 | 🟢 Public priceboard + 🟡 official; authenticated 🔴 | [Case Study](./bsc-webtrading) |
 
 Xem [Broker Domain Matrix](./broker-domain-matrix) để biết capability nào là screen thật, client evidence hay chỉ official documentation.
 
@@ -277,6 +292,10 @@ SSI/VPS 🟣 labels + 🟡 docs: `PendingReceivable + Financing + Workflow + Led
 ### Conditional Orders
 
 Rule sống lâu hơn trading order; duplicate market event không được sinh hai order. → [Domain 06](/domains/06-conditional-orders)
+
+### BSC Priceboard → Order Command
+
+BSC 🟢 public + 🟡 official: 3-level bid/ask, foreign-room data, multi-product boards và click bid/ask để mở quick order. Đây là case tốt để tách **Market Data Projection → Order Intent → Risk/OMS**; connection-status UI cũng minh họa freshness/degraded state. → [BSC case](./bsc-webtrading) · [Bài 10](/lectures/10-market-data-engineering/)
 
 ### Portfolio Projection
 
@@ -347,6 +366,13 @@ Ta thiết kế reference architecture để học cách đáp ứng chúng.
 
 ### VPS
 - https://smartone.vps.com.vn/vi-VN/Home/BriefUserGuide
+
+### BSC
+- https://trading.bsc.com.vn/priceboard
+- https://www.bsc.com.vn/bsc-web-trading/
+- https://www.bsc.com.vn/giao-dich-chung-khoan-co-so/
+- https://www.bsc.com.vn/Download/HDSD_BSC_Webtrading_ct.pdf
+- https://www.bsc.com.vn/tin-tuc/tin-chi-tiet/91088-bsc-ra-mat-tinh-nang-giao-dich-thoa-thuan-truc-tuyen-tren-nen-tang-webtrading/
 
 ### TCBS
 - https://www.tcbs.com.vn/ca-nhan/he-thong/
