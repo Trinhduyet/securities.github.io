@@ -93,6 +93,14 @@ Eligible advance = 95m · Fee illustrative = 0.2m
 
 ### TCBS / TCInvest
 
-🟡 Public iWealth, sản phẩm, help. Authenticated TCInvest: 🔴 (redirect `guest/login`). iXu = 🟡 product copy; authenticated reward ledger 🔴.\n\n### BSC WebTrading\n\n🟢 Public priceboard 14/10/2026: 3-level bid/ask, last trade, total volume, high/average/low, foreign buy/sell/room, multi-product tabs, odd-lot, GDTT and connection state. 🟡 Official docs: quick order by clicking bid/ask, ProTrading, conditional orders, multiple sub-accounts, derivatives and online negotiated trading. Authenticated workflow: 🔴.\n\n`Bonds = 🟢*` means the public priceboard exposes a TPDN tab; it does **not** verify a full authenticated bond-order lifecycle.\n\n→ [BSC WebTrading Case Study](./bsc-webtrading)
+🟡 Public iWealth, sản phẩm, help. Authenticated TCInvest: 🔴 (redirect `guest/login`). iXu = 🟡 product copy; authenticated reward ledger 🔴.
+
+### BSC WebTrading
+
+🟢 Public priceboard 14/10/2026: 3-level bid/ask, last trade, total volume, high/average/low, foreign buy/sell/room, multi-product tabs, odd-lot, GDTT and connection state. 🟡 Official docs: quick order by clicking bid/ask, ProTrading, conditional orders, multiple sub-accounts, derivatives and online negotiated trading. Authenticated workflow: 🔴.
+
+`Bonds = 🟢*` means the public priceboard exposes a TPDN tab; it does **not** verify a full authenticated bond-order lifecycle.
+
+→ [BSC WebTrading Case Study](./bsc-webtrading)
 
 Chi tiết: [ui-inspection-ssi-iboard](./ui-inspection-ssi-iboard) · [ui-inspection-vps-smartone](./ui-inspection-vps-smartone) · [ui-inspection-tcbs-tcinvest](./ui-inspection-tcbs-tcinvest) · [bsc-webtrading](./bsc-webtrading)
