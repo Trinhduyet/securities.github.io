@@ -52,7 +52,7 @@ const domains = [
 ]
 
 const caseStudies = [
-  { text: 'Tổng quan SSI / VPS / TCBS', link: '/case-studies/index.html' },
+  { text: 'Tổng quan SSI / VPS / TCBS / BSC', link: '/case-studies/index.html' },
   { text: 'Visual Gallery', link: '/case-studies/visual-gallery.html' },
   { text: 'Broker Domain Matrix', link: '/case-studies/broker-domain-matrix.html' },
   { text: '01. SSI iBoard', link: '/case-studies/ssi-iboard.html' },
@@ -60,6 +60,7 @@ const caseStudies = [
   { text: '02. VPS SmartOne', link: '/case-studies/vps-smartone.html' },
   { text: 'UI Inspection — VPS SmartOne', link: '/case-studies/ui-inspection-vps-smartone.html' },
   { text: '03. TCBS / TCInvest', link: '/case-studies/tcbs-tcinvest.html' },
+  { text: '04. BSC WebTrading', link: '/case-studies/bsc-webtrading.html' },
   { text: 'UI Inspection — TCBS / TCInvest', link: '/case-studies/ui-inspection-tcbs-tcinvest.html' },
   { text: 'Screenshot inventory', link: '/case-studies/screenshots/index.html' }
 ]
