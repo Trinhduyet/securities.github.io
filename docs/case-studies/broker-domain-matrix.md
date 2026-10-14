@@ -1,12 +1,12 @@
 ---
-title: "Broker Domain Matrix — SSI / VPS / TCBS"
+title: "Broker Domain Matrix — SSI / VPS / TCBS / BSC"
 description: "Bảng map capability theo mức evidence (observed screen, client evidence, official docs) sang 8 Core Domains."
 ---
 
 # Broker Domain Matrix
 
 <div class="lesson-meta">
-  <span><strong>Cập nhật</strong> 19/08/2026</span>
+  <span><strong>Cập nhật</strong> 14/10/2026</span>
   <span><strong>Evidence</strong> 🟢 🟣 🟡 🔴 —</span>
   <span><strong>Không suy luận</strong> kiến trúc nội bộ từng broker</span>
 </div>
@@ -28,33 +28,36 @@ Một cell có thể kết hợp: `🟢+🟡`, `🟣+🟡`.
 
 **Client evidence** = bằng chứng từ code/menu/route/label phía ứng dụng sau login — **không** đồng nghĩa đã kiểm tra workflow thực tế hay submit form.
 
-Phiên READ-ONLY: SSI + VPS authenticated **19/08/2026**. TCBS authenticated **chưa xác minh** (public **18/08/2026**).
+Phiên READ-ONLY: SSI + VPS authenticated **19/08/2026**. TCBS authenticated **chưa xác minh** (public **18/08/2026**). BSC public priceboard + official docs **14/10/2026**, authenticated 🔴.
 
-| Capability | SSI | VPS | TCBS | Core Domain |
-|---|---|---|---|---|
-| Market Board | 🟢 | 🟢 | 🟡 | [05](/domains/05-realtime-analytics) |
-| Order Entry | 🟢+🟣 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) |
-| Order Status | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) |
-| Partial Fill | 🟡 | 🟡 | 🟡 | [01](/domains/01-securities-core) |
-| Buying Power | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) + Risk |
-| Margin (overview / ratio / debt) | 🟢 | 🔴 | 🟡 | [01](/domains/01-securities-core) + Risk |
-| Portfolio / P&L | 🟣 | 🟣 | 🟡 | Cross-domain projection |
-| Cash / Statement | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) |
-| Pending Settlement | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) + Settlement |
-| Cash Advance | 🟣+🟡 | 🟣+🟡 | 🔴 | 01 + Financing + [08](/domains/08-enterprise-workflow) + Ledger/Settlement |
-| Derivatives | 🟢+🟣 | 🟢+🟣 | 🟡 | [02](/domains/02-derivatives-core) |
-| Bonds | 🟢+🟣 | 🟣 | 🟡 | [03](/domains/03-bonds-core) |
-| Funds | 🟣 | 🟣 | 🟡 | [04](/domains/04-funds-core) |
-| Technical Analytics | 🟢 | 🟢 | 🟡 | [05](/domains/05-realtime-analytics) |
-| Conditional Orders | 🟣+🟡 | 🟣+🟡 | 🟡 | [06](/domains/06-conditional-orders) |
-| TWAP | — | — | 🟡 | [06](/domains/06-conditional-orders) |
-| Rewards / Loyalty | 🔴 | 🟣* | 🟡 | [07](/domains/07-rewards) — *promotion UI; ledger not verified |
-| eKYC / Onboarding | 🟡 | 🔴 | 🟡 | [08](/domains/08-enterprise-workflow) |
-| IPO | 🟣+🟡 | — | 🟡 | [08](/domains/08-enterprise-workflow) |
-| Corporate Actions | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) + [08](/domains/08-enterprise-workflow) |
-| Order History | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) |
-| Cash Transfer | 🟣+🟡 | 🟣+🟡 | 🟡 | [01](/domains/01-securities-core) + [08](/domains/08-enterprise-workflow) |
-| Margin apply / Tăng sức mua | 🟣 | 🔴 | 🟡 | [08](/domains/08-enterprise-workflow) + Risk |
+| Capability | SSI | VPS | TCBS | BSC | Core Domain |
+|---|---|---|---|---|---|
+| Market Board | 🟢 | 🟢 | 🟡 | 🟢+🟡 | [05](/domains/05-realtime-analytics) |
+| Order Entry | 🟢+🟣 | 🟣+🟡 | 🟡 | 🟡 | [01](/domains/01-securities-core) |
+| Order Status | 🟣+🟡 | 🟣+🟡 | 🟡 | 🟡 | [01](/domains/01-securities-core) |
+| Partial Fill | 🟡 | 🟡 | 🟡 | 🔴 | [01](/domains/01-securities-core) |
+| Buying Power | 🟣+🟡 | 🟣+🟡 | 🟡 | 🔴 | [01](/domains/01-securities-core) + Risk |
+| Margin (overview / ratio / debt) | 🟢 | 🔴 | 🟡 | 🔴 | [01](/domains/01-securities-core) + Risk |
+| Portfolio / P&L | 🟣 | 🟣 | 🟡 | 🟡 | Cross-domain projection |
+| Cash / Statement | 🟣+🟡 | 🟣+🟡 | 🟡 | 🔴 | [01](/domains/01-securities-core) |
+| Pending Settlement | 🟣+🟡 | 🟣+🟡 | 🟡 | 🔴 | [01](/domains/01-securities-core) + Settlement |
+| Cash Advance | 🟣+🟡 | 🟣+🟡 | 🔴 | 🔴 | 01 + Financing + [08](/domains/08-enterprise-workflow) + Ledger/Settlement |
+| Derivatives | 🟢+🟣 | 🟢+🟣 | 🟡 | 🟡 | [02](/domains/02-derivatives-core) |
+| Bonds | 🟢+🟣 | 🟣 | 🟡 | 🟢* | [03](/domains/03-bonds-core) |
+| Funds | 🟣 | 🟣 | 🟡 | 🔴 | [04](/domains/04-funds-core) |
+| Technical Analytics | 🟢 | 🟢 | 🟡 | 🔴 | [05](/domains/05-realtime-analytics) |
+| Conditional Orders | 🟣+🟡 | 🟣+🟡 | 🟡 | 🟡 | [06](/domains/06-conditional-orders) |
+| TWAP | — | — | 🟡 | 🔴 | [06](/domains/06-conditional-orders) |
+| Rewards / Loyalty | 🔴 | 🟣* | 🟡 | 🔴 | [07](/domains/07-rewards) — *promotion UI; ledger not verified |
+| eKYC / Onboarding | 🟡 | 🔴 | 🟡 | 🟡 | [08](/domains/08-enterprise-workflow) |
+| IPO | 🟣+🟡 | — | 🟡 | 🔴 | [08](/domains/08-enterprise-workflow) |
+| Corporate Actions | 🟣+🟡 | 🟣+🟡 | 🟡 | 🔴 | [01](/domains/01-securities-core) + [08](/domains/08-enterprise-workflow) |
+| Order History | 🟣+🟡 | 🟣+🟡 | 🟡 | 🟡 | [01](/domains/01-securities-core) |
+| Cash Transfer | 🟣+🟡 | 🟣+🟡 | 🟡 | 🔴 | [01](/domains/01-securities-core) + [08](/domains/08-enterprise-workflow) |
+| Margin apply / Tăng sức mua | 🟣 | 🔴 | 🟡 | 🔴 | [08](/domains/08-enterprise-workflow) + Risk |
+| Odd-lot board / trading | — | — | 🟡 | 🟢+🟡 | [01](/domains/01-securities-core) + Market Rules |
+| Negotiated / GDTT | — | — | 🔴 | 🟢+🟡 | [01](/domains/01-securities-core) + Market Rules |
+| Foreign buy/sell/room | 🟢 | 🟢 | 🟡 | 🟢 | [05](/domains/05-realtime-analytics) + Reference Data |
 
 ## Cross-cutting: Cash Advance
 
@@ -90,6 +93,6 @@ Eligible advance = 95m · Fee illustrative = 0.2m
 
 ### TCBS / TCInvest
 
-🟡 Public iWealth, sản phẩm, help. Authenticated TCInvest: 🔴 (redirect `guest/login`). iXu = 🟡 product copy; authenticated reward ledger 🔴.
+🟡 Public iWealth, sản phẩm, help. Authenticated TCInvest: 🔴 (redirect `guest/login`). iXu = 🟡 product copy; authenticated reward ledger 🔴.\n\n### BSC WebTrading\n\n🟢 Public priceboard 14/10/2026: 3-level bid/ask, last trade, total volume, high/average/low, foreign buy/sell/room, multi-product tabs, odd-lot, GDTT and connection state. 🟡 Official docs: quick order by clicking bid/ask, ProTrading, conditional orders, multiple sub-accounts, derivatives and online negotiated trading. Authenticated workflow: 🔴.\n\n`Bonds = 🟢*` means the public priceboard exposes a TPDN tab; it does **not** verify a full authenticated bond-order lifecycle.\n\n→ [BSC WebTrading Case Study](./bsc-webtrading)
 
-Chi tiết: [ui-inspection-ssi-iboard](./ui-inspection-ssi-iboard) · [ui-inspection-vps-smartone](./ui-inspection-vps-smartone) · [ui-inspection-tcbs-tcinvest](./ui-inspection-tcbs-tcinvest)
+Chi tiết: [ui-inspection-ssi-iboard](./ui-inspection-ssi-iboard) · [ui-inspection-vps-smartone](./ui-inspection-vps-smartone) · [ui-inspection-tcbs-tcinvest](./ui-inspection-tcbs-tcinvest) · [bsc-webtrading](./bsc-webtrading)
