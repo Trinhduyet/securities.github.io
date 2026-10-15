@@ -1,48 +1,61 @@
 # Resources
 
-Dùng phần này như reference library khi đọc lecture, review design hoặc chuẩn bị system-design interview về securities platform.
+Dùng phần này như reference library khi đọc lecture, review design hoặc chuẩn bị system-design interview.
+
+## Đọc đầu tiên: System Map
+
+**[System Map — Brokerage Platform Architecture](./system-map.html)** là bản đồ canonical của website.
+
+Nó phân biệt:
+
+~~~text
+Business Domain
+vs
+Runtime/System Component
+vs
+External Market Infrastructure
+~~~
+
+và ba flow:
+
+~~~text
+Order / Trading
+Market Data
+Post-Trade / Settlement
+~~~
+
+Nếu chưa chắc OMS, Exchange Gateway, Trading Venue, VSDC và Ledger nằm ở đâu, đọc System Map trước.
 
 <div class="course-grid">
+  <a class="course-card" href="./system-map"><strong>System Map</strong><span>OMS, Risk, Gateway, Market Data, Post-trade, VSDC, Ledger, authority và data flow.</span></a>
   <a class="course-card" href="./glossary"><strong>Glossary</strong><span>Thuật ngữ finance, trading, FIX, clearing, settlement và engineering.</span></a>
-  <a class="course-card" href="./system-map"><strong>System Map</strong><span>Bản đồ bounded contexts, authority và data flow của brokerage platform.</span></a>
   <a class="course-card" href="./checklist"><strong>Review Checklist</strong><span>Invariant, distributed failure, ledger, market data, security, HA/DR và operations.</span></a>
   <a class="course-card" href="./competency-matrix"><strong>Competency Matrix</strong><span>Tự đánh giá từ finance-aware backend đến securities architecture lead.</span></a>
-  <a class="course-card" href="./failure-scenarios"><strong>50 Failure Scenarios</strong><span>Catalog để design review, chaos test, game day và interview.</span></a>
+  <a class="course-card" href="./failure-scenarios"><strong>50 Failure Scenarios</strong><span>Catalog cho design review, chaos test, game day và interview.</span></a>
   <a class="course-card" href="./references"><strong>References</strong><span>Nguồn chính thức/primary sources để kiểm tra market rules và protocol.</span></a>
 </div>
 
-## Cách dùng
+## Khi học
 
-### Khi học lecture
+~~~text
+System Map
+→ Lecture / Domain
+→ Glossary khi cần
+→ Failure Scenarios
+→ Competency Matrix
+~~~
 
-Mở Glossary nếu thuật ngữ chưa chắc; sau bài dùng Competency Matrix và Failure Scenarios để tự kiểm tra xem bạn hiểu lifecycle hay chỉ nhớ định nghĩa.
+## Khi review architecture
 
-### Khi review architecture
-
-Đi theo:
-
-```text
+~~~text
 System Map
 → Review Checklist
 → Failure Scenarios
-→ source/specification trong References
-```
+→ Primary References / Specification
+~~~
 
-### Khi implement production
+## Khi implement production
 
-Ưu tiên nguồn chính thức cho rule có thể thay đổi: SSC, HOSE/HNX/VSDC, FIX Trading Community, văn bản pháp lý và specification được cấp cho thành viên thị trường. Không suy từ một bài blog rằng production interface của KRX/VSDC giống hệt ví dụ generic.
+Ưu tiên nguồn chính thức cho rule/protocol có thể thay đổi: SSC, HOSE/HNX/VSDC, FIX Trading Community, văn bản pháp lý và specification/certification material dành cho thành viên thị trường.
 
-## Golden questions
-
-Với bất kỳ component nào, luôn hỏi:
-
-```text
-Authority là ai?
-State nào bền vững?
-Invariant nào không được phá?
-Timeout có thể là UNKNOWN không?
-Duplicate/out-of-order xử lý thế nào?
-Recovery/replay từ đâu?
-Reconcile với nguồn nào?
-Ai vận hành khi break xảy ra?
-```
+Không suy production interface chỉ từ blog, UI broker hoặc ví dụ generic.
