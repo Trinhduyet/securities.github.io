@@ -11,7 +11,7 @@ description: "Học core chứng khoán từ SSI iBoard, VPS SmartOne, TCInvest 
   <span><strong>Cách học</strong> UI → Business → State → Data → Failure</span>
 </div>
 
-Module này kết hợp **public documentation + read-only UI inspection**. SSI và VPS đã được khảo sát trên authenticated session ngày **19/08/2026**; TCBS / TCInvest dùng public/official evidence; BSC được khảo sát qua public priceboard + official docs ngày **14/10/2026**. TCBS và BSC chưa xác minh authenticated UI.
+Module này kết hợp **public documentation + read-only UI inspection**. SSI và VPS đã được khảo sát trên authenticated session ngày **19/08/2026**; TCBS / TCInvest dùng public/official evidence; BSC được khảo sát qua **MCP Playwright** trên public priceboard ngày **15/10/2026** (+ official docs). TCBS và BSC chưa xác minh authenticated trading UI.
 
 > Screenshot và menu chỉ chứng minh **capability / UI evidence**. Chúng không chứng minh broker dùng database, microservice, Kafka, FIX engine hay topology nội bộ nào cụ thể.
 
@@ -58,14 +58,15 @@ Module này kết hợp **public documentation + read-only UI inspection**. SSI 
   </a>
 
   <a class="broker-card" href="./bsc-webtrading">
+    <img src="./screenshots/bsc/public/bsc-public-market-depth.png" alt="BSC public priceboard three-level market depth" />
     <div class="broker-card-body">
       <strong>BSC WebTrading</strong>
       <div class="evidence-row">
-        <span class="evidence-badge evidence-green">🟢 Public priceboard</span>
+        <span class="evidence-badge evidence-green">🟢 Public Playwright</span>
         <span class="evidence-badge evidence-yellow">🟡 Official docs</span>
       </div>
-      <p><strong>Học tốt nhất:</strong> Market Depth, Click-to-Trade, ProTrading, Conditional Orders, GDTT.</p>
-      <span>Market Data projection → Order Command → Risk/OMS.</span>
+      <p><strong>Học tốt nhất:</strong> Market depth, priceboard→order boundary, odd-lot, GDTT, multi-product boards.</p>
+      <span>Market Data projection → Order Intent → Risk/OMS.</span>
     </div>
   </a>
 </div>
@@ -97,7 +98,7 @@ Module này kết hợp **public documentation + read-only UI inspection**. SSI 
 
 Xem toàn bộ ảnh tại [Visual Gallery](./visual-gallery). Ảnh authenticated đã được redact/crop; các màn hình có holdings, số dư, lệnh thật hoặc bank/PII đã được bỏ qua.
 
-> BSC hiện dùng public live UI + official docs làm evidence; chưa lưu screenshot vào repository để tránh thêm ảnh không có provenance/capture workflow đầy đủ. → [BSC WebTrading case study](./bsc-webtrading)
+> BSC: screenshot public có provenance (15/10/2026) trong [Visual Gallery](./visual-gallery) và [Screenshot Inventory](./screenshots/). Authenticated trading UI vẫn 🔴. → [BSC WebTrading case study](./bsc-webtrading)
 
 ## 3. Cách đọc evidence và thuật ngữ
 
@@ -257,7 +258,7 @@ Nếu SELL validation chỉ check `SellQty <= TotalPosition`, hệ thống có t
 | **SSI iBoard** | Authenticated 19/08/2026 | 🟢 Bảng giá, Margin, Market Analytics + 🟣 SPA labels + 🟡 docs | [UI Inspection](./ui-inspection-ssi-iboard) |
 | **VPS SmartOne** | Authenticated 19/08/2026 | 🟢 Bảng giá, `/market` + 🟣 SPA labels + 🟡 guide | [UI Inspection](./ui-inspection-vps-smartone) |
 | **TCBS / TCInvest** | Public 18/08/2026 | 🟡 Public/official; authenticated 🔴 | [UI Inspection](./ui-inspection-tcbs-tcinvest) |
-| **BSC WebTrading** | Public 14/10/2026 | 🟢 Public priceboard + 🟡 official; authenticated 🔴 | [Case Study](./bsc-webtrading) |
+| **BSC WebTrading** | Public Playwright 15/10/2026 | 🟢 Public priceboard + 🟡 official; authenticated trading 🔴 | [Case Study](./bsc-webtrading) |
 
 Xem [Broker Domain Matrix](./broker-domain-matrix) để biết capability nào là screen thật, client evidence hay chỉ official documentation.
 
@@ -295,7 +296,7 @@ Rule sống lâu hơn trading order; duplicate market event không được sinh
 
 ### BSC Priceboard → Order Command
 
-BSC 🟢 public + 🟡 official: 3-level bid/ask, foreign-room data, multi-product boards và click bid/ask để mở quick order. Đây là case tốt để tách **Market Data Projection → Order Intent → Risk/OMS**; connection-status UI cũng minh họa freshness/degraded state. → [BSC case](./bsc-webtrading) · [Bài 10](/lectures/10-market-data-engineering/)
+BSC 🟢 Playwright: 3-level depth, GDTT tape, odd-lot/Buy In/TPDN/CW/ETF/derivatives tabs, footer `Đang kết nối`/`Đã kết nối`. 🟡 Official: click dư mua/dư bán → quick order + tiểu khoản (public session **không** mở ticket). Case tốt để tách **Market Data Projection → Order Intent → Risk/OMS**. → [BSC case](./bsc-webtrading) · [Bài 10](/lectures/10-market-data-engineering/)
 
 ### Portfolio Projection
 
@@ -371,6 +372,7 @@ Ta thiết kế reference architecture để học cách đáp ứng chúng.
 - https://trading.bsc.com.vn/priceboard
 - https://www.bsc.com.vn/bsc-web-trading/
 - https://www.bsc.com.vn/giao-dich-chung-khoan-co-so/
+- https://www.bsc.com.vn/bo-lenh-dieu-kien/
 - https://www.bsc.com.vn/Download/HDSD_BSC_Webtrading_ct.pdf
 - https://www.bsc.com.vn/tin-tuc/tin-chi-tiet/91088-bsc-ra-mat-tinh-nang-giao-dich-thoa-thuan-truc-tuyen-tren-nen-tang-webtrading/
 

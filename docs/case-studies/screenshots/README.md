@@ -1,15 +1,15 @@
 ---
-title: "Screenshot inventory — SSI / VPS / TCBS"
+title: "Screenshot inventory — SSI / VPS / TCBS / BSC"
 description: "Danh mục ảnh minh họa public và authenticated (redacted), có source URL, capture date, evidence level và PII status."
 ---
 
 # Screenshot inventory
 
-Ảnh chỉ minh họa **UI / capability**. Không dùng screenshot để suy ra kiến trúc nội bộ SSI, VPS hoặc TCBS.
+Ảnh chỉ minh họa **UI / capability**. Không dùng screenshot để suy ra kiến trúc nội bộ SSI, VPS, TCBS hoặc BSC.
 
 **SPA** = *Single Page Application*. **Redacted** = đã crop/ẩn tên, số tài khoản hoặc vùng nhạy cảm trước khi commit.
 
-Phiên thu thập chính: **19/08/2026**, READ-ONLY. Không gửi lệnh, không chuyển tiền, không thay đổi tài khoản.
+Phiên thu thập: SSI/VPS/TCBS **19/08/2026**; BSC public Playwright **15/10/2026**. READ-ONLY. Không gửi lệnh, không chuyển tiền, không thay đổi tài khoản.
 
 ## Evidence
 
@@ -43,6 +43,15 @@ Phiên thu thập chính: **19/08/2026**, READ-ONLY. Không gửi lệnh, không
 | `tcbs/public/tcbs-public-derivatives-product.png` | TCBS | 🟡 Public Marketing/Product Content | `https://www.tcbs.com.vn/ca-nhan/san-pham/` | 19/08/2026 | iFuture | 02 | safe | [TCBS](../tcbs-tcinvest), [Domain 02](/domains/02-derivatives-core), [Gallery](../visual-gallery) |
 | `tcbs/public/tcbs-public-recurring-investment.png` | TCBS | 🟡 Public Marketing Page | `https://www.tcbs.com.vn/ca-nhan/san-pham/dau-tu-dinh-ky/` | 19/08/2026 | Đầu tư định kỳ quỹ | 04 | safe | [TCBS](../tcbs-tcinvest), [Gallery](../visual-gallery) |
 | `tcbs/public/tcbs-public-conditional-order.png` | TCBS | 🟡 Public Documentation | `https://help.tcbs.com.vn/lenh-dieu-kien/` + TWAP help | 19/08/2026 | Lệnh điều kiện / TWAP documentation | 06 | safe | [TCBS](../tcbs-tcinvest), [Domain 06](/domains/06-conditional-orders), [Gallery](../visual-gallery) |
+| `bsc/public/bsc-public-priceboard-overview.png` | BSC | 🟢 Public UI | `https://trading.bsc.com.vn/priceboard` | 15/10/2026 | Shell bảng giá + tab đa sản phẩm + Đăng nhập | 05 | No PII | [BSC](../bsc-webtrading), [Gallery](../visual-gallery) |
+| `bsc/public/bsc-public-market-depth.png` | BSC | 🟢 Public UI | `https://trading.bsc.com.vn/priceboard` | 15/10/2026 | 3-level bid/ask + last/change + NN columns | 05 | No PII | [BSC](../bsc-webtrading), [index](../index), [Gallery](../visual-gallery) |
+| `bsc/public/bsc-public-index-tabs.png` | BSC | 🟢 Public UI | `https://trading.bsc.com.vn/priceboard` | 15/10/2026 | Index/board selector (VN30, VN100, …) | 05 | No PII | [BSC](../bsc-webtrading) |
+| `bsc/public/bsc-public-gdtt-board.png` | BSC | 🟢 Public UI | `https://trading.bsc.com.vn/priceboard` | 15/10/2026 | GDTT chào mua/khớp/chào bán | 01 + Market Rules | No PII | [BSC](../bsc-webtrading), [Gallery](../visual-gallery) |
+| `bsc/public/bsc-public-tpdn-board.png` | BSC | 🟢 Public UI | `https://trading.bsc.com.vn/priceboard` | 15/10/2026 | TPDN view với Mã HĐ | 03 (view only) | No PII | [BSC](../bsc-webtrading), [Gallery](../visual-gallery) |
+| `bsc/public/bsc-public-derivatives-board.png` | BSC | 🟢 Public UI | `https://trading.bsc.com.vn/priceboard` | 15/10/2026 | Phái sinh submenu / HĐTL entry | 02 | No PII | [BSC](../bsc-webtrading) |
+| `bsc/public/bsc-public-odd-lot-board.png` | BSC | 🟢 Public UI | `https://trading.bsc.com.vn/priceboard` | 15/10/2026 | Lô lẻ entry / board mode | 01 + Market Rules | No PII | [BSC](../bsc-webtrading) |
+| `bsc/public/bsc-public-connection-state.png` | BSC | 🟢 Public UI | `https://trading.bsc.com.vn/priceboard` | 15/10/2026 | Footer Đã kết nối / Đang kết nối + timestamp | 05 | No PII | [BSC](../bsc-webtrading), [Gallery](../visual-gallery) |
+| `bsc/public/bsc-public-order-entry-boundary.png` | BSC | 🟢 Public UI | `https://trading.bsc.com.vn/priceboard` | 15/10/2026 | Public board + CTA Đăng nhập (auth boundary) | 01 | No PII | [BSC](../bsc-webtrading) |
 
 > Với các ảnh TCBS product-specific được chụp từ catalog/section public, inventory cố ý ghi **product catalog source** thay vì suy một URL chi tiết nếu ảnh không được lấy từ một route product riêng.
 
@@ -56,6 +65,7 @@ Phiên thu thập chính: **19/08/2026**, READ-ONLY. Không gửi lệnh, không
 | VPS | Trạng thái lệnh bảng thật | Có thể lộ symbol/price/qty/order history |
 | VPS | Chuyển tiền | Bank / PII / side effect risk |
 | TCBS | Authenticated TCInvest | 🔴 Not verified — redirect `guest/login` trong phiên khảo sát |
+| BSC | Authenticated ProTrading / order ticket / portfolio | 🔴 Not verified — phiên chỉ public; không login |
 | Tất cả | QR login, OTP, PIN | Secret / authentication data — không commit |
 
 ## Cấu trúc thư mục
@@ -70,6 +80,9 @@ screenshots/
 │   ├── public/
 │   └── authenticated/
 ├── tcbs/
+│   ├── public/
+│   └── authenticated/   # trống — chưa verify login
+├── bsc/
 │   ├── public/
 │   └── authenticated/   # trống — chưa verify login
 └── shared/

@@ -1,9 +1,9 @@
 ---
-title: "Visual Gallery — SSI / VPS / TCBS"
+title: "Visual Gallery — SSI / VPS / TCBS / BSC"
 description: "Thư viện ảnh minh họa broker UI theo provenance, Core Domain và bài học nghiệp vụ."
 ---
 
-# Visual Gallery — SSI / VPS / TCBS
+# Visual Gallery — SSI / VPS / TCBS / BSC
 
 <div class="lesson-meta">
   <span><strong>Mục tiêu</strong> Học nghiệp vụ từ screen thật / public product UI</span>
@@ -182,15 +182,58 @@ Inventory đầy đủ, source URL, capture date và PII status: [Screenshot Inv
 > **Business concept:** `ConditionalOrder != TradingOrder`; trigger/scheduler phải chống duplicate generated order.  
 > **Học sâu:** [Domain 06](/domains/06-conditional-orders).
 
-## 4. So sánh nhanh bằng hình ảnh
+## 4. BSC WebTrading
+
+**Evidence:** 🟢 Public Playwright (15/10/2026) + 🟡 Official  
+**Học tốt nhất:** Market depth · GDTT · Odd-lot · Multi-product boards · Connectivity UI  
+**Authenticated trading UI:** 🔴
+
+### Priceboard & depth
+
+![BSC market depth](./screenshots/bsc/public/bsc-public-market-depth.png)
+
+> 🟢 **Public UI · 15/10/2026** · `trading.bsc.com.vn/priceboard`  
+> **Bạn đang nhìn:** board chỉ số với Trần/Sàn/TC, **3 mức** dư mua/dư bán, khớp lệnh, NN Mua/Bán/Room, nút Đăng nhập.  
+> **Business concept:** market-data projection; depth UI ≠ central matching ownership.  
+> **Học sâu:** [BSC case](./bsc-webtrading) · [Domain 05](/domains/05-realtime-analytics) · [Bài 10](/lectures/10-market-data-engineering/).
+
+### GDTT
+
+![BSC GDTT](./screenshots/bsc/public/bsc-public-gdtt-board.png)
+
+> 🟢 **Public UI · 15/10/2026**  
+> **Bạn đang nhìn:** Chào mua / Khớp lệnh thỏa thuận / Chào bán + tổng KL/GT — **không** phải lưới 3-level continuous.  
+> **Business concept:** negotiated trade workflow ≠ continuous matching.  
+> **Học sâu:** [BSC case § GDTT](./bsc-webtrading).
+
+### TPDN product view
+
+![BSC TPDN](./screenshots/bsc/public/bsc-public-tpdn-board.png)
+
+> 🟢 **Public UI · 15/10/2026**  
+> **Bạn đang nhìn:** board TPDN với cột **Mã HĐ**.  
+> **Business concept:** one UI shell, bond identifier khác equity ticker; lifecycle trái phiếu authenticated vẫn 🔴.  
+> **Học sâu:** [Domain 03](/domains/03-bonds-core).
+
+### Connectivity
+
+![BSC connection](./screenshots/bsc/public/bsc-public-connection-state.png)
+
+> 🟢 **Public UI · 15/10/2026**  
+> **Bạn đang nhìn:** footer timestamp + trạng thái `Đã kết nối` / `Đang kết nối`.  
+> **Business concept:** transport connected ≠ data fresh ≠ session valid.  
+> **Học sâu:** [Bài 10](/lectures/10-market-data-engineering/).
+
+## 5. So sánh nhanh bằng hình ảnh
 
 | Broker | Evidence mạnh nhất | Screen / ảnh nên dùng để học | Core lesson |
 |---|---|---|---|
 | **SSI** | 🟢 Authenticated + 🟡 docs | Margin Overview, Market Analytics | Risk/Credit + realtime analytics |
 | **VPS** | 🟢 Authenticated + 🟡 guide | Market Board/Insight + official state wording | Order/account/settlement concepts |
 | **TCBS** | 🟡 Official/Public | Product catalog, Bond, Fund, Derivatives | Multi-asset bounded contexts |
+| **BSC** | 🟢 Public Playwright + 🟡 docs | Market depth, GDTT, TPDN, connection footer | Depth · priceboard→order · odd-lot/GDTT |
 
-## 5. Khi nào không nên dùng screenshot làm evidence?
+## 6. Khi nào không nên dùng screenshot làm evidence?
 
 Không dùng ảnh để kết luận:
 
@@ -214,4 +257,5 @@ Reference design giải thích cách một securities system có thể model cap
 - [SSI iBoard Case Study](./ssi-iboard)
 - [VPS SmartOne Case Study](./vps-smartone)
 - [TCBS / TCInvest Case Study](./tcbs-tcinvest)
+- [BSC WebTrading Case Study](./bsc-webtrading)
 - [Screenshot Inventory](./screenshots/)

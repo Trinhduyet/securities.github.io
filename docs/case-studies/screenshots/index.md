@@ -1,16 +1,16 @@
 ---
-title: "Screenshot Inventory — SSI / VPS / TCBS"
+title: "Screenshot Inventory — SSI / VPS / TCBS / BSC"
 description: "Điểm vào ổn định cho thư viện screenshot của Broker App Case Studies."
 ---
 
-# Screenshot Inventory — SSI / VPS / TCBS
+# Screenshot Inventory — SSI / VPS / TCBS / BSC
 
 Trang này là route ổn định cho `/case-studies/screenshots/` và liên kết tới danh mục ảnh đầy đủ.
 
 <div class="lesson-meta">
-  <span><strong>Phiên chính</strong> 19/08/2026</span>
+  <span><strong>Phiên chính</strong> SSI/VPS/TCBS 19/08/2026 · BSC 15/10/2026</span>
   <span><strong>An toàn</strong> READ-ONLY</span>
-  <span><strong>PII</strong> Authenticated screenshots đã redact/crop</span>
+  <span><strong>PII</strong> Authenticated đã redact; BSC chỉ public</span>
 </div>
 
 ## Đi đâu tiếp?
@@ -54,6 +54,9 @@ screenshots/
 ├── tcbs/
 │   ├── public/
 │   └── authenticated/
+├── bsc/
+│   ├── public/
+│   └── authenticated/   # trống — chưa verify login
 └── shared/
 ```
 

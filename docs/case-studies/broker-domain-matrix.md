@@ -6,7 +6,7 @@ description: "Bảng map capability theo mức evidence (observed screen, client
 # Broker Domain Matrix
 
 <div class="lesson-meta">
-  <span><strong>Cập nhật</strong> 14/10/2026</span>
+  <span><strong>Cập nhật</strong> 15/10/2026</span>
   <span><strong>Evidence</strong> 🟢 🟣 🟡 🔴 —</span>
   <span><strong>Không suy luận</strong> kiến trúc nội bộ từng broker</span>
 </div>
@@ -28,26 +28,28 @@ Một cell có thể kết hợp: `🟢+🟡`, `🟣+🟡`.
 
 **Client evidence** = bằng chứng từ code/menu/route/label phía ứng dụng sau login — **không** đồng nghĩa đã kiểm tra workflow thực tế hay submit form.
 
-Phiên READ-ONLY: SSI + VPS authenticated **19/08/2026**. TCBS authenticated **chưa xác minh** (public **18/08/2026**). BSC public priceboard + official docs **14/10/2026**, authenticated 🔴.
+Phiên READ-ONLY: SSI + VPS authenticated **19/08/2026**. TCBS authenticated **chưa xác minh** (public **18/08/2026**). BSC public priceboard Playwright **15/10/2026** + official docs; authenticated trading UI 🔴.
 
 | Capability | SSI | VPS | TCBS | BSC | Core Domain |
 |---|---|---|---|---|---|
 | Market Board | 🟢 | 🟢 | 🟡 | 🟢+🟡 | [05](/domains/05-realtime-analytics) |
+| Market Depth (3-level) | 🟢 | 🟢 | 🟡 | 🟢 | [05](/domains/05-realtime-analytics) |
 | Order Entry | 🟢+🟣 | 🟣+🟡 | 🟡 | 🟡 | [01](/domains/01-securities-core) |
 | Order Status | 🟣+🟡 | 🟣+🟡 | 🟡 | 🟡 | [01](/domains/01-securities-core) |
 | Partial Fill | 🟡 | 🟡 | 🟡 | 🔴 | [01](/domains/01-securities-core) |
 | Buying Power | 🟣+🟡 | 🟣+🟡 | 🟡 | 🔴 | [01](/domains/01-securities-core) + Risk |
 | Margin (overview / ratio / debt) | 🟢 | 🔴 | 🟡 | 🔴 | [01](/domains/01-securities-core) + Risk |
-| Portfolio / P&L | 🟣 | 🟣 | 🟡 | 🟡 | Cross-domain projection |
+| Portfolio / P&L | 🟣 | 🟣 | 🟡 | 🔴 | Cross-domain projection |
 | Cash / Statement | 🟣+🟡 | 🟣+🟡 | 🟡 | 🔴 | [01](/domains/01-securities-core) |
 | Pending Settlement | 🟣+🟡 | 🟣+🟡 | 🟡 | 🔴 | [01](/domains/01-securities-core) + Settlement |
 | Cash Advance | 🟣+🟡 | 🟣+🟡 | 🔴 | 🔴 | 01 + Financing + [08](/domains/08-enterprise-workflow) + Ledger/Settlement |
-| Derivatives | 🟢+🟣 | 🟢+🟣 | 🟡 | 🟡 | [02](/domains/02-derivatives-core) |
+| Derivatives | 🟢+🟣 | 🟢+🟣 | 🟡 | 🟢+🟡 | [02](/domains/02-derivatives-core) |
 | Bonds | 🟢+🟣 | 🟣 | 🟡 | 🟢* | [03](/domains/03-bonds-core) |
 | Funds | 🟣 | 🟣 | 🟡 | 🔴 | [04](/domains/04-funds-core) |
-| Technical Analytics | 🟢 | 🟢 | 🟡 | 🔴 | [05](/domains/05-realtime-analytics) |
+| Technical Analytics | 🟢 | 🟢 | 🟡 | 🟢† | [05](/domains/05-realtime-analytics) |
 | Conditional Orders | 🟣+🟡 | 🟣+🟡 | 🟡 | 🟡 | [06](/domains/06-conditional-orders) |
 | TWAP | — | — | 🟡 | 🔴 | [06](/domains/06-conditional-orders) |
+| ProTrading | 🔴 | 🔴 | 🔴 | 🟡 | Composition of projections + command |
 | Rewards / Loyalty | 🔴 | 🟣* | 🟡 | 🔴 | [07](/domains/07-rewards) — *promotion UI; ledger not verified |
 | eKYC / Onboarding | 🟡 | 🔴 | 🟡 | 🟡 | [08](/domains/08-enterprise-workflow) |
 | IPO | 🟣+🟡 | — | 🟡 | 🔴 | [08](/domains/08-enterprise-workflow) |
@@ -58,6 +60,7 @@ Phiên READ-ONLY: SSI + VPS authenticated **19/08/2026**. TCBS authenticated **c
 | Odd-lot board / trading | — | — | 🟡 | 🟢+🟡 | [01](/domains/01-securities-core) + Market Rules |
 | Negotiated / GDTT | — | — | 🔴 | 🟢+🟡 | [01](/domains/01-securities-core) + Market Rules |
 | Foreign buy/sell/room | 🟢 | 🟢 | 🟡 | 🟢 | [05](/domains/05-realtime-analytics) + Reference Data |
+| Connectivity / freshness UI | 🔴 | 🔴 | 🔴 | 🟢 | [05](/domains/05-realtime-analytics) · [Bài 10](/lectures/10-market-data-engineering/) |
 
 ## Cross-cutting: Cash Advance
 
@@ -97,9 +100,14 @@ Eligible advance = 95m · Fee illustrative = 0.2m
 
 ### BSC WebTrading
 
-🟢 Public priceboard 14/10/2026: 3-level bid/ask, last trade, total volume, high/average/low, foreign buy/sell/room, multi-product tabs, odd-lot, GDTT and connection state. 🟡 Official docs: quick order by clicking bid/ask, ProTrading, conditional orders, multiple sub-accounts, derivatives and online negotiated trading. Authenticated workflow: 🔴.
+🟢 Playwright public priceboard **15/10/2026**: 3-level bid/ask, index/product tabs (ETFs, CW, TPDN, Lô lẻ, Buy In, Phái sinh submenu), GDTT tape (Chào mua/Khớp/Chào bán), foreign NN columns, footer `Đang kết nối`/`Đã kết nối`, public routes `/priceboard` · `/symbol-detail`. 🟡 Official: click bid/ask → quick order, tiểu khoản, ProTrading, conditional orders, odd-lot qty 1–99, GDTT online. Authenticated order ticket / ProTrading screen / portfolio: 🔴.
 
-`Bonds = 🟢*` means the public priceboard exposes a TPDN tab; it does **not** verify a full authenticated bond-order lifecycle.
+- `Bonds = 🟢*` — TPDN **market/product view** (`Mã HĐ`); bond order lifecycle 🔴.  
+- `Technical Analytics = 🟢†` — public `/symbol-detail` charts/index info; deep analytics suite 🔴.  
+- `Derivatives = 🟢+🟡` — submenu HĐTL + board HĐTL TPCP observed; margin/MTM 🔴.  
+- `Order Entry = 🟡` only — public session did **not** open a filled order form (login boundary only).
+
+**Strongest learning evidence:** market depth · priceboard→order boundary · odd-lot · GDTT · multi-product boards · connectivity UI.
 
 → [BSC WebTrading Case Study](./bsc-webtrading)
 

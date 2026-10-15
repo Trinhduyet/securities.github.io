@@ -29,15 +29,18 @@ Các nguồn dưới đây dùng để học **capability và terminology công 
 
 ### BSC / BIDV Securities
 
-- [BSC Price Board](https://trading.bsc.com.vn/priceboard)
-- [BSC WebTrading](https://www.bsc.com.vn/bsc-web-trading/)
-- [BSC WebTrading User Guide](https://www.bsc.com.vn/Download/HDSD_BSC_Webtrading_ct.pdf)
-- [Giao dịch chứng khoán cơ sở](https://www.bsc.com.vn/giao-dich-chung-khoan-co-so/)
+Ưu tiên: priceboard thật → hướng dẫn giao dịch chính thức → announcement/quy định. Tránh SEO/third-party summary.
+
+- [BSC Price Board (WebTrading)](https://trading.bsc.com.vn/priceboard) — primary live UI evidence
+- [BSC WebTrading product page](https://www.bsc.com.vn/bsc-web-trading/)
+- [BSC WebTrading User Guide (PDF)](https://www.bsc.com.vn/Download/HDSD_BSC_Webtrading_ct.pdf)
+- [Giao dịch chứng khoán cơ sở](https://www.bsc.com.vn/giao-dich-chung-khoan-co-so/) — click bid/ask, tiểu khoản, lô lẻ, Pro
 - [Giao dịch chứng khoán phái sinh](https://www.bsc.com.vn/giao-dich-chung-khoan-phai-sinh/)
-- [BSC Smart Invest](https://www.bsc.com.vn/bsc-smart-invest/)
-- [Hướng dẫn đọc bảng điện](https://www.bsc.com.vn/tin-tuc/tin-chi-tiet/92817-huong-dan-cach-doc-bang-dien-chung-khoan/)
+- [Bộ lệnh điều kiện](https://www.bsc.com.vn/bo-lenh-dieu-kien/)
+- [Giới thiệu lệnh điều kiện](https://www.bsc.com.vn/gioi-thieu-lenh-dieu-kien)
 - [Giao dịch thỏa thuận trực tuyến trên WebTrading](https://www.bsc.com.vn/tin-tuc/tin-chi-tiet/91088-bsc-ra-mat-tinh-nang-giao-dich-thoa-thuan-truc-tuyen-tren-nen-tang-webtrading/)
 - [Quy định giao dịch chung](https://www.bsc.com.vn/quy-dinh-giao-dich-chung/)
+- [Hướng dẫn đọc bảng điện](https://www.bsc.com.vn/tin-tuc/tin-chi-tiet/92817-huong-dan-cach-doc-bang-dien-chung-khoan/)
 
 Course mapping: [BSC WebTrading Case Study](../case-studies/bsc-webtrading.html).
 
